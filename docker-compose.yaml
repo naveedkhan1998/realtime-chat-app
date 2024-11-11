@@ -63,10 +63,10 @@ services:
     environment:
       - WATCHPACK_POLLING=true
     volumes:
-      - ./frontend/src/:/usr/app/src/
-      - ./frontend/public/:/usr/app/public/
-      - ./frontend/package.json:/usr/app/package.json
-      - ./frontend/package-lock.json:/usr/app/package-lock.json
+      - ./frontend/src/:/app/src/
+      - ./frontend/public/:/app/public/
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
 
 volumes:
   redis-data:

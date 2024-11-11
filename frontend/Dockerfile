@@ -1,18 +1,26 @@
-# Use an official Node.js image as a base
-FROM node:18-alpine
+# Use a lightweight Node.js image
+FROM node:20-alpine
 
-# Set working directory
+# Set the working directory inside the container
 WORKDIR /app
 
+# Copy package.json and yarn.lock to leverage Docker layer caching
+COPY package.json ./
+
 # Install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
+RUN npm i
 
 # Copy the rest of the application code
 COPY . .
 
-# Expose the development port (Vite usually runs on 5173 by default)
+# Set environment variables for development
+ENV NODE_ENV=development
+
+# Expose the port Vite uses
 EXPOSE 5173
 
-# Start the React app in development mode
-CMD ["npm", "run", "dev", "--", "--host"]
+# Enable polling for file changes (useful in Docker)
+ENV CHOKIDAR_USEPOLLING=true
+
+# Start the Vite development server
+CMD ["npm","run", "dev","--", "--host"]

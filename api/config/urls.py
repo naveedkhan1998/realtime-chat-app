@@ -20,6 +20,13 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from config import settings
 
+
+
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+
+
 urlpatterns = (
     [
         path("admin/", admin.site.urls),
@@ -30,10 +37,12 @@ urlpatterns = (
         path(
             "auth/registration/", include("dj_rest_auth.registration.urls")
         ),  # Registration endpoints
-        # Optional: Include social account URLs if using social auth
-        path("auth/social/", include("allauth.socialaccount.urls")),
+        path('auth/social/google/', include('allauth.socialaccount.urls')),
     ]
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.OUTPUT_URL, document_root=settings.OUTPUT_ROOT)
 )
+
+
+
