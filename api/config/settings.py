@@ -31,6 +31,11 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 HOST = "localhost"
 
+# Google OAuth
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+GOOGLE_OAUTH_CALLBACK_URL = os.getenv("GOOGLE_OAUTH_CALLBACK_URL")
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,25 +47,26 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Rest framework and other dependencies
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
     "channels",
+    # Custom apps
+    "apps.accounts",
     # Allauth and REST integration
     "allauth",
     "allauth.account",
     "allauth.socialaccount",  # Optional, only if you need social authentication
-    "dj_rest_auth",  # Provides RESTful endpoints for authentication
-    "dj_rest_auth.registration",  # Optional, for registration endpoints
     "allauth.socialaccount.providers.google",  # Optional, add other providers as needed
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -74,27 +80,52 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
 }
 
-# Allauth settings
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = (
-    "mandatory"  # Set to "mandatory" if email verification is needed
-)
-ACCOUNT_AUTHENTICATION_METHOD = "email"  # Or "email" for email-based login
-ACCOUNT_USERNAME_REQUIRED = True
-
-# dj-rest-auth settings
-REST_USE_JWT = True  # Use JWT for token-based authentication
-
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWS_CREDENTIALS = True
+
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+)
+
+LOGIN_REDIRECT_URL = "/callback/"
+
+# django-allauth (social)
+# Authenticate if local account with this email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+# Connect local account and social account if local account with that email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+# Save social tokens in the database
+SOCIALACCOUNT_STORE_TOKENS = True
+# Enable the following providers
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "client_id": GOOGLE_OAUTH_CLIENT_ID,
+                "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+                "key": "",
+            },
+        ],
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+        "OAUTH_PKCE_ENABLED": True,
+        "FETCH_USER_INFO": True,
+    }
+}
 
 ROOT_URLCONF = "config.urls"
 
@@ -184,16 +215,18 @@ MEDIA_URL = "media/"
 OUTPUT_ROOT = os.path.join(BASE_DIR, "OUTPUTS/")
 OUTPUT_URL = "outputs/"
 async_load = True
-# CORS and CSRF:
-
-CSRF_COOKIE_SECURE = False
-CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
-CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
 
 
-CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
-CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to access it
-CSRF_COOKIE_SAMESITE = "Lax"  # Controls CSRF cookie sharing between different origins (use 'None' for different origin setups in production)
+# # CORS and CSRF:
+
+# CSRF_COOKIE_SECURE = False
+# CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
+# CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
+
+
+# CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+# CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to access it
+# CSRF_COOKIE_SAMESITE = "Lax"  # Controls CSRF cookie sharing between different origins (use 'None' for different origin setups in production)
 
 
 mimetypes.add_type("text/css", ".css", True)

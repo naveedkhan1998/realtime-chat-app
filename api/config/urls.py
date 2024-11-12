@@ -21,28 +21,14 @@ from django.conf.urls.static import static
 from config import settings
 
 
-
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
-
-
-
 urlpatterns = (
     [
         path("admin/", admin.site.urls),
-        # Django Allauth and dj-rest-auth
-        path(
-            "auth/", include("dj_rest_auth.urls")
-        ),  # Endpoints for login, logout, password reset, etc.
-        path(
-            "auth/registration/", include("dj_rest_auth.registration.urls")
-        ),  # Registration endpoints
-        path('auth/social/google/', include('allauth.socialaccount.urls')),
+        path("api/accounts/", include("apps.accounts.urls")),
+        path("api/api-auth/", include("rest_framework.urls")),
+        path("api/allauth/accounts/", include("allauth.urls")),
     ]
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.OUTPUT_URL, document_root=settings.OUTPUT_ROOT)
 )
-
-
-

@@ -9,7 +9,7 @@ const App: React.FC = () => {
   return (
     <GoogleOAuthProvider clientId={clientId}>
       <Login />
-      <div>Holla</div>
+      <div className="">Holla</div>
     </GoogleOAuthProvider>
   );
 };
