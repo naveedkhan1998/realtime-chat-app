@@ -24,5 +24,5 @@ urlpatterns = [
         UserPasswordResetView.as_view(),
         name="password_reset_confirm",
     ),
-    path("auth/social/google/", GoogleLoginView.as_view(), name="google_login"),
+    path("social/google/", GoogleLoginView.as_view(), name="google_login"),
 ]
