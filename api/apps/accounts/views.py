@@ -44,7 +44,7 @@ def google_login_callback(request):
     social_account = social_accounts.first()
 
     token = SocialToken.objects.filter(
-        account=social_account, account__providers="google"
+        account=social_account, account__provider="google"
     ).first()
 
     if token:
@@ -69,7 +69,7 @@ def validate_google_token(request):
 
             if not google_access_token:
                 return JsonResponse({"error": "No access token provided"}, status=400)
-            return JsonResponse({"message": "Token is valid"}, status=200)
+            return JsonResponse({"valid": True}, status=200)
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     return JsonResponse({"error": "Invalid request method"}, status=400)
