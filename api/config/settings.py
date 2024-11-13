@@ -17,8 +17,7 @@ from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
+MAIN_URL_2 = "http://localhost:8000"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -29,7 +28,6 @@ SECRET_KEY = "django-insecure-(fw-8k28l584l*w!s*hfxf$_j@)mi8*-1l&0^$e3od#j$8zpzb
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
-HOST = "localhost"
 
 # Google OAuth
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
@@ -40,92 +38,34 @@ GOOGLE_OAUTH_CALLBACK_URL = os.getenv("GOOGLE_OAUTH_CALLBACK_URL")
 
 INSTALLED_APPS = [
     "daphne",
-    "django.contrib.sites",
-    "django.contrib.admin",
+    'django.contrib.admin',
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Rest framework and other dependencies
+    "channels",
     "corsheaders",
+    "django_filters",
     "rest_framework",
     "rest_framework.authtoken",
-    "django_filters",
-    "channels",
+    "rest_framework_simplejwt.token_blacklist",
     # Custom apps
     "apps.accounts",
-    # Allauth and REST integration
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",  # Optional, only if you need social authentication
-    "allauth.socialaccount.providers.google",  # Optional, add other providers as needed
 ]
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
 ]
-SITE_ID = 1
 
-REST_FRAMEWORK = {
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-}
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
-
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOWS_CREDENTIALS = True
-
-AUTHENTICATION_BACKENDS = (
-    "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
-)
-
-LOGIN_REDIRECT_URL = "/callback/"
-
-# django-allauth (social)
-# Authenticate if local account with this email address already exists
-SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-# Connect local account and social account if local account with that email address already exists
-SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
-# Save social tokens in the database
-SOCIALACCOUNT_STORE_TOKENS = True
-# Enable the following providers
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APPS": [
-            {
-                "client_id": GOOGLE_OAUTH_CLIENT_ID,
-                "secret": GOOGLE_OAUTH_CLIENT_SECRET,
-                "key": "",
-            },
-        ],
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "OAUTH_PKCE_ENABLED": True,
-        "FETCH_USER_INFO": True,
-    }
-}
 
 ROOT_URLCONF = "config.urls"
 
@@ -191,6 +131,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Rest framework settings
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+}
+
+AUTH_USER_MODEL = "accounts.User"
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -219,20 +168,55 @@ async_load = True
 
 # # CORS and CSRF:
 
-# CSRF_COOKIE_SECURE = False
-# CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
-# CORS_ALLOWED_ORIGINS = ["http://localhost:8000"]
+CSRF_COOKIE_SECURE = False
+CSRF_TRUSTED_ORIGINS = [
+    "https://breeze-frontend-seven.vercel.app",
+    "http://localhost:5173",
+    "https://breeze.mnaveedk.com",
+    "http://localhost:8000",
+]
 
+# CORS_ALLOW_ALL_ORIGINS = True
 
-# CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
-# CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to access it
-# CSRF_COOKIE_SAMESITE = "Lax"  # Controls CSRF cookie sharing between different origins (use 'None' for different origin setups in production)
-
+CORS_ALLOWED_ORIGINS = [
+    "https://breeze-frontend-seven.vercel.app",
+    "http://localhost:5173",
+    "https://breeze.mnaveedk.com",
+    "http://localhost:8000",
+]
 
 mimetypes.add_type("text/css", ".css", True)
-X_FRAME_OPTIONS = "ALLOW-FROM http://localhost:3000/"
+X_FRAME_OPTIONS = "ALLOW-FROM http://localhost:5173/"
 
 BROKER_URL = os.environ.get("REDIS_URL")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+}

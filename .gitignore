@@ -2,3 +2,4 @@
 postgres
 static
 media
+*.pyc

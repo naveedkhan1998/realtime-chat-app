@@ -1,76 +1,189 @@
-import json
-from rest_framework import generics
-from django.http import JsonResponse
-from django.shortcuts import redirect
-from .serializers import UserSerializer
-from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import (
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserProfileSerializer,
+    UserChangePasswordSerializer,
+    SendPasswordResetEmailSerializer,
+    UserPasswordResetSerializer,
+)
+from .models import User, AUTH_PROVIDERS
+from django.contrib.auth import authenticate
+from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.decorators import login_required
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from allauth.socialaccount.models import SocialAccount, SocialToken
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from config.settings import GOOGLE_OAUTH_CLIENT_ID
 
-User = get_user_model()
+# Create your views here.
 
 
-class UserCreate(generics.CreateAPIView):
+class GoogleLoginView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get("token")
+        if not token:
+            return Response(
+                {"error": "No token provided."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID
+            )
+
+            email = idinfo["email"]
+            name = idinfo.get("name", "")
+            first_name = idinfo.get("given_name", "")
+            last_name = idinfo.get("family_name", "")
+            picture = idinfo.get("picture", "")
+
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "name": name or f"{first_name} {last_name}",
+                    "is_email_verify": True,
+                    "auth_provider": AUTH_PROVIDERS.get("google"),
+                    "tc": True,  # Assuming terms are accepted via OAuth
+                },
+            )
+
+            # Update user data if necessary
+            if not user.name:
+                user.name = name or f"{first_name} {last_name}"
+                user.save()
+
+            # Generate JWT tokens
+            token = get_tokens_for_user(user)
+            return Response(
+                {"token": token, "msg": "Login successful"},
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError:
+            # Invalid token
+            return Response(
+                {"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
+
+
+class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (AllowAny,)
+    serializer_class = UserRegistrationSerializer
+    renderer_classes = [UserRenderer]
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token = get_tokens_for_user(user)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                {"token": token, "msg": "Registration successful"},
+                status=status.HTTP_201_CREATED,
+                headers=headers,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+class UserLoginView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [AllowAny]
+
+    def post(self, request, format=None):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get("email")
+            password = serializer.validated_data.get("password")
+            user = authenticate(email=email, password=password)
+            if user:
+                token = get_tokens_for_user(user)
+                return Response(
+                    {"token": token, "msg": "Login successful"},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                # Check if user exists and suggest using OAuth provider
+                if User.objects.filter(email=email).exists():
+                    existing_user = User.objects.get(email=email)
+                    if existing_user.auth_provider != AUTH_PROVIDERS.get("email"):
+                        return Response(
+                            {
+                                "errors": {
+                                    "non_field_errors": [
+                                        f"Please continue your login using {existing_user.auth_provider.capitalize()}"
+                                    ]
+                                }
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                return Response(
+                    {"errors": {"non_field_errors": ["Invalid email or password."]}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
 
 
-@login_required
-def google_login_callback(request):
-    user = request.user
+class UserChangePasswordView(generics.UpdateAPIView):
+    serializer_class = UserChangePasswordSerializer
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
 
-    social_accounts = SocialAccount.objects.filter(user=user)
-    print("Social Account for user: ", social_accounts)
+    def get_object(self):
+        return self.request.user
 
-    if not social_accounts.exists():
-        return redirect(
-            "http://localhost:5173/login/callback/?error=No%20social%20account%20found"
+
+class SendPasswordResetEmailView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [AllowAny]
+
+    def post(self, request, format=None):
+        serializer = SendPasswordResetEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(
+                {"msg": "Password reset link sent successfully"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserPasswordResetView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [AllowAny]
+
+    def post(self, request, uid, token, format=None):
+        serializer = UserPasswordResetSerializer(
+            data=request.data, context={"uid": uid, "token": token}
         )
-
-    social_account = social_accounts.first()
-
-    token = SocialToken.objects.filter(
-        account=social_account, account__provider="google"
-    ).first()
-
-    if token:
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        return redirect(
-            f"http://localhost:5173/login/callback/?access_token={access_token}"
-        )
-    else:
-        return redirect(
-            "http://localhost:5173/login/callback/?error=No%20token%20found"
-        )
-
-
-@csrf_exempt
-def validate_google_token(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            google_access_token = data.get("access_token")
-            print(google_access_token)
-
-            if not google_access_token:
-                return JsonResponse({"error": "No access token provided"}, status=400)
-            return JsonResponse({"valid": True}, status=200)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
-    return JsonResponse({"error": "Invalid request method"}, status=400)
-            
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"msg": "Password reset successfully"}, status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

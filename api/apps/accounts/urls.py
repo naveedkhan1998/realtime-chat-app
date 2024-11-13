@@ -1,32 +1,28 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import (
-    TokenVerifyView,
-    TokenObtainPairView,
-    TokenRefreshView,
+from django.urls import path
+from .views import (
+    UserRegistrationView,
+    UserLoginView,
+    UserProfileView,
+    UserChangePasswordView,
+    SendPasswordResetEmailView,
+    UserPasswordResetView,
+    GoogleLoginView,
 )
-
-from apps.accounts.views import (
-    UserCreate,
-    UserDetailView,
-    google_login_callback,
-    validate_google_token,
-)
-
-router = DefaultRouter()
-
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    path("", include(router.urls)),
-    path("user/register/", UserCreate.as_view(), name="user_create"),
-    path("user/detail/", UserDetailView.as_view(), name="user_detail"),
+    path("register/", UserRegistrationView.as_view(), name="register"),
+    path("login/", UserLoginView.as_view(), name="login"),
+    path("refresh_token/", TokenRefreshView.as_view(), name="refresh_token"),
+    path("profile/", UserProfileView.as_view(), name="profile"),
+    path("change-password/", UserChangePasswordView.as_view(), name="change_password"),
     path(
-        "token/",
-        TokenObtainPairView.as_view(),
-        name="token-obtain-pair",
+        "reset-password/", SendPasswordResetEmailView.as_view(), name="reset_password"
     ),
-    path("token/verify/", TokenVerifyView.as_view(), name="token-verify"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
-    path("google/callback/", google_login_callback, name="google-login-callback"),
-    path("google/validate-token/", validate_google_token, name="google-validate-token"),
+    path(
+        "reset-password/<uid>/<token>/",
+        UserPasswordResetView.as_view(),
+        name="password_reset_confirm",
+    ),
+    path("auth/social/google/", GoogleLoginView.as_view(), name="google_login"),
 ]
