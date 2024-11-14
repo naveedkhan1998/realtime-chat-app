@@ -1,14 +1,12 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useAppSelector } from "@/app/hooks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { MessageSquare, Phone, Video, Users, Settings, Search, PlusCircle, ArrowLeft } from "lucide-react";
+import { MessageSquare, Phone, Video, Users, Settings, Search, PlusCircle, ArrowLeft, Send } from "lucide-react";
 
 interface ChatPreview {
   id: number;
@@ -23,6 +21,7 @@ export default function Dashboard() {
   const user = useAppSelector((state) => state.auth.user);
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -39,6 +38,13 @@ export default function Dashboard() {
     { id: 3, name: "Carol Williams", avatar: "/placeholder.svg?height=40&width=40", lastMessage: "Thanks for your help!", time: "2h", unread: 1 },
     { id: 4, name: "David Brown", avatar: "/placeholder.svg?height=40&width=40", lastMessage: "See you later!", time: "1d", unread: 0 },
   ];
+
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      console.log(`Sending message to chat ${activeChat}: ${message}`);
+      setMessage("");
+    }
+  };
 
   const Sidebar = () => (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800">
@@ -86,13 +92,21 @@ export default function Dashboard() {
 
   const ChatArea = () => (
     <div className="flex flex-col h-full">
-      <header className="flex items-center justify-between p-4 bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+      <header className={` ${activeChat ? "flex" : "hidden"} items-center justify-between p-4 bg-white border-b dark:bg-gray-800 dark:border-gray-700`}>
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
-        <h1 className="text-2xl font-bold">MNK Chat</h1>
+        {activeChat && (
+          <div className="flex items-center">
+            <Avatar className="w-8 h-8 mr-2">
+              <AvatarImage src={recentChats.find((chat) => chat.id === activeChat)?.avatar} alt={recentChats.find((chat) => chat.id === activeChat)?.name} />
+              <AvatarFallback>{recentChats.find((chat) => chat.id === activeChat)?.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <h2 className="text-lg font-semibold">{recentChats.find((chat) => chat.id === activeChat)?.name}</h2>
+          </div>
+        )}
         <div className="flex space-x-2">
           <Button variant="ghost" size="icon">
             <Phone className="w-5 h-5" />
@@ -109,13 +123,10 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 overflow-auto">
         {activeChat ? (
           <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Chat with {recentChats.find((chat) => chat.id === activeChat)?.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <p className="text-center text-gray-500">Chat messages will appear here</p>
             </CardContent>
           </Card>
@@ -128,6 +139,17 @@ export default function Dashboard() {
           </Card>
         )}
       </div>
+
+      {activeChat && (
+        <div className="p-4 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
+          <div className="flex space-x-2">
+            <Input placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} />
+            <Button onClick={handleSendMessage}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -141,7 +163,7 @@ export default function Dashboard() {
         )
       ) : (
         <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={20} minSize={15} maxSize={40}>
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
             <Sidebar />
           </ResizablePanel>
           <ResizableHandle withHandle />

@@ -1,10 +1,21 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { useHealthCheckQuery } from "@/services/baseApi";
 import { setError } from "@/features/errorSlice";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
-export default function HealthCheck({ children }: { children: React.ReactNode }) {
+interface HealthCheckProps {
+  children: React.ReactNode;
+}
+
+export default function HealthCheck({ children }: HealthCheckProps) {
   const { isLoading, isError, refetch } = useHealthCheckQuery();
   const [backendUp, setBackendUp] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 12; // 1 minute (5 seconds * 12)
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -15,12 +26,12 @@ export default function HealthCheck({ children }: { children: React.ReactNode })
       // Backend is not up yet; retry every 5 seconds
       intervalId = setInterval(() => {
         refetch();
+        setRetryCount((prevCount) => prevCount + 1);
       }, 5000);
     } else if (!isError) {
       // Backend is up
-      if (!backendUp) {
-        setBackendUp(true);
-      }
+      setBackendUp(true);
+      setRetryCount(0);
       intervalId = setInterval(() => {
         refetch();
       }, 120000);
@@ -41,8 +52,21 @@ export default function HealthCheck({ children }: { children: React.ReactNode })
 
   if (isLoading || (isError && !backendUp)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Starting up backend server.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Alert className="max-w-md">
+          <AlertTitle>Starting up backend server</AlertTitle>
+          <AlertDescription>
+            {retryCount >= maxRetries ? (
+              "Unable to connect to the server. Please refresh the page or try again later."
+            ) : (
+              <>
+                Please wait while we establish a connection.
+                <Progress value={(retryCount / maxRetries) * 100} className="mt-2" />
+              </>
+            )}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
