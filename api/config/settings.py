@@ -38,7 +38,7 @@ GOOGLE_OAUTH_CALLBACK_URL = os.getenv("GOOGLE_OAUTH_CALLBACK_URL")
 
 INSTALLED_APPS = [
     "daphne",
-    'django.contrib.admin',
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

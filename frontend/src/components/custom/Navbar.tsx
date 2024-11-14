@@ -5,6 +5,7 @@ import { logOut } from "@/features/authSlice";
 import { Menu, Moon, Sun, X, Home, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { setThemeRedux } from "@/features/themeSlice";
 
 const Navbar: React.FC = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -17,7 +18,8 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
-  }, [theme]);
+    dispatch(setThemeRedux(theme));
+  }, [theme, dispatch]);
 
   const handleLogout = () => {
     dispatch(logOut());

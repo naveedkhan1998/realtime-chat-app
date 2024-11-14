@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useLoginMutation, useRegisterMutation, useGoogleLoginMutation } from "@/services/authApi";
@@ -10,34 +11,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch } from "@/app/hooks";
 import { setCredentials } from "@/features/authSlice";
 import { setCookie } from "@/utils/cookie";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock, User } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 
 export default function LoginRegistration() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  // State variables for login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-
-  // State variables for registration form
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPassword2, setRegisterPassword2] = useState("");
-
-  // Error and success messages
   const [loginError, setLoginError] = useState("");
   const [registerError, setRegisterError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // RTK Query mutations
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
   const [googleLogin] = useGoogleLoginMutation();
 
-  // Handle login form submission
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
@@ -50,7 +45,6 @@ export default function LoginRegistration() {
     }
   };
 
-  // Handle registration form submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegisterError("");
@@ -73,7 +67,6 @@ export default function LoginRegistration() {
     }
   };
 
-  // Handle Google login success
   const handleLoginSuccess = async (response: CredentialResponse) => {
     if (response.credential) {
       try {
@@ -88,7 +81,6 @@ export default function LoginRegistration() {
     }
   };
 
-  // Handle authentication success
   const handleAuthSuccess = (userData: any) => {
     setCookie("access_token", userData.token.access, { expires: 1 });
     setCookie("refresh_token", userData.token.refresh, { expires: 7 });
@@ -102,7 +94,6 @@ export default function LoginRegistration() {
     navigate("/dashboard");
   };
 
-  // Handle authentication error
   const handleAuthError = (error: any, setError: (message: string) => void) => {
     console.error("Authentication error:", error);
     if (error.data && error.data.errors) {
@@ -112,98 +103,70 @@ export default function LoginRegistration() {
     }
   };
 
-  // Handle Google login failure
   const handleLoginFailure = () => {
     setLoginError("Google login failed.");
   };
 
   return (
-    <Card className="w-[350px] dark:bg-gray-800">
+    <Card className="w-full max-w-lg">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold dark:text-white">Welcome</CardTitle>
-        <CardDescription className="dark:text-gray-300">Sign in to your account or create a new one.</CardDescription>
+        <CardTitle className="text-3xl font-bold text-center">Welcome to MNK Chat</CardTitle>
+        <CardDescription className="text-center">Sign in to your account or create a new one to start chatting.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login" className="dark:text-gray-200 dark:data-[state=active]:bg-gray-700">
-              Login
-            </TabsTrigger>
-            <TabsTrigger value="register" className="dark:text-gray-200 dark:data-[state=active]:bg-gray-700">
-              Register
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
-            <form onSubmit={handleLoginSubmit}>
-              <div className="grid items-center w-full gap-4">
-                {loginError && <p className="text-red-500 dark:text-red-400">{loginError}</p>}
-                {successMessage && <p className="text-green-500 dark:text-green-400">{successMessage}</p>}
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="loginEmail" className="dark:text-gray-200">
-                    Email
-                  </Label>
-                  <Input
-                    id="loginEmail"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
-                    className="dark:bg-gray-700 dark:text-white"
-                  />
+            <form onSubmit={handleLoginSubmit} className="space-y-6">
+              {loginError && <p className="text-sm font-medium text-destructive">{loginError}</p>}
+              {successMessage && <p className="text-sm font-medium text-green-600">{successMessage}</p>}
+              <div className="space-y-2">
+                <Label htmlFor="loginEmail">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
+                  <Input id="loginEmail" type="email" placeholder="Enter your email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required className="pl-10" />
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="loginPassword" className="dark:text-gray-200">
-                    Password
-                  </Label>
-                  <Input
-                    id="loginPassword"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                    className="dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                <Button type="submit" className="w-full dark:bg-blue-600 dark:hover:bg-blue-700" disabled={isLoginLoading}>
-                  {isLoginLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  {isLoginLoading ? "Signing In..." : "Sign In"}
-                </Button>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="loginPassword">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
+                  <Input id="loginPassword" type="password" placeholder="Enter your password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required className="pl-10" />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoginLoading}>
+                {isLoginLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                {isLoginLoading ? "Signing In..." : "Sign In"}
+              </Button>
             </form>
           </TabsContent>
 
           <TabsContent value="register">
-            <form onSubmit={handleRegisterSubmit}>
-              <div className="grid items-center w-full gap-4">
-                {registerError && <p className="text-red-500 dark:text-red-400">{registerError}</p>}
-                {successMessage && <p className="text-green-500 dark:text-green-400">{successMessage}</p>}
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="registerName" className="dark:text-gray-200">
-                    Name
-                  </Label>
-                  <Input id="registerName" placeholder="Enter your name" value={registerName} onChange={(e) => setRegisterName(e.target.value)} required className="dark:bg-gray-700 dark:text-white" />
+            <form onSubmit={handleRegisterSubmit} className="space-y-6">
+              {registerError && <p className="text-sm font-medium text-destructive">{registerError}</p>}
+              {successMessage && <p className="text-sm font-medium text-green-600">{successMessage}</p>}
+              <div className="space-y-2">
+                <Label htmlFor="registerName">Name</Label>
+                <div className="relative">
+                  <User className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
+                  <Input id="registerName" placeholder="Enter your name" value={registerName} onChange={(e) => setRegisterName(e.target.value)} required className="pl-10" />
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="registerEmail" className="dark:text-gray-200">
-                    Email
-                  </Label>
-                  <Input
-                    id="registerEmail"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
-                    required
-                    className="dark:bg-gray-700 dark:text-white"
-                  />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="registerEmail">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
+                  <Input id="registerEmail" type="email" placeholder="Enter your email" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} required className="pl-10" />
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="registerPassword" className="dark:text-gray-200">
-                    Password
-                  </Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="registerPassword">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
                   <Input
                     id="registerPassword"
                     type="password"
@@ -211,13 +174,14 @@ export default function LoginRegistration() {
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
-                    className="dark:bg-gray-700 dark:text-white"
+                    className="pl-10"
                   />
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="registerPassword2" className="dark:text-gray-200">
-                    Confirm Password
-                  </Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="registerPassword2">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
                   <Input
                     id="registerPassword2"
                     type="password"
@@ -225,14 +189,14 @@ export default function LoginRegistration() {
                     value={registerPassword2}
                     onChange={(e) => setRegisterPassword2(e.target.value)}
                     required
-                    className="dark:bg-gray-700 dark:text-white"
+                    className="pl-10"
                   />
                 </div>
-                <Button type="submit" className="w-full dark:bg-blue-600 dark:hover:bg-blue-700" disabled={isRegisterLoading}>
-                  {isRegisterLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  {isRegisterLoading ? "Registering..." : "Register"}
-                </Button>
               </div>
+              <Button type="submit" className="w-full" disabled={isRegisterLoading}>
+                {isRegisterLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                {isRegisterLoading ? "Registering..." : "Register"}
+              </Button>
             </form>
           </TabsContent>
         </Tabs>
@@ -241,13 +205,15 @@ export default function LoginRegistration() {
       <CardFooter className="flex flex-col space-y-4">
         <div className="relative w-full">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t dark:border-gray-600" />
+            <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-2 bg-background text-muted-foreground dark:bg-gray-800 dark:text-gray-400">Or continue with</span>
+            <span className="px-2 bg-background text-muted-foreground">Or continue with</span>
           </div>
         </div>
-        <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="filled_blue" size="large" text="continue_with" shape="rectangular" width="320" />
+        <div className="w-full">
+          <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="filled_blue" size="large" text="continue_with" shape="rectangular" width="100%" />
+        </div>
       </CardFooter>
     </Card>
   );

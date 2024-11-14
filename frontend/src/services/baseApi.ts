@@ -40,7 +40,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
     if (refreshToken) {
       const refreshResult = await baseQuery(
         {
-          url: "api/accounts/refresh_token/",
+          url: "accounts/refresh_token/",
           method: "POST",
           body: { refresh: refreshToken },
         },

@@ -57,7 +57,6 @@ class User(AbstractBaseUser):
     name = models.CharField(max_length=200)
     avatar = models.ImageField(
         verbose_name="Avatar",
-        upload_to="user/avatar/",
         default="profile_icon.png",
         null=True,
         blank=True,

@@ -1,1 +1,3 @@
 venv
+gcpCredentials.json
+__pycache__

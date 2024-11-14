@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import generics, status
+import requests as NormalRequests
+from django.core.files.base import ContentFile
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import (
@@ -54,6 +56,14 @@ class GoogleLoginView(APIView):
                     "tc": True,  # Assuming terms are accepted via OAuth
                 },
             )
+
+            # Update user data if necessary
+            if created or not user.avatar:
+                # Download the image
+                response = NormalRequests.get(picture)
+                if response.status_code == 200:
+                    image_content = ContentFile(response.content)
+                    user.avatar.save(f"{user.id}_avatar.jpg", image_content)
 
             # Update user data if necessary
             if not user.name:

@@ -5,6 +5,7 @@ import { baseApi } from "./baseApi";
 export interface UserProfile {
   id: number;
   email: string;
+  avatar: string;
   name: string;
 }
 
@@ -13,7 +14,6 @@ export const userApi = baseApi.injectEndpoints({
     getUserProfile: builder.query<UserProfile, void>({
       query: () => "accounts/profile/",
     }),
-
   }),
   overrideExisting: false,
 });

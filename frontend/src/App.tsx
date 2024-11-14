@@ -28,7 +28,7 @@ const App: React.FC = () => {
       <AuthInitializer />
       <GoogleOAuthProvider clientId={clientId}>
         <Router>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex flex-col h-screen">
             <Navbar />
             <main className="flex-grow">
               <Routes>
