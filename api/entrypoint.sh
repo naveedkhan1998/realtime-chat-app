@@ -5,6 +5,8 @@ echo "Applying database migrations..."
 python3 manage.py makemigrations
 python3 manage.py migrate
 
+python3 manage.py initadmin
+
 # Collect static files (if needed)
 echo "Collecting static files..."
 python3 manage.py collectstatic --noinput

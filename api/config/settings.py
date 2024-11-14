@@ -170,18 +170,18 @@ async_load = True
 
 CSRF_COOKIE_SECURE = False
 CSRF_TRUSTED_ORIGINS = [
-    "https://breeze-frontend-seven.vercel.app",
+    "https://chat-frontend.mnaveedk.com/",
     "http://localhost:5173",
-    "https://breeze.mnaveedk.com",
+    "https://chat-backend.mnaveedk.com",
     "http://localhost:8000",
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "https://breeze-frontend-seven.vercel.app",
+    "https://chat-frontend.mnaveedk.com/",
     "http://localhost:5173",
-    "https://breeze.mnaveedk.com",
+    "https://chat-backend.mnaveedk.com",
     "http://localhost:8000",
 ]
 
