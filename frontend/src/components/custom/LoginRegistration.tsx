@@ -31,7 +31,7 @@ export default function LoginRegistration() {
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
-  const [googleLogin] = useGoogleLoginMutation();
+  const [googleLogin, { isLoading: isGoogleLoginLoading }] = useGoogleLoginMutation();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,7 +212,14 @@ export default function LoginRegistration() {
           </div>
         </div>
         <div className="w-full">
-          <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="filled_blue" size="large" text="continue_with" shape="rectangular" width="100%" />
+          {isGoogleLoginLoading ? (
+            <div className="flex items-center justify-center">
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <span>Loading...</span>
+            </div>
+          ) : (
+            <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="filled_blue" size="large" text="continue_with" shape="rectangular" width="100%" />
+          )}
         </div>
       </CardFooter>
     </Card>
