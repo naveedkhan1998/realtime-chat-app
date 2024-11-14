@@ -55,7 +55,7 @@ const Navbar: React.FC = () => {
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-md dark:bg-black dark:border-gray-700">
       <div className="container flex items-center justify-between h-16 px-4 m-auto">
         <Link to="/" className="text-2xl font-bold text-black dark:text-white">
-          MNK Chat App
+          MNK Chat
         </Link>
         <div className="flex items-center space-x-4">
           <div className="hidden md:flex md:items-center md:space-x-4">
