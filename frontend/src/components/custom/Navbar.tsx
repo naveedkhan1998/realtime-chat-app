@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { logOut } from "@/features/authSlice";
-import { Menu, Moon, Sun, X, Home, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, Moon, Sun, X, Home, User, LogOut, ChevronDown, Group } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { setThemeRedux } from "@/features/themeSlice";
@@ -39,6 +39,9 @@ const Navbar: React.FC = () => {
         <>
           <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/dashboard")}>
             <User className="w-4 h-4" /> Dashboard
+          </Button>
+          <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/friends")}>
+            <Group className="w-4 h-4" /> Friends
           </Button>
         </>
       ) : (

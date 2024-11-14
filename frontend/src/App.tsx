@@ -14,6 +14,7 @@ import { useAppSelector } from "./app/hooks";
 import Navbar from "./components/custom/Navbar";
 import Dashboard from "./pages/dashboard";
 import HomePage from "./pages/home-page";
+import Friends from "./pages/friends-page";
 
 const clientId = GOOGLE_CLIENT_ID || "";
 
@@ -44,6 +45,7 @@ const App: React.FC = () => {
                     </PrivateRoute>
                   }
                 />
+                <Route path="/friends" element={<Friends />} />
               </Routes>
             </main>
             <ErrorToast />

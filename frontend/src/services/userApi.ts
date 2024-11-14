@@ -14,8 +14,13 @@ export const userApi = baseApi.injectEndpoints({
     getUserProfile: builder.query<UserProfile, void>({
       query: () => "accounts/profile/",
     }),
+    searchUsers: builder.query<UserProfile[], { query: string }>({
+      query: ({ query }) => `accounts/users/?search=${encodeURIComponent(query)}`,
+      providesTags: ["Users"],
+    }),
   }),
+
   overrideExisting: false,
 });
 
-export const { useGetUserProfileQuery } = userApi;
+export const { useGetUserProfileQuery, useSearchUsersQuery } = userApi;

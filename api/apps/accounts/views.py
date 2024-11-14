@@ -4,10 +4,12 @@ from rest_framework import generics, status
 import requests as NormalRequests
 from django.core.files.base import ContentFile
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 from rest_framework.views import APIView
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
+    UserSerializer,
     UserProfileSerializer,
     UserChangePasswordSerializer,
     SendPasswordResetEmailSerializer,
@@ -149,6 +151,14 @@ class UserLoginView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [SearchFilter]
+    search_fields = ["name", "email"]
 
 
 class UserProfileView(generics.RetrieveAPIView):

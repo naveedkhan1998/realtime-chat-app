@@ -108,9 +108,12 @@ const extractErrorMessages = (errors: any): string[] => {
   return messages;
 };
 
+type TagType = "FriendRequests" | "Friendships" | "ChatRooms" | "Messages" | "TypingStatus" | "Users";
+
 // Create the base API slice
 export const baseApi = createApi({
   baseQuery: baseQueryWithReauth,
+  tagTypes: ["FriendRequests", "Friendships", "ChatRooms", "Messages", "TypingStatus", "Users"] as TagType[],
   endpoints: (builder) => ({
     // Existing endpoints
 
