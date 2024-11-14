@@ -170,7 +170,7 @@ async_load = True
 
 CSRF_COOKIE_SECURE = False
 CSRF_TRUSTED_ORIGINS = [
-    "https://chat-frontend.mnaveedk.com/",
+    "https://chat-frontend.mnaveedk.com",
     "http://localhost:5173",
     "https://chat-backend.mnaveedk.com",
     "http://localhost:8000",
@@ -179,7 +179,7 @@ CSRF_TRUSTED_ORIGINS = [
 # CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "https://chat-frontend.mnaveedk.com/",
+    "https://chat-frontend.mnaveedk.com",
     "http://localhost:5173",
     "https://chat-backend.mnaveedk.com",
     "http://localhost:8000",
