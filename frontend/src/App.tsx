@@ -23,6 +23,8 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 const App: React.FC = () => {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
   return (
     <HealthCheck>
       <AuthInitializer />
@@ -33,7 +35,7 @@ const App: React.FC = () => {
             <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
                 <Route
                   path="/dashboard"
                   element={
@@ -44,7 +46,6 @@ const App: React.FC = () => {
                 />
               </Routes>
             </main>
-
             <ErrorToast />
           </div>
         </Router>
