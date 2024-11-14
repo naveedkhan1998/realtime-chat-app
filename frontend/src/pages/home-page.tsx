@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Users, Shield, Zap, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) => (
   <motion.div whileHover={{ scale: 1.05 }} className="p-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
@@ -23,9 +24,11 @@ const HomePage: React.FC = () => (
           Experience seamless real-time communication with friends and family. Share messages, photos, and create lasting connections.
         </motion.p>
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.4 }}>
-          <Button size="lg" className="mr-4">
-            Get Started <ChevronRight className="ml-2" />
-          </Button>
+          <Link to={"login/"}>
+            <Button size="lg" className="mr-4">
+              Get Started <ChevronRight className="ml-2" />
+            </Button>
+          </Link>
           <Button size="lg" variant="outline">
             Learn More
           </Button>
