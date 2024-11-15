@@ -66,8 +66,8 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
         )}
         <div className="flex items-center">
           <Avatar className="w-10 h-10 mr-3 border-2 border-gray-200 dark:border-gray-700">
-            <AvatarImage src={activeRoom?.participants[0].avatar} alt={activeRoom?.name} />
-            <AvatarFallback>{activeRoom?.name?.charAt(0)}</AvatarFallback>
+            <AvatarImage src={otherParticipant.avatar} alt={otherParticipant.name} />
+            <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
             <h2 className="text-lg font-semibold">{activeRoom?.name || otherParticipant.name}</h2>
