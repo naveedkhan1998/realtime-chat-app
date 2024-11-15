@@ -13,6 +13,8 @@ import { WebSocketService } from "@/utils/websocket";
 import { UserProfile } from "@/services/userApi";
 import ChatMessageItem from "./ChatMessageItem";
 import { useForm } from "react-hook-form";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { SerializedError } from "@reduxjs/toolkit";
 
 interface ChatAreaProps {
   user: UserProfile;
@@ -21,7 +23,7 @@ interface ChatAreaProps {
   isMobile: boolean;
   chatRooms: ChatRoom[] | undefined;
   messagesLoading: boolean;
-  messagesError: Error | null;
+  messagesError: FetchBaseQueryError | SerializedError | undefined;
 }
 
 export default function ChatArea({ user, activeChat, setActiveChat, isMobile, chatRooms, messagesLoading, messagesError }: ChatAreaProps) {
@@ -79,7 +81,9 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
           </div>
         ) : messagesError ? (
           <Card className="bg-red-50 dark:bg-red-900">
-            <CardContent className="p-4 text-center text-red-600 dark:text-red-100">Error loading messages: {messagesError.message}</CardContent>
+            <CardContent className="p-4 text-center text-red-600 dark:text-red-100">
+              Error loading messages: {messagesError && "data" in messagesError ? (messagesError.data as string) : "An error occurred"}
+            </CardContent>
           </Card>
         ) : messages.length > 0 ? (
           <div className="space-y-4">
