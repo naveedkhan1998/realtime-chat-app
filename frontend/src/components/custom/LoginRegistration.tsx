@@ -218,7 +218,7 @@ export default function LoginRegistration() {
               <span>Loading...</span>
             </div>
           ) : (
-            <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="filled_blue" size="large" text="continue_with" shape="rectangular" width="100%" />
+            <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="filled_black" size="large" shape="rectangular" />
           )}
         </div>
       </CardFooter>
