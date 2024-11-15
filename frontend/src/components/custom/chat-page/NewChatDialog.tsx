@@ -9,6 +9,7 @@ import { Friendship, useCreateChatRoomMutation, useGetFriendshipsQuery } from "@
 import { useAppSelector } from "@/app/hooks";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Switch } from "@/components/ui/switch";
+import { useNavigate } from "react-router-dom";
 
 const NewChatDialog: React.FC = () => {
   const { data: friendships, isLoading } = useGetFriendshipsQuery();
@@ -17,6 +18,7 @@ const NewChatDialog: React.FC = () => {
   const [groupName, setGroupName] = useState(""); // State for group name
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
   const [createChatRoom] = useCreateChatRoomMutation(); // Mutation hook for creating a chat room
+  const navigate = useNavigate();
 
   const currentUser = useAppSelector((state) => state.auth.user);
 
@@ -101,10 +103,11 @@ const NewChatDialog: React.FC = () => {
             </div>
           )}
         </ScrollArea>
+        <Button onClick={() => navigate("/friends")}>Add Friends</Button>
         <DialogClose asChild>
           <Button
             onClick={handleSubmit}
-            className="w-full mt-4"
+            className="w-full"
             disabled={isGroup && !groupName} // Disable button if group name is empty for group chats
           >
             Start Chat
