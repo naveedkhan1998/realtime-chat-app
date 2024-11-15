@@ -70,7 +70,7 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
             <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="text-lg font-semibold">{activeRoom?.name || otherParticipant.name}</h2>
+            <h2 className="font-semibold md:text-lg">{activeRoom?.name || otherParticipant.name}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">{activeRoom?.participants.length} participants</p>
           </div>
         </div>
