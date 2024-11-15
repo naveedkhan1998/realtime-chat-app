@@ -34,6 +34,7 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
   const { register, handleSubmit, reset } = useForm<{ message: string }>();
 
   const activeRoom = chatRooms?.find((chat) => chat.id === activeChat);
+  const otherParticipant = activeRoom?.participants.find((p) => p.id !== user.id) || user;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,7 +70,7 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
             <AvatarFallback>{activeRoom?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="text-lg font-semibold">{activeRoom?.name || "Chat"}</h2>
+            <h2 className="text-lg font-semibold">{activeRoom?.name || otherParticipant.name}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">{activeRoom?.participants.length} participants</p>
           </div>
         </div>
@@ -97,22 +98,22 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
               </CardContent>
             </Card>
           ) : messages.length > 0 ? (
-            <div className="space-y-4">
+            <div className="pt-20 space-y-4">
               {messages.map((msg: Message) => (
                 <ChatMessageItem key={msg.id} message={msg} isOwnMessage={msg.sender.id === user.id} />
               ))}
               <div ref={messagesEndRef} />
             </div>
           ) : (
-            <Card className="h-full bg-white dark:bg-gray-800">
-              <CardContent className="flex items-center justify-center h-full">
+            <Card className="bg-white h-fit dark:bg-gray-800">
+              <CardContent>
                 <p className="text-center text-gray-500 dark:text-gray-400">No messages yet. Start the conversation!</p>
               </CardContent>
             </Card>
           )}
         </div>
       </ScrollArea>
-      <form onSubmit={onSubmit} className="p-3 m-0 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
+      <form onSubmit={onSubmit} className="sticky bottom-0 p-3 m-0 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
         <div className="flex space-x-2">
           <Input {...register("message")} placeholder="Type a message..." className="flex-1" autoComplete="off" />
           <Button type="submit" aria-label="Send message">

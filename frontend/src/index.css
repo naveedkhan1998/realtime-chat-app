@@ -64,3 +64,38 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide top and bottom arrows */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Customize the scrollbar container */
+::-webkit-scrollbar {
+  width: 12px; /* Increased width */
+  height: 12px; /* Increased height */
+}
+
+/* Style the scrollbar track (background) */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light gray */
+  border-radius: 6px; /* Slightly rounded corners */
+}
+
+/* Style the scrollbar thumb (draggable part) */
+::-webkit-scrollbar-thumb {
+  background: #888; /* Darker gray */
+  border-radius: 6px; /* Slightly rounded corners */
+  border: 3px solid #f1f1f1; /* Increased border width and light gray color */
+}
+
+/* Hover effect for the scrollbar thumb */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darker gray on hover */
+}
+
+/* Hide scrollbar arrows in Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}

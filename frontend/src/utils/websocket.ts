@@ -29,8 +29,9 @@ export class WebSocketService {
   private static instance: WebSocketService;
   private socket: WebSocket | null = null;
   private callbacks: { [key: string]: Array<(data: any) => void> } = {};
+  private currentChatRoomId: number | null = null;
 
-  private constructor() {} // Make the constructor private to enforce singleton pattern
+  private constructor() {}
 
   static getInstance() {
     if (!WebSocketService.instance) {
@@ -40,11 +41,20 @@ export class WebSocketService {
   }
 
   connect(chatRoomId: number, token: string) {
-    const baseUrl = import.meta.env.VITE_BASE_API_URL
+    if (this.socket && this.currentChatRoomId === chatRoomId) {
+      console.log("Already connected to this chat room");
+      return;
+    }
+
+    // Disconnect the existing WebSocket connection if switching chat rooms
+    this.disconnect();
+
+    const baseUrl = import.meta.env.VITE_BASE_API_URL;
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const socketUrl = `${protocol}://${baseUrl}/ws/chat/${chatRoomId}/?token=${token}`;
 
     this.socket = new WebSocket(socketUrl);
+    this.currentChatRoomId = chatRoomId;
 
     this.socket.onopen = () => {
       console.log("WebSocket connected");
@@ -58,6 +68,7 @@ export class WebSocketService {
     this.socket.onclose = () => {
       console.log("WebSocket disconnected");
       this.socket = null;
+      this.currentChatRoomId = null;
     };
 
     this.socket.onerror = (error) => {
@@ -67,14 +78,19 @@ export class WebSocketService {
 
   disconnect() {
     if (this.socket) {
+      this.socket.onclose = null; // Prevent triggering onclose twice
       this.socket.close();
       this.socket = null;
+      this.currentChatRoomId = null;
+      console.log("WebSocket disconnected manually");
     }
   }
 
   send(data: any) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
+    } else {
+      console.error("WebSocket is not open. Cannot send data");
     }
   }
 

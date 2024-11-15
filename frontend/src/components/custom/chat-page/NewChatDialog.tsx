@@ -3,9 +3,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { PlusCircle } from "lucide-react";
-import { Friendship, useGetFriendshipsQuery } from "@/services/chatApi";
+import { Friendship, useCreateChatRoomMutation, useGetFriendshipsQuery } from "@/services/chatApi";
 import { useAppSelector } from "@/app/hooks";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Switch } from "@/components/ui/switch";
@@ -14,15 +14,15 @@ const NewChatDialog: React.FC = () => {
   const { data: friendships, isLoading } = useGetFriendshipsQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [isGroup, setIsGroup] = useState(false);
+  const [groupName, setGroupName] = useState(""); // State for group name
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
+  const [createChatRoom] = useCreateChatRoomMutation(); // Mutation hook for creating a chat room
+
+  const currentUser = useAppSelector((state) => state.auth.user);
 
   // Filter the friendships to exclude the current user and match the search query
-  const currentUser = useAppSelector((state) => state.auth.user);
   const filteredFriends = friendships
-    ?.map((friendship: Friendship) => {
-      const otherUser = friendship.users.find((user) => user.id !== currentUser?.id);
-      return otherUser;
-    })
+    ?.flatMap((friendship: Friendship) => friendship.users.filter((user) => user.id !== currentUser?.id))
     .filter((user) => user && user.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleFriendSelect = (friendId: number) => {
@@ -37,9 +37,24 @@ const NewChatDialog: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Selected Friends:", selectedFriends);
-    // Trigger chat or group creation logic here
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        name: isGroup ? groupName : "",
+        is_group_chat: isGroup,
+        participants: selectedFriends,
+      };
+      //@ts-expect-error - The response type is not defined in the createChatRoom mutation
+      const response = await createChatRoom(payload);
+      console.log("Chat Room Created:", response);
+      // Reset state after successful creation
+      setSearchQuery("");
+      setIsGroup(false);
+      setGroupName("");
+      setSelectedFriends([]);
+    } catch (error) {
+      console.error("Error creating chat room:", error);
+    }
   };
 
   return (
@@ -54,8 +69,15 @@ const NewChatDialog: React.FC = () => {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span>Create a Group?</span>
-            <Switch checked={isGroup} onCheckedChange={(checked) => setIsGroup(checked)} />
+            <Switch
+              checked={isGroup}
+              onCheckedChange={(checked) => {
+                setIsGroup(checked);
+                if (!checked) setGroupName(""); // Reset group name if group toggle is turned off
+              }}
+            />
           </div>
+          {isGroup && <Input placeholder="Enter group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} className="mb-2" />}
           <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
         </div>
         <ScrollArea className="h-64">
@@ -79,9 +101,15 @@ const NewChatDialog: React.FC = () => {
             </div>
           )}
         </ScrollArea>
-        <Button onClick={handleSubmit} className="w-full mt-4">
-          Start Chat
-        </Button>
+        <DialogClose asChild>
+          <Button
+            onClick={handleSubmit}
+            className="w-full mt-4"
+            disabled={isGroup && !groupName} // Disable button if group name is empty for group chats
+          >
+            Start Chat
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );

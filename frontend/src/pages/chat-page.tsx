@@ -24,13 +24,14 @@ export default function ChatPage() {
 
   const { data: chatRooms, isLoading: chatRoomsLoading, error: chatRoomsError } = useGetChatRoomsQuery();
 
-  const { data: messagesData, isLoading: messagesLoading, error: messagesError } = useGetMessagesQuery({ chat_room_id: activeChat! }, { skip: !activeChat });
+  const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch: refetchMessages } = useGetMessagesQuery({ chat_room_id: activeChat! }, { skip: !activeChat });
 
   useEffect(() => {
     if (messagesData && activeChat) {
+      refetchMessages();
       dispatch(setMessages({ chatRoomId: activeChat, messages: messagesData }));
     }
-  }, [messagesData, activeChat, dispatch]);
+  }, [messagesData, activeChat, dispatch, refetchMessages]);
 
   useEffect(() => {
     if (activeChat && accessToken) {
