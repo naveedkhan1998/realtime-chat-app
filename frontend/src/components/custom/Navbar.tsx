@@ -37,8 +37,8 @@ const Navbar: React.FC = () => {
       </Button>
       {isAuthenticated ? (
         <>
-          <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/dashboard")}>
-            <User className="w-4 h-4" /> Dashboard
+          <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/chat")}>
+            <User className="w-4 h-4" /> Chat
           </Button>
           <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/friends")}>
             <Group className="w-4 h-4" /> Friends

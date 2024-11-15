@@ -1,8 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Message } from "@/services/chatApi";
+
+export interface ChatMessageEvent {
+  type: "chat_message";
+  message: Message;
+}
+
+export interface TypingStatusEvent {
+  type: "typing_status";
+  typing_data: {
+    user_id: number;
+    is_typing: boolean;
+  };
+}
+
+export interface ReadReceiptEvent {
+  type: "read_receipt";
+  read_receipt_data: {
+    message_id: number;
+    user_id: number;
+  };
+}
+
+export type WebSocketEvent = ChatMessageEvent | TypingStatusEvent | ReadReceiptEvent;
+
 export class WebSocketService {
   private static instance: WebSocketService;
   private socket: WebSocket | null = null;
-  private callbacks: { [key: string]: (data: any) => void } = {};
+  private callbacks: { [key: string]: Array<(data: any) => void> } = {};
+
+  private constructor() {} // Make the constructor private to enforce singleton pattern
 
   static getInstance() {
     if (!WebSocketService.instance) {
@@ -22,13 +50,17 @@ export class WebSocketService {
     };
 
     this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const data: WebSocketEvent = JSON.parse(event.data);
       this.handleSocketMessage(data);
     };
 
     this.socket.onclose = () => {
       console.log("WebSocket disconnected");
       this.socket = null;
+    };
+
+    this.socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
     };
   }
 
@@ -45,18 +77,51 @@ export class WebSocketService {
     }
   }
 
-  on(eventType: string, callback: (data: any) => void) {
-    this.callbacks[eventType] = callback;
+  sendMessage(content: string) {
+    const data = {
+      type: "send_message",
+      content,
+    };
+    this.send(data);
   }
 
-  off(eventType: string) {
-    delete this.callbacks[eventType];
+  sendTypingStatus(isTyping: boolean) {
+    const data = {
+      type: "typing",
+      is_typing: isTyping,
+    };
+    this.send(data);
   }
 
-  private handleSocketMessage(data: any) {
-    const eventType = data.type;
+  sendReadReceipt(messageId: number) {
+    const data = {
+      type: "read_receipt",
+      message_id: messageId,
+    };
+    this.send(data);
+  }
+
+  on<T extends WebSocketEvent>(eventType: T["type"], callback: (data: any) => void): void {
+    if (!this.callbacks[eventType]) {
+      this.callbacks[eventType] = [];
+    }
+    this.callbacks[eventType].push(callback);
+  }
+
+  off<T extends WebSocketEvent>(eventType: T["type"], callback: (data: any) => void): void {
     if (this.callbacks[eventType]) {
-      this.callbacks[eventType](data);
+      this.callbacks[eventType] = this.callbacks[eventType].filter((cb) => cb !== callback);
+      if (this.callbacks[eventType].length === 0) {
+        delete this.callbacks[eventType];
+      }
+    }
+  }
+
+  private handleSocketMessage(data: WebSocketEvent) {
+    const eventType = data.type;
+
+    if (this.callbacks[eventType]) {
+      this.callbacks[eventType].forEach((callback) => callback(data));
     }
   }
 }

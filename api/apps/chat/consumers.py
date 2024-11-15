@@ -72,40 +72,44 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.update_typing_status(is_typing)
         typing_data = {
             "type": "typing_status",
-            "user_id": self.scope["user"].id,
-            "is_typing": is_typing,
+            "typing_data": {
+                "user_id": self.scope["user"].id,
+                "is_typing": is_typing,
+            },
         }
         # Send typing status to room group
         await self.channel_layer.group_send(
             self.chat_room_group_name,
-            {"type": "chat_typing", "typing_data": typing_data},
+            typing_data,
         )
 
     async def handle_read_receipt(self, message_id):
         await self.create_read_receipt(message_id)
         read_receipt_data = {
             "type": "read_receipt",
-            "message_id": message_id,
-            "user_id": self.scope["user"].id,
+            "read_receipt_data": {
+                "message_id": message_id,
+                "user_id": self.scope["user"].id,
+            },
         }
         # Send read receipt to room group
         await self.channel_layer.group_send(
             self.chat_room_group_name,
-            {"type": "chat_read_receipt", "read_receipt_data": read_receipt_data},
+            read_receipt_data,
         )
 
     # Receive message from room group
     async def chat_message(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps(event["message"]))
+        # Send the entire event to WebSocket
+        await self.send(text_data=json.dumps(event))
 
-    async def chat_typing(self, event):
-        # Send typing status to WebSocket
-        await self.send(text_data=json.dumps(event["typing_data"]))
+    async def typing_status(self, event):
+        # Send the entire event to WebSocket
+        await self.send(text_data=json.dumps(event))
 
-    async def chat_read_receipt(self, event):
-        # Send read receipt to WebSocket
-        await self.send(text_data=json.dumps(event["read_receipt_data"]))
+    async def read_receipt(self, event):
+        # Send the entire event to WebSocket
+        await self.send(text_data=json.dumps(event))
 
     @database_sync_to_async
     def create_message(self, content):

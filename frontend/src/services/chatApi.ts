@@ -107,7 +107,7 @@ export const chatApi = baseApi.injectEndpoints({
       query: ({ chat_room_id }) => ({
         url: `chat/messages/?chat_room=${chat_room_id}`,
       }),
-      providesTags: (result, error, arg) => [{ type: "Messages", id: arg.chat_room_id }],
+      providesTags: (_result, _error, arg) => [{ type: "Messages", id: arg.chat_room_id }],
     }),
     sendMessage: builder.mutation<Message, Partial<Message>>({
       query: (body) => ({
@@ -115,7 +115,7 @@ export const chatApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (result, error, arg) => [{ type: "Messages", id: arg.chat_room }],
+      invalidatesTags: (_result, _error, arg) => [{ type: "Messages", id: arg.chat_room }],
     }),
 
     // Message Read Receipts

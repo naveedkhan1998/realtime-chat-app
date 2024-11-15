@@ -1,5 +1,3 @@
-// App.tsx
-
 import React from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
@@ -12,9 +10,9 @@ import HealthCheck from "./components/custom/HealthCheck";
 import LoginPage from "./pages/login-page";
 import { useAppSelector } from "./app/hooks";
 import Navbar from "./components/custom/Navbar";
-import Dashboard from "./pages/dashboard";
 import HomePage from "./pages/home-page";
-import Friends from "./pages/friends-page";
+import FriendsPage from "./pages/friends-page";
+import ChatPage from "./pages/chat-page";
 
 const clientId = GOOGLE_CLIENT_ID || "";
 
@@ -36,16 +34,23 @@ const App: React.FC = () => {
             <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
+                <Route path="/login" element={isAuthenticated ? <Navigate to="/chat" /> : <LoginPage />} />
                 <Route
-                  path="/dashboard"
+                  path="/chat"
                   element={
                     <PrivateRoute>
-                      <Dashboard />
+                      <ChatPage />
                     </PrivateRoute>
                   }
                 />
-                <Route path="/friends" element={<Friends />} />
+                <Route
+                  path="/friends"
+                  element={
+                    <PrivateRoute>
+                      <FriendsPage />
+                    </PrivateRoute>
+                  }
+                />
               </Routes>
             </main>
             <ErrorToast />
