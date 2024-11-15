@@ -110,7 +110,7 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
           )}
         </div>
       </ScrollArea>
-      <form onSubmit={onSubmit} className="sticky bottom-0 p-3 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
+      <form onSubmit={onSubmit} className="p-3 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
         <div className="flex space-x-2">
           <Input {...register("message")} placeholder="Type a message..." className="flex-1" autoComplete="off" />
           <Button type="submit" aria-label="Send message">
