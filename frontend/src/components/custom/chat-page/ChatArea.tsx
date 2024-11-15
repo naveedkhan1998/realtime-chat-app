@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useEffect, useRef } from "react";
 import { useAppSelector } from "@/app/hooks";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,7 +35,7 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const onSubmit = handleSubmit(({ message }: any) => {
+  const onSubmit = handleSubmit(({ message }) => {
     if (message.trim() && activeChat) {
       const ws = WebSocketService.getInstance();
       ws.send({ type: "send_message", content: message });
@@ -46,8 +44,8 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
   });
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      <header className="sticky z-10 flex items-center justify-between p-4 bg-white border-b md:top-0 top-16 dark:bg-gray-800 dark:border-gray-700">
+    <div className="flex flex-col h-[100dvh] bg-gray-50 dark:bg-gray-900">
+      <header className="sticky top-0 z-10 flex items-center justify-between p-3 bg-white border-b dark:bg-gray-800 dark:border-gray-700">
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)} aria-label="Back to chat list">
             <ArrowLeft className="w-5 h-5" />
@@ -74,33 +72,35 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
           ))}
         </div>
       </header>
-      <ScrollArea className="flex-1 p-4">
-        {messagesLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : messagesError ? (
-          <Card className="bg-red-50 dark:bg-red-900">
-            <CardContent className="p-4 text-center text-red-600 dark:text-red-100">
-              Error loading messages: {messagesError && "data" in messagesError ? (messagesError.data as string) : "An error occurred"}
-            </CardContent>
-          </Card>
-        ) : messages.length > 0 ? (
-          <div className="space-y-4">
-            {messages.map((msg: Message) => (
-              <ChatMessageItem key={msg.id} message={msg} isOwnMessage={msg.sender.id === user.id} />
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        ) : (
-          <Card className="h-full bg-white dark:bg-gray-800">
-            <CardContent className="flex items-center justify-center h-full">
-              <p className="text-center text-gray-500 dark:text-gray-400">No messages yet. Start the conversation!</p>
-            </CardContent>
-          </Card>
-        )}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-4">
+          {messagesLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : messagesError ? (
+            <Card className="bg-red-50 dark:bg-red-900">
+              <CardContent className="p-4 text-center text-red-600 dark:text-red-100">
+                Error loading messages: {messagesError && "data" in messagesError ? (messagesError.data as string) : "An error occurred"}
+              </CardContent>
+            </Card>
+          ) : messages.length > 0 ? (
+            <div className="space-y-4">
+              {messages.map((msg: Message) => (
+                <ChatMessageItem key={msg.id} message={msg} isOwnMessage={msg.sender.id === user.id} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            <Card className="h-full bg-white dark:bg-gray-800">
+              <CardContent className="flex items-center justify-center h-full">
+                <p className="text-center text-gray-500 dark:text-gray-400">No messages yet. Start the conversation!</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </ScrollArea>
-      <form onSubmit={onSubmit} className="sticky bottom-0 p-4 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
+      <form onSubmit={onSubmit} className="sticky bottom-0 p-3 bg-white border-t dark:bg-gray-800 dark:border-gray-700">
         <div className="flex space-x-2">
           <Input {...register("message")} placeholder="Type a message..." className="flex-1" autoComplete="off" />
           <Button type="submit" aria-label="Send message">

@@ -23,7 +23,7 @@ export default function ChatMessageItem({ message, isOwnMessage }: MessageItemPr
       )}
       <div className={cn("flex flex-col max-w-[70%]", isOwnMessage ? "items-end" : "items-start")}>
         <div className={cn("px-4 py-2 rounded-2xl shadow-sm", isOwnMessage ? "bg-[#3E54AC] text-white" : "bg-white border border-gray-200")}>
-          <p className="text-sm break-words">{message.content}</p>
+          <p className="text-sm break-words dark:text-black">{message.content}</p>
         </div>
         <div className="flex items-center mt-1 space-x-2">
           {!isOwnMessage && <span className="text-xs font-medium text-gray-600">{message.sender.name}</span>}
