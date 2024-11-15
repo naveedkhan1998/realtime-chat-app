@@ -106,11 +106,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ user, activeChat, setActiveChat, is
             value={message}
             onChange={(e) => {
               setMessage(e.target.value);
-              const ws = WebSocketService.getInstance();
-              ws.send({
-                type: "typing",
-                is_typing: e.target.value.length > 0,
-              });
+              //   const ws = WebSocketService.getInstance();
+              //   ws.send({
+              //     type: "typing",
+              //     is_typing: e.target.value.length > 0,
+              //   });
             }}
             onKeyPress={(e) => {
               if (e.key === "Enter") {

@@ -23,8 +23,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # Add user to typing status
-        await self.update_typing_status(is_typing=False)
+        # # Add user to typing status
+        # await self.update_typing_status(is_typing=False)
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -32,8 +32,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.chat_room_group_name, self.channel_name
         )
 
-        # Remove typing status
-        await self.remove_typing_status()
+        # # Remove typing status
+        # await self.remove_typing_status()
 
     # Receive message from WebSocket
     async def receive(self, text_data):
@@ -43,12 +43,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if event_type == "send_message":
             content = data.get("content")
             await self.handle_send_message(content)
-        elif event_type == "typing":
-            is_typing = data.get("is_typing", False)
-            await self.handle_typing(is_typing)
-        elif event_type == "read_receipt":
-            message_id = data.get("message_id")
-            await self.handle_read_receipt(message_id)
+        # elif event_type == "typing":
+        #     is_typing = data.get("is_typing", False)
+        #     await self.handle_typing(is_typing)
+        # elif event_type == "read_receipt":
+        #     message_id = data.get("message_id")
+        #     await self.handle_read_receipt(message_id)
 
     async def handle_send_message(self, content):
         message = await self.create_message(content)
@@ -68,48 +68,48 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Send message to room group
         await self.channel_layer.group_send(self.chat_room_group_name, message_data)
 
-    async def handle_typing(self, is_typing):
-        await self.update_typing_status(is_typing)
-        typing_data = {
-            "type": "typing_status",
-            "typing_data": {
-                "user_id": self.scope["user"].id,
-                "is_typing": is_typing,
-            },
-        }
-        # Send typing status to room group
-        await self.channel_layer.group_send(
-            self.chat_room_group_name,
-            typing_data,
-        )
+    # async def handle_typing(self, is_typing):
+    #     await self.update_typing_status(is_typing)
+    #     typing_data = {
+    #         "type": "typing_status",
+    #         "typing_data": {
+    #             "user_id": self.scope["user"].id,
+    #             "is_typing": is_typing,
+    #         },
+    #     }
+    #     # Send typing status to room group
+    #     await self.channel_layer.group_send(
+    #         self.chat_room_group_name,
+    #         typing_data,
+    #     )
 
-    async def handle_read_receipt(self, message_id):
-        await self.create_read_receipt(message_id)
-        read_receipt_data = {
-            "type": "read_receipt",
-            "read_receipt_data": {
-                "message_id": message_id,
-                "user_id": self.scope["user"].id,
-            },
-        }
-        # Send read receipt to room group
-        await self.channel_layer.group_send(
-            self.chat_room_group_name,
-            read_receipt_data,
-        )
+    # async def handle_read_receipt(self, message_id):
+    #     await self.create_read_receipt(message_id)
+    #     read_receipt_data = {
+    #         "type": "read_receipt",
+    #         "read_receipt_data": {
+    #             "message_id": message_id,
+    #             "user_id": self.scope["user"].id,
+    #         },
+    #     }
+    #     # Send read receipt to room group
+    #     await self.channel_layer.group_send(
+    #         self.chat_room_group_name,
+    #         read_receipt_data,
+    #     )
 
     # Receive message from room group
     async def chat_message(self, event):
         # Send the entire event to WebSocket
         await self.send(text_data=json.dumps(event))
 
-    async def typing_status(self, event):
-        # Send the entire event to WebSocket
-        await self.send(text_data=json.dumps(event))
+    # async def typing_status(self, event):
+    #     # Send the entire event to WebSocket
+    #     await self.send(text_data=json.dumps(event))
 
-    async def read_receipt(self, event):
-        # Send the entire event to WebSocket
-        await self.send(text_data=json.dumps(event))
+    # async def read_receipt(self, event):
+    #     # Send the entire event to WebSocket
+    #     await self.send(text_data=json.dumps(event))
 
     @database_sync_to_async
     def create_message(self, content):
@@ -120,34 +120,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         return message
 
-    @database_sync_to_async
-    def update_typing_status(self, is_typing):
-        user = self.scope["user"]
-        chat_room = ChatRoom.objects.get(id=self.chat_room_id)
-        TypingStatus.objects.update_or_create(
-            user=user, chat_room=chat_room, defaults={"is_typing": is_typing}
-        )
+    # @database_sync_to_async
+    # def update_typing_status(self, is_typing):
+    #     user = self.scope["user"]
+    #     chat_room = ChatRoom.objects.get(id=self.chat_room_id)
+    #     TypingStatus.objects.update_or_create(
+    #         user=user, chat_room=chat_room, defaults={"is_typing": is_typing}
+    #     )
 
-    @database_sync_to_async
-    def remove_typing_status(self):
-        user = self.scope["user"]
-        chat_room = ChatRoom.objects.get(id=self.chat_room_id)
-        TypingStatus.objects.filter(user=user, chat_room=chat_room).delete()
+    # @database_sync_to_async
+    # def remove_typing_status(self):
+    #     user = self.scope["user"]
+    #     chat_room = ChatRoom.objects.get(id=self.chat_room_id)
+    #     TypingStatus.objects.filter(user=user, chat_room=chat_room).delete()
 
-    @database_sync_to_async
-    def create_read_receipt(self, message_id):
-        user = self.scope["user"]
-        message = Message.objects.get(id=message_id)
-        MessageReadReceipt.objects.update_or_create(
-            user=user, message=message, defaults={"read_at": message.timestamp}
-        )
-        # Update last_read_message in ChatRoomParticipant
-        participant = ChatRoomParticipant.objects.get(
-            chat_room=message.chat_room, user=user
-        )
-        if (
-            participant.last_read_message is None
-            or participant.last_read_message.timestamp < message.timestamp
-        ):
-            participant.last_read_message = message
-            participant.save()
+    # @database_sync_to_async
+    # def create_read_receipt(self, message_id):
+    #     user = self.scope["user"]
+    #     message = Message.objects.get(id=message_id)
+    #     MessageReadReceipt.objects.update_or_create(
+    #         user=user, message=message, defaults={"read_at": message.timestamp}
+    #     )
+    #     # Update last_read_message in ChatRoomParticipant
+    #     participant = ChatRoomParticipant.objects.get(
+    #         chat_room=message.chat_room, user=user
+    #     )
+    #     if (
+    #         participant.last_read_message is None
+    #         or participant.last_read_message.timestamp < message.timestamp
+    #     ):
+    #         participant.last_read_message = message
+    #         participant.save()
