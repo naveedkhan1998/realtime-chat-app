@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import ChatMessageItem from "./ChatMessageItem";
 import { useForm } from "react-hook-form";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SerializedError } from "@reduxjs/toolkit";
+import { setNavbarVisibility } from "@/features/uiSlice";
 
 interface ChatAreaProps {
   user: UserProfile;
@@ -25,6 +26,7 @@ interface ChatAreaProps {
 }
 
 export default function ChatArea({ user, activeChat, setActiveChat, isMobile, chatRooms, messagesLoading, messagesError }: ChatAreaProps) {
+  const dispatch = useAppDispatch();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messages = useAppSelector((state) => state.chat.messages[activeChat] || []);
   const { register, handleSubmit, reset } = useForm<{ message: string }>();
@@ -47,7 +49,15 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
     <div className="flex flex-col h-[100dvh] bg-gray-50 dark:bg-gray-900">
       <header className="sticky top-0 z-10 flex items-center justify-between p-3 bg-white border-b dark:bg-gray-800 dark:border-gray-700">
         {isMobile && (
-          <Button variant="ghost" size="icon" onClick={() => setActiveChat(null)} aria-label="Back to chat list">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setActiveChat(null);
+              dispatch(setNavbarVisibility(true));
+            }}
+            aria-label="Back to chat list"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
         )}

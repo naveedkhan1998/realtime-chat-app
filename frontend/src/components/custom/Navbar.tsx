@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { logOut } from "@/features/authSlice";
 import { Menu, Moon, Sun, X, Home, User, LogOut, ChevronDown, Group } from "lucide-react";
@@ -12,10 +12,10 @@ import { baseApi } from "@/services/baseApi";
 
 const Navbar: React.FC = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const showNavbar = useAppSelector((state) => state.ui.showNavbar);
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
   const [theme, setTheme] = useState<"light" | "dark">(() => (localStorage.getItem("theme") as "light" | "dark") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -87,7 +87,7 @@ const Navbar: React.FC = () => {
     </DropdownMenu>
   );
 
-  if (isMobile && location.pathname === "/chat") {
+  if (!showNavbar && isMobile) {
     return null;
   }
 

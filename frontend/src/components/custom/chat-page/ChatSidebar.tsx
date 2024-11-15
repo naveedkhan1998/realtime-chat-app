@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Search, PlusCircle } from "lucide-react";
 import { ChatRoom } from "@/services/chatApi";
 import { UserProfile } from "@/services/userApi";
+import { useAppDispatch } from "@/app/hooks";
+import { setNavbarVisibility } from "@/features/uiSlice";
 
 interface SidebarProps {
   user: UserProfile;
@@ -19,6 +21,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ user, activeChat, setActiveChat, chatRooms, chatRoomsLoading, chatRoomsError }) => {
+  const dispatch = useAppDispatch();
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800">
       <div className="p-4">
@@ -54,7 +57,15 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeChat, setActiveChat, chat
             {chatRooms?.map((chat) => {
               const otherParticipant = chat.participants.find((p) => p.id !== user.id) || user;
               return (
-                <Button key={chat.id} variant={activeChat === chat.id ? "secondary" : "ghost"} className="justify-start w-full px-2 py-6" onClick={() => setActiveChat(chat.id)}>
+                <Button
+                  key={chat.id}
+                  variant={activeChat === chat.id ? "secondary" : "ghost"}
+                  className="justify-start w-full px-2 py-6"
+                  onClick={() => {
+                    setActiveChat(chat.id);
+                    dispatch(setNavbarVisibility(false));
+                  }}
+                >
                   <Avatar className="w-10 h-10 mr-3">
                     <AvatarImage src={otherParticipant.avatar} alt={otherParticipant.name} />
                     <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>
