@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { logOut } from "@/features/authSlice";
-import { Menu, Moon, Sun, X, Home, User, LogOut, ChevronDown, Group } from "lucide-react";
+import { Menu, Moon, Sun, Home, User, LogOut, Group } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { setThemeRedux } from "@/features/themeSlice";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { baseApi } from "@/services/baseApi";
 
 const Navbar: React.FC = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const showNavbar = useAppSelector((state) => state.ui.showNavbar);
   const user = useAppSelector((state) => state.auth.user);
+  const showNavbar = useAppSelector((state) => state.ui.showNavbar);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [theme, setTheme] = useState<"light" | "dark">(() => (localStorage.getItem("theme") as "light" | "dark") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -29,125 +28,158 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
-    dispatch(setThemeRedux(theme));
-  }, [theme, dispatch]);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
   const handleLogout = () => {
     dispatch(logOut());
     dispatch(baseApi.util.resetApiState());
-    setIsOpen(false);
+    setIsMenuOpen(false); // Close the menu after logout
   };
-
-  const toggleTheme = () => setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
 
   const NavItems = () => (
     <>
-      <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/")}>
-        <Home className="w-4 h-4" /> Home
+      <Button
+        variant="ghost"
+        className="flex items-center justify-start gap-2"
+        onClick={() => {
+          navigate("/");
+          setIsMenuOpen(false); // Close menu after navigation
+        }}
+      >
+        <Home className="w-5 h-5" /> Home
       </Button>
       {isAuthenticated ? (
         <>
-          <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/chat")}>
-            <User className="w-4 h-4" /> Chat
+          <Button
+            variant="ghost"
+            className="flex items-center justify-start gap-2"
+            onClick={() => {
+              navigate("/chat");
+              setIsMenuOpen(false); // Close menu after navigation
+            }}
+          >
+            <User className="w-5 h-5" /> Chat
           </Button>
-          <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/friends")}>
-            <Group className="w-4 h-4" /> Friends
+          <Button
+            variant="ghost"
+            className="flex items-center justify-start gap-2"
+            onClick={() => {
+              navigate("/friends");
+              setIsMenuOpen(false); // Close menu after navigation
+            }}
+          >
+            <Group className="w-5 h-5" /> Friends
           </Button>
         </>
       ) : (
-        <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/login")}>
-          <User className="w-4 h-4" /> Login
+        <Button
+          variant="ghost"
+          className="flex items-center justify-start gap-2"
+          onClick={() => {
+            navigate("/login");
+            setIsMenuOpen(false); // Close menu after navigation
+          }}
+        >
+          <User className="w-5 h-5" /> Login
         </Button>
       )}
     </>
   );
 
-  const UserMenu = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={user?.avatar} alt={user?.name} />
-            <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <span className="hidden md:inline">{user?.name}</span>
-          <ChevronDown className="w-4 h-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => navigate("/profile")}>
-          <User className="w-4 h-4 mr-2" />
-          Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
-  if (!showNavbar && isMobile) {
-    return null;
-  }
+  if (!showNavbar && isMobile) return null;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-md dark:bg-gray-950 dark:border-gray-800">
-      <div className="container flex items-center justify-between h-16 px-4 m-auto">
-        <Link to="/" className="text-2xl font-bold text-primary">
+    <nav className="sticky top-0 z-50 w-full bg-white border-b dark:bg-gray-900 dark:border-gray-800">
+      <div className="container flex items-center justify-between h-16 px-4 mx-auto">
+        {/* Logo */}
+        <Button variant="ghost" className="text-2xl font-bold text-primary" onClick={() => navigate("/")}>
           MNK Chat
-        </Link>
-        <div className="flex items-center space-x-2 md:space-x-4">
-          <div className="hidden md:flex md:items-center md:space-x-2">
-            <NavItems />
-          </div>
-          {isAuthenticated && (
-            <div className="hidden md:block">
-              <UserMenu />
-            </div>
-          )}
-          <Button variant="outline" size="icon" onClick={toggleTheme} className="relative">
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+        </Button>
+
+        {/* Desktop Navigation */}
+        <div className="hidden space-x-6 md:flex">
+          <NavItems />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center space-x-4">
+          {/* Theme Toggle */}
+          <Button variant="outline" size="icon" onClick={toggleTheme}>
+            {theme === "light" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+
+          {/* User Menu for Desktop */}
+          {isAuthenticated && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:block">{user?.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="w-5 h-5 mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="w-5 h-5 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Mobile Menu */}
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-[1.2rem] w-[1.2rem]" />
-                <span className="sr-only">Toggle menu</span>
+                <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <div className="flex flex-col mt-8 space-y-4">
+            <SheetContent side="right">
+              {/* Profile Info */}
+              {isAuthenticated && (
+                <div className="flex flex-col items-start p-4 border-b dark:border-gray-700">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={user?.avatar} alt={user?.name} />
+                      <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="text-lg font-medium">{user?.name}</div>
+                      <div className="text-sm text-muted-foreground">{user?.email}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation Items */}
+              <div className="flex flex-col mt-4 space-y-4">
                 <NavItems />
                 {isAuthenticated && (
                   <>
-                    <div className="flex items-center gap-2 px-4 py-2">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={user?.avatar} alt={user?.name} />
-                        <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{user?.name}</span>
-                        <span className="text-sm text-muted-foreground">{user?.email}</span>
-                      </div>
-                    </div>
-                    <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate("/profile")}>
-                      <User className="w-4 h-4" /> Profile
+                    <Button
+                      variant="ghost"
+                      className="flex items-center justify-start gap-2"
+                      onClick={() => {
+                        navigate("/profile");
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <User className="w-5 h-5" /> Profile
                     </Button>
-                    <Button variant="ghost" className="flex items-center gap-2" onClick={handleLogout}>
-                      <LogOut className="w-4 h-4" /> Logout
+                    <Button variant="ghost" className="flex items-center justify-start gap-2" onClick={handleLogout}>
+                      <LogOut className="w-5 h-5" /> Logout
                     </Button>
                   </>
                 )}
               </div>
-              <SheetClose asChild>
-                <Button variant="outline" size="icon" className="absolute right-4 top-4" onClick={() => setIsOpen(false)}>
-                  <X className="w-4 h-4" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </SheetClose>
             </SheetContent>
           </Sheet>
         </div>
