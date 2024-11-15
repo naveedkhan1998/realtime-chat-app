@@ -25,10 +25,12 @@ interface ChatAreaProps {
   messagesError: FetchBaseQueryError | SerializedError | undefined;
 }
 
+const newMessages: Message[] = [];
+
 export default function ChatArea({ user, activeChat, setActiveChat, isMobile, chatRooms, messagesLoading, messagesError }: ChatAreaProps) {
   const dispatch = useAppDispatch();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messages = useAppSelector((state) => state.chat.messages[activeChat] || []);
+  const messages = useAppSelector((state) => state.chat.messages[activeChat] || newMessages);
   const { register, handleSubmit, reset } = useForm<{ message: string }>();
 
   const activeRoom = chatRooms?.find((chat) => chat.id === activeChat);

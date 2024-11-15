@@ -5,11 +5,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, PlusCircle } from "lucide-react";
+import { Search } from "lucide-react";
 import { ChatRoom } from "@/services/chatApi";
 import { UserProfile } from "@/services/userApi";
 import { useAppDispatch } from "@/app/hooks";
 import { setNavbarVisibility } from "@/features/uiSlice";
+import NewChatDialog from "./NewChatDialog";
 
 interface SidebarProps {
   user: UserProfile;
@@ -42,9 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeChat, setActiveChat, chat
           <Input placeholder="Search chats" className="pl-8" />
         </div>
         {/* New Chat Button */}
-        <Button className="w-full mb-4">
-          <PlusCircle className="w-4 h-4 mr-2" /> New Chat
-        </Button>
+        <NewChatDialog />
       </div>
       {/* Chat List */}
       <ScrollArea className="flex-1">
