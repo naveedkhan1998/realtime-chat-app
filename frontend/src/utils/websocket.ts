@@ -40,8 +40,9 @@ export class WebSocketService {
   }
 
   connect(chatRoomId: number, token: string) {
+    const baseUrl = import.meta.env.VITE_BASE_API_URL
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const socketUrl = `${protocol}://${window.location.host}/ws/chat/${chatRoomId}/?token=${token}`;
+    const socketUrl = `${protocol}://${baseUrl}/ws/chat/${chatRoomId}/?token=${token}`;
 
     this.socket = new WebSocket(socketUrl);
 

@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { setThemeRedux } from "@/features/themeSlice";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { baseApi } from "@/services/baseApi";
 
 const Navbar: React.FC = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -25,6 +26,8 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logOut());
+    // Reset the RTK Query cache
+    dispatch(baseApi.util.resetApiState());
     setIsOpen(false);
   };
 

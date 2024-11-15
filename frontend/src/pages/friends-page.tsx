@@ -178,7 +178,7 @@ const Friends: React.FC = () => {
   return (
     <div className="h-full bg-gray-100 dark:bg-gray-900">
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+        <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
           <Sidebar />
         </ResizablePanel>
         <ResizableHandle withHandle />
