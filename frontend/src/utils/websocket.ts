@@ -24,12 +24,15 @@ export interface ReadReceiptEvent {
 }
 
 export type WebSocketEvent = ChatMessageEvent | TypingStatusEvent | ReadReceiptEvent;
-
 export class WebSocketService {
   private static instance: WebSocketService;
   private socket: WebSocket | null = null;
   private callbacks: { [key: string]: Array<(data: any) => void> } = {};
   private currentChatRoomId: number | null = null;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
+  private reconnectInterval: number = 3000; // 3 seconds between reconnect attempts
+  private pingInterval: number | null = null;
 
   private constructor() {}
 
@@ -55,9 +58,11 @@ export class WebSocketService {
 
     this.socket = new WebSocket(socketUrl);
     this.currentChatRoomId = chatRoomId;
+    this.reconnectAttempts = 0;
 
     this.socket.onopen = () => {
       console.log("WebSocket connected");
+      this.startPing(); // Start the ping-pong mechanism
     };
 
     this.socket.onmessage = (event) => {
@@ -67,8 +72,12 @@ export class WebSocketService {
 
     this.socket.onclose = () => {
       console.log("WebSocket disconnected");
+      this.stopPing(); // Stop ping-pong on disconnect
       this.socket = null;
       this.currentChatRoomId = null;
+
+      // Attempt to reconnect
+      this.reconnect();
     };
 
     this.socket.onerror = (error) => {
@@ -80,9 +89,41 @@ export class WebSocketService {
     if (this.socket) {
       this.socket.onclose = null; // Prevent triggering onclose twice
       this.socket.close();
-      this.socket = null;
-      this.currentChatRoomId = null;
+      this.stopPing();
       console.log("WebSocket disconnected manually");
+    }
+  }
+
+  private reconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      setTimeout(() => {
+        console.log("Attempting to reconnect...");
+        this.reconnectAttempts += 1;
+        if (this.currentChatRoomId && this.socket === null) {
+          this.connect(this.currentChatRoomId, "your-token-here");
+        }
+      }, this.reconnectInterval);
+    } else {
+      console.log("Max reconnect attempts reached.");
+    }
+  }
+
+  private startPing() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+    }
+    this.pingInterval = window.setInterval(() => {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        console.log("Sending ping");
+        this.socket.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 30000); // Ping every 30 seconds
+  }
+
+  private stopPing() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
     }
   }
 
