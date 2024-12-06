@@ -9,12 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, UserPlus, Check, X, Loader2 } from "lucide-react";
+import { Search, UserPlus, Check, X, Loader2, UserX } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 export default function Friends() {
   const user = useAppSelector((state) => state.auth.user);
   const [searchQuery, setSearchQuery] = useState("");
+  const [friendFilter, setFriendFilter] = useState("all");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const { data: friendships, isLoading: friendshipsLoading, error: friendshipsError, refetch: refetchFriendships } = useGetFriendshipsQuery(undefined, { pollingInterval: 10000 });
@@ -43,6 +46,11 @@ export default function Friends() {
       });
     } catch (error) {
       console.error("Failed to send friend request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send friend request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -57,6 +65,11 @@ export default function Friends() {
       refetchReceivedRequests();
     } catch (error) {
       console.error("Failed to accept friend request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to accept friend request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -70,24 +83,48 @@ export default function Friends() {
       refetchReceivedRequests();
     } catch (error) {
       console.error("Failed to decline friend request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to decline friend request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
+  const filteredFriends = friendships?.flatMap((friendship) => {
+    const friends = [friendship.user1, friendship.user2].filter((friend) => friend.id !== user?.id);
+    return friends.filter((friend) => {
+      if (friendFilter === "all") return true;
+      return friend.name.toLowerCase().includes(friendFilter.toLowerCase());
+    });
+  });
+
   return (
     <div className="container p-4 mx-auto space-y-4">
-      <Card>
+      <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle>Friends</CardTitle>
+          <CardTitle className="text-2xl font-bold">Friends</CardTitle>
           <CardDescription>Manage your friends and friend requests</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="friends" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
               <TabsTrigger value="friends">Friends</TabsTrigger>
-              <TabsTrigger value="requests">Requests</TabsTrigger>
+              <TabsTrigger value="requests">
+                Requests
+                {filteredRequests && filteredRequests.length > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {filteredRequests.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="add">Add Friends</TabsTrigger>
             </TabsList>
             <TabsContent value="friends">
+              <div className="flex items-center mb-4 space-x-2">
+                <Search className="w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Filter friends" value={friendFilter} onChange={(e) => setFriendFilter(e.target.value)} className="flex-grow" />
+              </div>
               <ScrollArea className="h-[400px] w-full rounded-md border p-4">
                 {friendshipsLoading ? (
                   <div className="flex items-center justify-center h-full">
@@ -95,23 +132,37 @@ export default function Friends() {
                   </div>
                 ) : friendshipsError ? (
                   <p className="text-center text-red-500">Error loading friends</p>
-                ) : friendships && friendships.length > 0 ? (
+                ) : filteredFriends && filteredFriends.length > 0 ? (
                   <div className="space-y-4">
-                    {friendships.map((friendship) => {
-                      const friends = [friendship.user1, friendship.user2].filter((friend) => friend.id !== user?.id);
-                      return friends.map((friend) => (
-                        <div key={friend.id} className="flex items-center p-2 border rounded">
-                          <Avatar className="w-8 h-8 mr-2">
+                    {filteredFriends.map((friend) => (
+                      <div key={friend.id} className="flex items-center justify-between p-3 transition-colors rounded-lg bg-muted hover:bg-muted/80">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="w-10 h-10">
                             <AvatarImage src={friend.avatar} alt={friend.name} />
                             <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <span>{friend.name}</span>
+                          <div>
+                            <p className="font-medium">{friend.name}</p>
+                            <p className="text-sm text-muted-foreground">Online</p>
+                          </div>
                         </div>
-                      ));
-                    })}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <UserX className="w-5 h-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Remove friend</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <p className="text-center">You have no friends yet.</p>
+                  <p className="text-center text-muted-foreground">You have no friends yet.</p>
                 )}
               </ScrollArea>
             </TabsContent>
@@ -126,27 +177,45 @@ export default function Friends() {
                 ) : filteredRequests && filteredRequests.length > 0 ? (
                   <div className="space-y-4">
                     {filteredRequests.map((request) => (
-                      <div key={request.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center space-x-2">
-                          <Avatar className="w-8 h-8">
+                      <div key={request.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="w-10 h-10">
                             <AvatarImage src={request.from_user.avatar} alt={request.from_user.name} />
                             <AvatarFallback>{request.from_user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <span>{request.from_user.name}</span>
+                          <span className="font-medium">{request.from_user.name}</span>
                         </div>
                         <div className="flex space-x-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleAcceptFriendRequest(request.id)} disabled={acceptingRequest || request.status !== "pending"}>
-                            <Check className="w-5 h-5 text-green-500" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeclineFriendRequest(request.id)} disabled={decliningRequest || request.status !== "pending"}>
-                            <X className="w-5 h-5 text-red-500" />
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={() => handleAcceptFriendRequest(request.id)} disabled={acceptingRequest || request.status !== "pending"}>
+                                  <Check className="w-5 h-5 text-green-500" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Accept request</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={() => handleDeclineFriendRequest(request.id)} disabled={decliningRequest || request.status !== "pending"}>
+                                  <X className="w-5 h-5 text-red-500" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Decline request</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center">No pending friend requests</p>
+                  <p className="text-center text-muted-foreground">No pending friend requests</p>
                 )}
               </ScrollArea>
             </TabsContent>
@@ -165,24 +234,33 @@ export default function Friends() {
                   ) : searchError ? (
                     <p className="text-center text-red-500">Error searching users</p>
                   ) : searchResults && searchResults.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {searchResults.map((searchUser) => (
-                        <div key={searchUser.id} className="flex items-center justify-between p-2">
-                          <div className="flex items-center space-x-2">
-                            <Avatar className="w-8 h-8">
+                        <div key={searchUser.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="w-10 h-10">
                               <AvatarImage src={searchUser.avatar} alt={searchUser.name} />
                               <AvatarFallback>{searchUser.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span>{searchUser.name}</span>
+                            <span className="font-medium">{searchUser.name}</span>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => handleSendFriendRequest(searchUser.id)} disabled={sendingRequest}>
-                            <UserPlus className="w-5 h-5" />
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={() => handleSendFriendRequest(searchUser.id)} disabled={sendingRequest}>
+                                  <UserPlus className="w-5 h-5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Send friend request</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    debouncedSearchQuery && <p className="text-center">No users found</p>
+                    debouncedSearchQuery && <p className="text-center text-muted-foreground">No users found</p>
                   )}
                 </ScrollArea>
               </div>
