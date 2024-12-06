@@ -1,4 +1,3 @@
-import React from "react";
 import { Message } from "@/services/chatApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";

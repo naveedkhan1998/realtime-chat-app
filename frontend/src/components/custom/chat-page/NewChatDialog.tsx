@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,6 +54,11 @@ const NewChatDialog: React.FC = () => {
     }
   };
 
+  const handleTabChange = (value: string) => {
+    setIsGroup(value === "group");
+    setSelectedFriendIds([]);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -67,7 +70,7 @@ const NewChatDialog: React.FC = () => {
         <DialogHeader>
           <DialogTitle>Start a New Chat</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="direct" className="w-full">
+        <Tabs defaultValue="direct" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="direct">
               <MessageCircle className="w-4 h-4 mr-2" />
@@ -81,15 +84,15 @@ const NewChatDialog: React.FC = () => {
           <TabsContent value="direct" className="space-y-4">
             <div className="relative">
               <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
-              <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+              <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" aria-label="Search friends for direct chat" />
             </div>
             <FriendList friends={filteredFriends || []} selectedFriendIds={selectedFriendIds} onFriendSelect={handleFriendSelect} isLoading={isLoading} />
           </TabsContent>
           <TabsContent value="group" className="space-y-4">
-            <Input placeholder="Enter group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+            <Input placeholder="Enter group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} aria-label="Enter group name" />
             <div className="relative">
               <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
-              <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+              <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" aria-label="Search friends for group chat" />
             </div>
             <FriendList friends={filteredFriends || []} selectedFriendIds={selectedFriendIds} onFriendSelect={handleFriendSelect} isLoading={isLoading} isGroup />
           </TabsContent>
@@ -99,7 +102,7 @@ const NewChatDialog: React.FC = () => {
             <UserPlus className="w-4 h-4 mr-2" /> Add Friends
           </Button>
           <DialogClose asChild>
-            <Button onClick={handleSubmit} disabled={(isGroup && !groupName) || selectedFriendIds.length === 0}>
+            <Button onClick={handleSubmit} disabled={(isGroup && !groupName) || selectedFriendIds.length === 0} aria-label={isGroup ? "Start group chat" : "Start direct chat"}>
               Start Chat
             </Button>
           </DialogClose>
@@ -122,7 +125,7 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
     <ScrollArea className="h-[300px] rounded-md border p-4">
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
-          <div className="w-8 h-8 border-b-2 border-gray-900 rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-b-2 border-gray-900 rounded-full animate-spin" aria-label="Loading friends"></div>
         </div>
       ) : (
         <AnimatePresence>
@@ -137,6 +140,9 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
                 friend && selectedFriendIds.includes(friend.id) ? "bg-blue-100 dark:bg-blue-800" : "hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
               onClick={() => friend && onFriendSelect(friend.id)}
+              role="button"
+              aria-pressed={selectedFriendIds.includes(friend?.id)}
+              aria-label={`Select ${friend?.name} for ${isGroup ? "group" : "direct"} chat`}
             >
               <Avatar className="w-10 h-10 mr-3">
                 <AvatarImage src={friend?.avatar} alt={friend?.name} />
@@ -144,7 +150,7 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
               </Avatar>
               <span className="flex-grow">{friend?.name}</span>
               {isGroup && (
-                <div className={`w-5 h-5 rounded-full border-2 ${selectedFriendIds.includes(friend?.id) ? "bg-blue-500 border-blue-500" : "border-gray-300"}`}>
+                <div className={`w-5 h-5 rounded-full border-2 ${selectedFriendIds.includes(friend?.id) ? "bg-blue-500 border-blue-500" : "border-gray-300"}`} aria-hidden="true">
                   {selectedFriendIds.includes(friend?.id) && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

@@ -54,7 +54,7 @@ export default function ChatPage() {
   if (!user) return null;
 
   return (
-    <div className="h-[95dvh] bg-gray-100 dark:bg-gray-900">
+    <div className="h-full bg-gray-100 dark:bg-gray-900 ">
       {isMobile ? (
         activeChat ? (
           <ChatArea user={user} activeChat={activeChat} setActiveChat={setActiveChat} isMobile={isMobile} chatRooms={chatRooms} messagesLoading={messagesLoading} messagesError={messagesError} />
