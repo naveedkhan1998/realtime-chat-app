@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 
 class ChatRoom(models.Model):
@@ -139,18 +139,39 @@ class FriendRequest(models.Model):
         return f"Friend request from {self.from_user.name} to {self.to_user.name}"
 
 
-class Friendship(models.Model):
+class FriendshipNew(models.Model):
     """
-    Represents an established friendship between users.
+    Represents a friendship between two users.
     """
 
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="friendships")
+    user1 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="friendship_initiated",
+        on_delete=models.CASCADE,
+    )
+    user2 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="friendship_received",
+        on_delete=models.CASCADE,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ("user1", "user2")
+
     def __str__(self):
-        return (
-            f"Friendship between {', '.join([user.name for user in self.users.all()])}"
-        )
+        return f"Friendship between {self.user1} and {self.user2}"
+
+    def clean(self):
+        if self.user1 == self.user2:
+            raise ValidationError("A user cannot be friends with themselves.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        # Ensure consistent ordering of user1 and user2 to prevent duplicates
+        if self.user1.id > self.user2.id:
+            self.user1, self.user2 = self.user2, self.user1
+        super().save(*args, **kwargs)
 
 
 class Notification(models.Model):

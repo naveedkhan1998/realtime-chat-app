@@ -22,7 +22,7 @@ export default function ChatPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const { data: chatRooms, isLoading: chatRoomsLoading, error: chatRoomsError } = useGetChatRoomsQuery();
+  const { data: chatRooms, isLoading: chatRoomsLoading, error: chatRoomsError } = useGetChatRoomsQuery(undefined, { pollingInterval: 10000 });
 
   const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch: refetchMessages } = useGetMessagesQuery({ chat_room_id: activeChat! }, { skip: !activeChat });
 

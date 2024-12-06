@@ -97,19 +97,18 @@ export default function Friends() {
                   <p className="text-center text-red-500">Error loading friends</p>
                 ) : friendships && friendships.length > 0 ? (
                   <div className="space-y-4">
-                    {friendships.map((friendship) =>
-                      friendship.users
-                        .filter((friend) => friend.id !== user?.id)
-                        .map((friend) => (
-                          <div key={friend.id} className="flex items-center p-2 border rounded">
-                            <Avatar className="w-8 h-8 mr-2">
-                              <AvatarImage src={friend.avatar} alt={friend.name} />
-                              <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span>{friend.name}</span>
-                          </div>
-                        ))
-                    )}
+                    {friendships.map((friendship) => {
+                      const friends = [friendship.user1, friendship.user2].filter((friend) => friend.id !== user?.id);
+                      return friends.map((friend) => (
+                        <div key={friend.id} className="flex items-center p-2 border rounded">
+                          <Avatar className="w-8 h-8 mr-2">
+                            <AvatarImage src={friend.avatar} alt={friend.name} />
+                            <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span>{friend.name}</span>
+                        </div>
+                      ));
+                    })}
                   </div>
                 ) : (
                   <p className="text-center">You have no friends yet.</p>

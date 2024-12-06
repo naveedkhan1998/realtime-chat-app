@@ -14,6 +14,7 @@ import os
 import mimetypes
 from pathlib import Path
 from datetime import timedelta
+from google.oauth2 import service_account
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_cleanup.apps.CleanupConfig",
     # Rest framework and other dependencies
     "channels",
     "corsheaders",
@@ -173,6 +175,25 @@ MEDIA_URL = "media/"
 OUTPUT_ROOT = os.path.join(BASE_DIR, "OUTPUTS/")
 OUTPUT_URL = "outputs/"
 async_load = True
+
+
+# # Set "media" folder
+# DEFAULT_FILE_STORAGE = "config.gcsUtils.Media"
+
+# GS_BUCKET_NAME = "realtime-app-bucket"
+
+# # Add an unique ID to a file name if same file name exists
+# GS_FILE_OVERWRITE = False
+
+# GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+#     os.path.join(BASE_DIR, "gcpCredentials.json"),
+# )
+
+# # STATIC_URL = "/static/"
+# # MEDIA_URL = "/media/"
+# MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/media/"
+
+# MEDIA_ROOT = BASE_DIR / "media"
 
 
 # # CORS and CSRF:

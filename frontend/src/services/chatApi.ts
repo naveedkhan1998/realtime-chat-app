@@ -17,7 +17,8 @@ export interface FriendRequest {
 
 export interface Friendship {
   id: number;
-  users: User[];
+  user1: User;
+  user2: User;
   created_at: string;
 }
 

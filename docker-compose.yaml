@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16.0
     container_name: realtime-chat-postgres
     env_file:
       - ./.envs/env.dev

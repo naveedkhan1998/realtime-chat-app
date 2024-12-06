@@ -9,7 +9,7 @@ from .models import (
     MessageReadReceipt,
     TypingStatus,
     FriendRequest,
-    Friendship,
+    FriendshipNew,
 )
 from .serializers import (
     ChatRoomSerializer,
@@ -22,6 +22,7 @@ from .serializers import (
 )
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
+from django.db import models
 
 User = get_user_model()
 
@@ -43,11 +44,19 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
             return Response(
                 {"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN
             )
+
         friend_request.status = "accepted"
         friend_request.save()
-        # Create friendship
-        friendship, created = Friendship.objects.get_or_create()
-        friendship.users.add(friend_request.from_user, friend_request.to_user)
+
+        # Create a pairwise friendship
+        FriendshipNew.objects.get_or_create(
+            user1=min(
+                friend_request.from_user, friend_request.to_user, key=lambda x: x.id
+            ),
+            user2=max(
+                friend_request.from_user, friend_request.to_user, key=lambda x: x.id
+            ),
+        )
         return Response({"status": "friend request accepted"})
 
     @action(detail=True, methods=["post"])
@@ -71,7 +80,9 @@ class FriendshipViewSet(viewsets.ReadOnlyModelViewSet):
     renderer_classes = [ChatRenderer]
 
     def get_queryset(self):
-        return Friendship.objects.filter(users=self.request.user)
+        return FriendshipNew.objects.filter(
+            models.Q(user1=self.request.user) | models.Q(user2=self.request.user)
+        )
 
 
 ### Chat Room Views ###

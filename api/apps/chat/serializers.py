@@ -6,9 +6,10 @@ from .models import (
     MessageReadReceipt,
     TypingStatus,
     FriendRequest,
-    Friendship,
+    FriendshipNew,
 )
 from django.contrib.auth import get_user_model
+from django.db import models
 
 User = get_user_model()
 
@@ -42,11 +43,10 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         ).exists():
             raise serializers.ValidationError("Friend request already sent.")
 
-        if (
-            Friendship.objects.filter(users=from_user)
-            .filter(users__id=to_user_id)
-            .exists()
-        ):
+        if FriendshipNew.objects.filter(
+            models.Q(user1=from_user, user2__id=to_user_id)
+            | models.Q(user1__id=to_user_id, user2=from_user)
+        ).exists():
             raise serializers.ValidationError("You are already friends with this user.")
 
         return data
@@ -61,11 +61,12 @@ class FriendRequestSerializer(serializers.ModelSerializer):
 
 
 class FriendshipSerializer(serializers.ModelSerializer):
-    users = UserSerializer(many=True, read_only=True)
+    user1 = UserSerializer(read_only=True)
+    user2 = UserSerializer(read_only=True)
 
     class Meta:
-        model = Friendship
-        fields = ["id", "users", "created_at"]
+        model = FriendshipNew
+        fields = ["id", "user1", "user2", "created_at"]
 
 
 class ChatRoomParticipantSerializer(serializers.ModelSerializer):
