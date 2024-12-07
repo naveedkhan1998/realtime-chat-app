@@ -75,6 +75,7 @@ class GoogleLoginView(APIView):
 
             # Generate JWT tokens
             token = get_tokens_for_user(user)
+            cache.delete("all_users")  # Clear cache
             return Response(
                 {"token": token, "msg": "Login successful"},
                 status=status.HTTP_200_OK,
@@ -166,7 +167,7 @@ class UserListView(generics.ListAPIView):
         if users is None:
             # Cache miss: fetch from database and cache the result
             users = list(User.objects.all())  # Convert QuerySet to list
-            cache.set("all_users", users, timeout=None)  # Cache indefinitely
+            cache.set("all_users", users, timeout=900)  # Cache for 15 minutes
 
         return users
 
