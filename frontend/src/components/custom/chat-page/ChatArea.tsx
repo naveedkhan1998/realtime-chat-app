@@ -20,7 +20,7 @@ import ChatMessageItem from "./ChatMessageItem";
 interface ChatAreaProps {
   user: UserProfile;
   activeChat: number;
-  setActiveChat: (chatId: number | null) => void;
+  setActiveChat: (chatId: number | undefined) => void;
   isMobile: boolean;
   chatRooms: ChatRoom[] | undefined;
   messagesLoading: boolean;
@@ -59,7 +59,7 @@ export default function ChatArea({ user, activeChat, setActiveChat, isMobile, ch
             variant="ghost"
             size="icon"
             onClick={() => {
-              setActiveChat(null);
+              setActiveChat(undefined);
               dispatch(setNavbarVisibility(true));
             }}
             aria-label="Back to chat list"

@@ -11,7 +11,7 @@ import ChatSidebar from "@/components/custom/chat-page/ChatSidebar";
 export default function ChatPage() {
   const user = useAppSelector((state) => state.auth.user);
   const dispatch = useAppDispatch();
-  const [activeChat, setActiveChat] = useState<number | null>(null);
+  const [activeChat, setActiveChat] = useState<number | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(false);
   const accessToken = useAppSelector((state) => state.auth.accessToken);
 
@@ -24,14 +24,18 @@ export default function ChatPage() {
 
   const { data: chatRooms, isLoading: chatRoomsLoading, error: chatRoomsError } = useGetChatRoomsQuery(undefined, { pollingInterval: 10000 });
 
-  const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch: refetchMessages } = useGetMessagesQuery({ chat_room_id: activeChat! }, { skip: !activeChat });
+  const {
+    data: messagesData,
+    isLoading: messagesLoading,
+    error: messagesError,
+
+  } = useGetMessagesQuery({ chat_room_id: activeChat! }, { skip: !activeChat,refetchOnMountOrArgChange: true });
 
   useEffect(() => {
     if (messagesData && activeChat) {
-      refetchMessages();
       dispatch(setMessages({ chatRoomId: activeChat, messages: messagesData }));
     }
-  }, [messagesData, activeChat, dispatch, refetchMessages]);
+  }, [messagesData, activeChat, dispatch]);
 
   useEffect(() => {
     if (activeChat && accessToken) {

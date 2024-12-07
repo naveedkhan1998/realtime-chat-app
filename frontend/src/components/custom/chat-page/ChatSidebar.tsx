@@ -14,8 +14,8 @@ import NewChatDialog from "./NewChatDialog";
 
 interface SidebarProps {
   user: UserProfile;
-  activeChat: number | null;
-  setActiveChat: (chatId: number | null) => void;
+  activeChat: number | undefined;
+  setActiveChat: (chatId: number | undefined) => void;
   chatRooms: ChatRoom[] | undefined;
   chatRoomsLoading: boolean;
   chatRoomsError: any;
