@@ -2,14 +2,14 @@
 
 # Run migrations
 echo "Applying database migrations..."
-python3 manage.py makemigrations
+# python3 manage.py makemigrations
 python3 manage.py migrate
 
-python3 manage.py initadmin
+# python3 manage.py initadmin
 
 # Collect static files (if needed)
-echo "Collecting static files..."
-python3 manage.py collectstatic --noinput
+# echo "Collecting static files..."
+#python3 manage.py collectstatic --noinput
 
 # Start the server with Uvicorn ASGI workers
 echo "Starting Django ASGI server..."

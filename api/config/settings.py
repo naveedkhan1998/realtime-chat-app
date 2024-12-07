@@ -26,7 +26,8 @@ MAIN_URL_2 = "http://localhost:8000"
 SECRET_KEY = "django-insecure-(fw-8k28l584l*w!s*hfxf$_j@)mi8*-1l&0^$e3od#j$8zpzb"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Set DEBUG based on an environment variable
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ["true", "1", "yes"]
 
 ALLOWED_HOSTS = ["*"]
 
@@ -168,32 +169,48 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
-STATIC_URL = "static/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
-MEDIA_URL = "media/"
-OUTPUT_ROOT = os.path.join(BASE_DIR, "OUTPUTS/")
-OUTPUT_URL = "outputs/"
-async_load = True
 
+# Common Settings
+GS_BUCKET_NAME = "realtime-app-bucket"
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, "gcpCredentials.json")
+)
 
-# # Set "media" folder
-# DEFAULT_FILE_STORAGE = "config.gcsUtils.Media"
+# Debug-based Configuration
+if DEBUG:
+    # Local development: Use the filesystem for static and media files
+    STATIC_URL = "/static/"
+    MEDIA_URL = "/media/"
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles/")
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
-# GS_BUCKET_NAME = "realtime-app-bucket"
+else:
+    # Production: Use GCS for static and media files
+    STATIC_ROOT = "/app/staticfiles/"
+    MEDIA_ROOT = "/app/media/"
+    STATIC_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/static/"
+    MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/media/"
 
-# # Add an unique ID to a file name if same file name exists
-# GS_FILE_OVERWRITE = False
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+            "OPTIONS": {
+                "bucket_name": GS_BUCKET_NAME,
+                "location": "media",  # Specify media files subdirectory
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+            "OPTIONS": {
+                "bucket_name": GS_BUCKET_NAME,
+                "location": "static",  # Specify static files subdirectory
+            },
+        },
+    }
 
-# GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-#     os.path.join(BASE_DIR, "gcpCredentials.json"),
-# )
-
-# # STATIC_URL = "/static/"
-# # MEDIA_URL = "/media/"
-# MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/media/"
-
-# MEDIA_ROOT = BASE_DIR / "media"
+# GCS-specific settings
+GS_DEFAULT_ACL = None
+GS_FILE_OVERWRITE = False
 
 
 # # CORS and CSRF:

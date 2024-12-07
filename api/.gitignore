@@ -2,3 +2,4 @@ venv
 gcpCredentials.json
 __pycache__
 *.pyc
+staticfiles
