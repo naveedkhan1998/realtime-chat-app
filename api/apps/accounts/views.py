@@ -23,6 +23,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from config.settings import GOOGLE_OAUTH_CLIENT_ID
+from django.core.cache import cache
 
 # Create your views here.
 
@@ -106,6 +107,7 @@ class UserRegistrationView(generics.CreateAPIView):
             user = serializer.save()
             token = get_tokens_for_user(user)
             headers = self.get_success_headers(serializer.data)
+            cache.delete("all_users")  # Clear cache
             return Response(
                 {"token": token, "msg": "Registration successful"},
                 status=status.HTTP_201_CREATED,
@@ -154,11 +156,30 @@ class UserLoginView(APIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [SearchFilter]
-    search_fields = ["name", "email"]
+
+    def get_queryset(self):
+        # Load all users from the cache
+        users = cache.get("all_users")
+
+        if users is None:
+            # Cache miss: fetch from database and cache the result
+            users = list(User.objects.all())  # Convert QuerySet to list
+            cache.set("all_users", users, timeout=None)  # Cache indefinitely
+
+        return users
+
+    def filter_queryset(self, queryset):
+        # Perform filtering on cached data (list) instead of using DRF's default filter
+        search_term = self.request.query_params.get("search", "").strip().lower()
+        if search_term:
+            queryset = [
+                user
+                for user in queryset
+                if search_term in user.name.lower() or search_term in user.email.lower()
+            ]
+        return queryset
 
 
 class UserProfileView(generics.RetrieveAPIView):

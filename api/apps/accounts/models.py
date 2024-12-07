@@ -53,8 +53,12 @@ class User(AbstractBaseUser):
         verbose_name="Email Address",
         max_length=255,
         unique=True,
+        db_index=True,
     )
-    name = models.CharField(max_length=200)
+    name = models.CharField(
+        max_length=200,
+        db_index=True,
+    )
     avatar = models.ImageField(
         verbose_name="Avatar",
         default="profile_icon.png",
