@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { GOOGLE_CLIENT_ID } from "../constants/routes/api";
@@ -9,10 +9,11 @@ import HealthCheck from "./components/custom/HealthCheck";
 
 import LoginPage from "./pages/login-page";
 import { useAppSelector } from "./app/hooks";
-import Navbar from "./components/custom/Navbar";
+import Sidebar from "./components/custom/Sidebar";
 import HomePage from "./pages/home-page";
 import FriendsPage from "./pages/friends-page";
 import ChatPage from "./pages/chat-page";
+import NewChat from "./components/custom/NewChat";
 
 const clientId = GOOGLE_CLIENT_ID || "";
 
@@ -23,15 +24,24 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
 
 const App: React.FC = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const [activeChat, setActiveChat] = useState<number | undefined>(undefined);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   return (
     <HealthCheck>
       <AuthInitializer />
       <GoogleOAuthProvider clientId={clientId}>
         <Router>
-          <div className="flex flex-col h-screen">
-            <Navbar />
-            <main className="flex-grow">
+          <div className="flex h-screen">
+            <Sidebar activeChat={activeChat} setActiveChat={setActiveChat} isMobile={isMobile} />
+            <main className="flex flex-col flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={isAuthenticated ? <Navigate to="/chat" /> : <LoginPage />} />
@@ -39,7 +49,7 @@ const App: React.FC = () => {
                   path="/chat"
                   element={
                     <PrivateRoute>
-                      <ChatPage />
+                      <ChatPage activeChat={activeChat} setActiveChat={setActiveChat} isMobile={isMobile} />
                     </PrivateRoute>
                   }
                 />
@@ -51,9 +61,17 @@ const App: React.FC = () => {
                     </PrivateRoute>
                   }
                 />
+                <Route
+                  path="/new-chat"
+                  element={
+                    <PrivateRoute>
+                      <NewChat />
+                    </PrivateRoute>
+                  }
+                />
               </Routes>
+              <ErrorToast />
             </main>
-            <ErrorToast />
           </div>
         </Router>
       </GoogleOAuthProvider>

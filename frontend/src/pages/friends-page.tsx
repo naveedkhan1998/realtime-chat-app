@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Search, UserPlus, Check, X, Loader2, UserX } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -100,61 +100,155 @@ export default function Friends() {
   });
 
   return (
-    <div className="container p-4 mx-auto space-y-4">
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Friends</CardTitle>
-          <CardDescription>Manage your friends and friend requests</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="friends" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="friends">Friends</TabsTrigger>
-              <TabsTrigger value="requests">
-                Requests
-                {filteredRequests && filteredRequests.length > 0 && (
-                  <Badge variant="destructive" className="ml-2">
-                    {filteredRequests.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="add">Add Friends</TabsTrigger>
-            </TabsList>
-            <TabsContent value="friends">
-              <div className="flex items-center mb-4 space-x-2">
-                <Search className="w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Filter friends" value={friendFilter} onChange={(e) => setFriendFilter(e.target.value)} className="flex-grow" />
+    <div className="flex-grow overflow-y-auto p-4">
+      <div className="w-full max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4">Friends</h2>
+        <Tabs defaultValue="friends" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="friends">Friends</TabsTrigger>
+            <TabsTrigger value="requests">
+              Requests
+              {filteredRequests && filteredRequests.length > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {filteredRequests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="add">Add Friends</TabsTrigger>
+          </TabsList>
+          <TabsContent value="friends">
+            <div className="flex items-center mb-4 space-x-2">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Filter friends" value={friendFilter} onChange={(e) => setFriendFilter(e.target.value)} className="flex-grow" />
+            </div>
+            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+              {friendshipsLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : friendshipsError ? (
+                <p className="text-center text-red-500">Error loading friends</p>
+              ) : filteredFriends && filteredFriends.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredFriends.map((friend) => (
+                    <div key={friend.id} className="flex items-center justify-between p-3 transition-colors rounded-lg bg-muted hover:bg-muted/80">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={friend.avatar} alt={friend.name} />
+                          <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{friend.name}</p>
+                          <p className="text-sm text-muted-foreground">Online</p>
+                        </div>
+                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <UserX className="w-5 h-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Remove friend</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground">You have no friends yet.</p>
+              )}
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value="requests">
+            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+              {receivedRequestsLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : receivedRequestsError ? (
+                <p className="text-center text-red-500">Error loading friend requests</p>
+              ) : filteredRequests && filteredRequests.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredRequests.map((request) => (
+                    <div key={request.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={request.from_user.avatar} alt={request.from_user.name} />
+                          <AvatarFallback>{request.from_user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{request.from_user.name}</span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="icon" onClick={() => handleAcceptFriendRequest(request.id)} disabled={acceptingRequest || request.status !== "pending"}>
+                                <Check className="w-5 h-5 text-green-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Accept request</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="icon" onClick={() => handleDeclineFriendRequest(request.id)} disabled={decliningRequest || request.status !== "pending"}>
+                                <X className="w-5 h-5 text-red-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Decline request</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground">No pending friend requests</p>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="add">
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search users" className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
-              <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                {friendshipsLoading ? (
+              <ScrollArea className="h-[350px] w-full rounded-md border p-4">
+                {searchLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="w-6 h-6 animate-spin" />
                   </div>
-                ) : friendshipsError ? (
-                  <p className="text-center text-red-500">Error loading friends</p>
-                ) : filteredFriends && filteredFriends.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredFriends.map((friend) => (
-                      <div key={friend.id} className="flex items-center justify-between p-3 transition-colors rounded-lg bg-muted hover:bg-muted/80">
+                ) : searchError ? (
+                  <p className="text-center text-red-500">Error searching users</p>
+                ) : searchResults && searchResults.length > 0 ? (
+                  <div className="space-y-3">
+                    {searchResults.map((searchUser) => (
+                      <div key={searchUser.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
                         <div className="flex items-center space-x-3">
                           <Avatar className="w-10 h-10">
-                            <AvatarImage src={friend.avatar} alt={friend.name} />
-                            <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={searchUser.avatar} alt={searchUser.name} />
+                            <AvatarFallback>{searchUser.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="font-medium">{friend.name}</p>
-                            <p className="text-sm text-muted-foreground">Online</p>
-                          </div>
+                          <span className="font-medium">{searchUser.name}</span>
                         </div>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <UserX className="w-5 h-5" />
+                              <Button variant="outline" size="icon" onClick={() => handleSendFriendRequest(searchUser.id)} disabled={sendingRequest}>
+                                <UserPlus className="w-5 h-5" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Remove friend</p>
+                              <p>Send friend request</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -162,112 +256,13 @@ export default function Friends() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground">You have no friends yet.</p>
+                  debouncedSearchQuery && <p className="text-center text-muted-foreground">No users found</p>
                 )}
               </ScrollArea>
-            </TabsContent>
-            <TabsContent value="requests">
-              <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-                {receivedRequestsLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  </div>
-                ) : receivedRequestsError ? (
-                  <p className="text-center text-red-500">Error loading friend requests</p>
-                ) : filteredRequests && filteredRequests.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredRequests.map((request) => (
-                      <div key={request.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={request.from_user.avatar} alt={request.from_user.name} />
-                            <AvatarFallback>{request.from_user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{request.from_user.name}</span>
-                        </div>
-                        <div className="flex space-x-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" onClick={() => handleAcceptFriendRequest(request.id)} disabled={acceptingRequest || request.status !== "pending"}>
-                                  <Check className="w-5 h-5 text-green-500" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Accept request</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" onClick={() => handleDeclineFriendRequest(request.id)} disabled={decliningRequest || request.status !== "pending"}>
-                                  <X className="w-5 h-5 text-red-500" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Decline request</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground">No pending friend requests</p>
-                )}
-              </ScrollArea>
-            </TabsContent>
-
-            <TabsContent value="add">
-              <div className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search users" className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </div>
-                <ScrollArea className="h-[350px] w-full rounded-md border p-4">
-                  {searchLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    </div>
-                  ) : searchError ? (
-                    <p className="text-center text-red-500">Error searching users</p>
-                  ) : searchResults && searchResults.length > 0 ? (
-                    <div className="space-y-3">
-                      {searchResults.map((searchUser) => (
-                        <div key={searchUser.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={searchUser.avatar} alt={searchUser.name} />
-                              <AvatarFallback>{searchUser.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{searchUser.name}</span>
-                          </div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" onClick={() => handleSendFriendRequest(searchUser.id)} disabled={sendingRequest}>
-                                  <UserPlus className="w-5 h-5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Send friend request</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    debouncedSearchQuery && <p className="text-center text-muted-foreground">No users found</p>
-                  )}
-                </ScrollArea>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -14,8 +14,8 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
 );
 
 const HomePage: React.FC = () => (
-  <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-    <main className="container px-4 mx-auto">
+  <div className="flex-grow overflow-y-auto p-4">
+    <div className="container px-4 mx-auto">
       <section className="py-20 text-center">
         <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-6 text-5xl font-bold leading-tight">
           Connect Instantly with MNK Chat
@@ -57,13 +57,7 @@ const HomePage: React.FC = () => (
           </form>
         </div>
       </section>
-    </main>
-
-    <footer className="py-8 bg-gray-100 dark:bg-gray-900">
-      <div className="container px-4 mx-auto text-center text-muted-foreground">
-        <p>&copy; 2024 MNK Chat. All rights reserved.</p>
-      </div>
-    </footer>
+    </div>
   </div>
 );
 
