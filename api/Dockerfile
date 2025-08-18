@@ -1,26 +1,35 @@
-# Use an official Python image as a base
-FROM python:3.10-slim
+ARG PY_TAG=3.13
+FROM python:${PY_TAG}-slim-bookworm AS base
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+COPY --from=ghcr.io/astral-sh/uv:0.8.11 /uv /uvx /bin/
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
 
-# Set work directory
+
+########## Builder ###############
+FROM base AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential libpq-dev curl wget git chromium-driver \
+  && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /src
+COPY pyproject.toml uv.lock* /src/
+
+# 3. Install project deps 
+RUN uv sync --locked
+
+########## Runtime ###############
+FROM base AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      netcat-openbsd libpq5 \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+COPY . /app
 
-# Install dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy project files to the container
-COPY . /app/
-
-# Set the entrypoint
-COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Expose the Django port
+RUN chmod +x /app/scripts/*.sh /app/scripts/production/*.sh
 EXPOSE 8000
-
-# Use the entrypoint file for container startup
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./scripts/entrypoint.sh"]
