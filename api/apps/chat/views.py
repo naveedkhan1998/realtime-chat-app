@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, generics, status
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .renderers import ChatRenderer
 from rest_framework.decorators import action
@@ -13,7 +13,6 @@ from .models import (
 )
 from .serializers import (
     ChatRoomSerializer,
-    ChatRoomParticipantSerializer,
     MessageSerializer,
     MessageReadReceiptSerializer,
     TypingStatusSerializer,
