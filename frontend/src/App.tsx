@@ -7,12 +7,12 @@ import ErrorToast from "./components/custom/ErrorToast";
 import AuthInitializer from "./components/custom/AuthInitializer";
 import HealthCheck from "./components/custom/HealthCheck";
 
-import LoginPage from "./pages/login-page";
+import LoginPage from "./pages/auth/login-page";
 import { useAppSelector } from "./app/hooks";
 import Sidebar from "./components/custom/Sidebar";
-import HomePage from "./pages/home-page";
-import FriendsPage from "./pages/friends-page";
-import ChatPage from "./pages/chat-page";
+import HomePage from "./pages/app/home-page";
+import FriendsPage from "./pages/app/friends-page";
+import ChatPage from "./pages/app/chat-page";
 import NewChat from "./components/custom/NewChat";
 
 const clientId = GOOGLE_CLIENT_ID || "";

@@ -31,6 +31,7 @@ export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<TokenResponse, LoginRequest>({
       query: (credentials) => ({
+        providesTags: ["Users", "ChatRooms"],
         url: "accounts/login/",
         method: "POST",
         body: credentials,
@@ -38,6 +39,7 @@ export const authApi = baseApi.injectEndpoints({
     }),
     register: builder.mutation<TokenResponse, RegisterRequest>({
       query: (userData) => ({
+        providesTags: ["Users", "ChatRooms"],
         url: "accounts/register/",
         method: "POST",
         body: userData,
@@ -45,6 +47,7 @@ export const authApi = baseApi.injectEndpoints({
     }),
     googleLogin: builder.mutation<TokenResponse, GoogleLoginRequest>({
       query: (data) => ({
+        providesTags: ["Users", "ChatRooms"],
         url: "accounts/social/google/",
         method: "POST",
         body: data,
