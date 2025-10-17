@@ -1,7 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { SerializedError } from '@reduxjs/toolkit';
 import {
   Users,
   Settings,
@@ -12,7 +10,6 @@ import {
   Smile,
 } from 'lucide-react';
 
-import { useAppSelector } from '@/app/hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,10 +23,16 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
-import { Message, ChatRoom, User } from '@/services/chatApi';
+import {
+  Message,
+  ChatRoom,
+  User,
+  useLazyGetMessagesPageQuery,
+} from '@/services/chatApi';
 import { WebSocketService } from '@/utils/websocket';
 import { UserProfile } from '@/services/userApi';
-
+import { prependMessages, setMessagePagination, setMessages } from '@/features/chatSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import MessageBubble from './MessageBubble';
 
 interface ChatWindowProps {
@@ -38,8 +41,6 @@ interface ChatWindowProps {
   setActiveChat: (chatId: number | undefined) => void;
   isMobile: boolean;
   chatRooms: ChatRoom[] | undefined;
-  messagesLoading: boolean;
-  messagesError: FetchBaseQueryError | SerializedError | undefined;
 }
 
 const emptyMessages: Message[] = [];
@@ -50,29 +51,152 @@ export default function ChatWindow({
   setActiveChat,
   isMobile,
   chatRooms,
-  messagesLoading,
-  messagesError,
 }: ChatWindowProps) {
+  const dispatch = useAppDispatch();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
   const messages = useAppSelector(
     state => state.chat.messages[activeChat] || emptyMessages
   );
+  const existingMessagesRef = useRef(messages);
+  const nextCursor = useAppSelector(
+    state => state.chat.pagination[activeChat]?.nextCursor ?? null
+  );
   const { register, handleSubmit, reset } = useForm<{ message: string }>();
+  const [fetchMessagesPage] = useLazyGetMessagesPageQuery();
   const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [initialError, setInitialError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const initialScrollDoneRef = useRef(false);
+
+  const scrollToBottom = useCallback(
+    (behavior: "auto" | "instant" | "smooth" = "smooth") => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
+      }
+    },
+    []
+  );
 
   const activeRoom = chatRooms?.find(chat => chat.id === activeChat);
   const otherParticipant =
     activeRoom?.participants.find(participant => participant.id !== user.id) ||
     user;
 
+  const extractCursor = useCallback((url: string | null) => {
+    if (!url) {
+      return null;
+    }
+    try {
+      const parsed = new URL(url);
+      return parsed.searchParams.get('cursor');
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const fetchInitialMessages = useCallback(async () => {
+    if (!activeChat) {
+      return;
+    }
+    setInitialLoading(true);
+    setInitialError(null);
+    setLoadMoreError(null);
+    try {
+      const response = await fetchMessagesPage({
+        chat_room_id: activeChat,
+        limit: 30,
+      }).unwrap();
+      const ordered = [...response.results].reverse();
+      const merged = mergeMessages(existingMessagesRef.current, ordered);
+      dispatch(setMessages({ chatRoomId: activeChat, messages: merged }));
+      dispatch(
+        setMessagePagination({
+          chatRoomId: activeChat,
+          nextCursor: extractCursor(response.next),
+        }),
+      );
+      shouldAutoScrollRef.current = true;
+      requestAnimationFrame(() => scrollToBottom("auto"));
+      initialScrollDoneRef.current = true;
+    } catch (error) {
+      console.error('Failed to load messages', error);
+      setInitialError('Unable to load messages. Try again.');
+      dispatch(setMessages({ chatRoomId: activeChat, messages: [] }));
+      dispatch(
+        setMessagePagination({ chatRoomId: activeChat, nextCursor: null }),
+      );
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [activeChat, dispatch, extractCursor, fetchMessagesPage, scrollToBottom]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!activeChat || !nextCursor) {
+      return;
+    }
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    try {
+      const response = await fetchMessagesPage({
+        chat_room_id: activeChat,
+        cursor: nextCursor,
+        limit: 30,
+      }).unwrap();
+      const ordered = [...response.results].reverse();
+      shouldAutoScrollRef.current = false;
+      dispatch(prependMessages({ chatRoomId: activeChat, messages: ordered }));
+      dispatch(
+        setMessagePagination({
+          chatRoomId: activeChat,
+          nextCursor: extractCursor(response.next),
+        }),
+      );
+    } catch (error) {
+      console.error('Failed to load older messages', error);
+      setLoadMoreError("Couldn't load older messages. Try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [activeChat, dispatch, extractCursor, fetchMessagesPage, nextCursor]);
+
+  const handleRetry = useCallback(() => {
+    fetchInitialMessages();
+  }, [fetchInitialMessages]);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    fetchInitialMessages();
+  }, [fetchInitialMessages]);
+
+  useEffect(() => {
+    initialScrollDoneRef.current = false;
+    shouldAutoScrollRef.current = true;
+  }, [activeChat]);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      return;
+    }
+    const behavior = initialScrollDoneRef.current ? "smooth" : "auto";
+    if (!shouldAutoScrollRef.current) {
+      shouldAutoScrollRef.current = true;
+      return;
+    }
+    scrollToBottom(behavior);
+    initialScrollDoneRef.current = true;
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    existingMessagesRef.current = messages;
   }, [messages]);
 
   const onSubmit = handleSubmit(({ message }) => {
     if (message.trim()) {
       const ws = WebSocketService.getInstance();
       ws.send({ type: 'send_message', content: message });
+      shouldAutoScrollRef.current = true;
       reset();
     }
   });
@@ -127,45 +251,72 @@ export default function ChatWindow({
         </div>
       </header>
 
-      <ScrollArea className="flex-1 px-4 py-4 sm:px-6">
-        <div className="space-y-4">
-          {messagesLoading ? (
-            <div className="flex h-[40vh] items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : messagesError ? (
-            <Card className="text-red-700 border border-red-200 bg-red-100/80 dark:border-red-400/40 dark:bg-red-900/40 dark:text-red-100">
-              <CardContent className="p-6 text-sm font-medium text-center">
-                Unable to load this thread:{' '}
-                {messagesError && 'data' in messagesError
-                  ? (messagesError.data as string)
-                  : 'Please retry shortly.'}
-              </CardContent>
-            </Card>
-          ) : messages.length > 0 ? (
-            messages.map(message => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isSent={message.sender.id === user.id}
-              />
-            ))
-          ) : (
-            <Card className="border border-dashed border-border bg-muted/40">
-              <CardContent className="p-8 space-y-2 text-center">
-                <p className="text-base font-semibold text-foreground">
-                  Say hello
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  No messages yet. Drop the first update to kick off the
-                  conversation.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-          <div ref={messagesEndRef} />
+  <ScrollArea className="flex-1 px-4 py-4 sm:px-6">
+    <div className="space-y-4">
+      {!initialLoading && nextCursor && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs font-medium rounded-full border-border"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? 'Loading...' : 'Load previous messages'}
+          </Button>
         </div>
-      </ScrollArea>
+      )}
+
+      {loadMoreError && (
+        <div className="text-xs text-center text-destructive">
+          {loadMoreError}{' '}
+          <button
+            type="button"
+            className="font-semibold underline hover:no-underline"
+            onClick={handleLoadMore}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {initialLoading ? (
+        <div className="flex h-[40vh] items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      ) : initialError ? (
+        <Card className="text-red-700 border border-red-200 bg-red-100/80 dark:border-red-400/40 dark:bg-red-900/40 dark:text-red-100">
+          <CardContent className="p-6 space-y-3 text-sm font-medium text-center">
+            <p>{initialError}</p>
+            <Button variant="outline" size="sm" onClick={handleRetry}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      ) : messages.length > 0 ? (
+        messages.map(message => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            isSent={message.sender.id === user.id}
+          />
+        ))
+      ) : (
+        <Card className="border border-dashed border-border bg-muted/40">
+          <CardContent className="p-8 space-y-2 text-center">
+            <p className="text-base font-semibold text-foreground">
+              Say hello
+            </p>
+            <p className="text-sm text-muted-foreground">
+              No messages yet. Drop the first update to kick off the
+              conversation.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  </ScrollArea>
 
       <form
         onSubmit={onSubmit}
@@ -305,5 +456,22 @@ function ComposerIcon({
     >
       {icon}
     </button>
+  );
+}
+
+function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
+  if (!incoming.length) {
+    return existing;
+  }
+  const byId = new Map<number, Message>();
+  for (const message of existing) {
+    byId.set(message.id, message);
+  }
+  for (const message of incoming) {
+    byId.set(message.id, message);
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   );
 }

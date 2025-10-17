@@ -53,6 +53,18 @@ export interface TypingStatus {
   updated_at: string;
 }
 
+export interface PaginatedResponse<T> {
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface CreateChatRoomPayload {
+  name?: string;
+  is_group_chat?: boolean;
+  participant_ids: number[];
+}
+
 export const chatApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Friend Requests
@@ -94,7 +106,7 @@ export const chatApi = baseApi.injectEndpoints({
       query: () => "chat/chat-rooms/",
       providesTags: ["ChatRooms"],
     }),
-    createChatRoom: builder.mutation<ChatRoom, Partial<ChatRoom>>({
+    createChatRoom: builder.mutation<ChatRoom, CreateChatRoomPayload>({
       query: (body) => ({
         url: "chat/chat-rooms/",
         method: "POST",
@@ -104,10 +116,19 @@ export const chatApi = baseApi.injectEndpoints({
     }),
 
     // Messages
-    getMessages: builder.query<Message[], { chat_room_id: number }>({
-      query: ({ chat_room_id }) => ({
-        url: `chat/messages/?chat_room=${chat_room_id}`,
-      }),
+    getMessagesPage: builder.query<PaginatedResponse<Message>, { chat_room_id: number; cursor?: string; limit?: number }>({
+      query: ({ chat_room_id, cursor, limit }) => {
+        const params = new URLSearchParams({ chat_room: chat_room_id.toString() });
+        if (cursor) {
+          params.set("cursor", cursor);
+        }
+        if (limit) {
+          params.set("limit", limit.toString());
+        }
+        return {
+          url: `chat/messages/?${params.toString()}`,
+        };
+      },
       providesTags: (_result, _error, arg) => [{ type: "Messages", id: arg.chat_room_id }],
     }),
     sendMessage: builder.mutation<Message, Partial<Message>>({
@@ -150,7 +171,8 @@ export const {
   useGetFriendshipsQuery,
   useGetChatRoomsQuery,
   useCreateChatRoomMutation,
-  useGetMessagesQuery,
+  useGetMessagesPageQuery,
+  useLazyGetMessagesPageQuery,
   useSendMessageMutation,
   useSendReadReceiptMutation,
   useUpdateTypingStatusMutation,

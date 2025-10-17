@@ -3,9 +3,9 @@ import { useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/app/hooks";
 
-import { useGetChatRoomsQuery, useGetMessagesQuery } from "@/services/chatApi";
+import { useGetChatRoomsQuery } from "@/services/chatApi";
 import { WebSocketService } from "@/utils/websocket";
-import { addMessage, setMessages } from "@/features/chatSlice";
+import { addMessage } from "@/features/chatSlice";
 import ChatWindow from "@/components/custom/ChatWindow";
 import { AppShellContext } from "@/layouts/AppShell";
 import { MessageSquareMore } from "lucide-react";
@@ -17,17 +17,6 @@ export default function ChatPage() {
   const accessToken = useAppSelector((state) => state.auth.accessToken);
 
   const { data: chatRooms } = useGetChatRoomsQuery(undefined, { pollingInterval: 10000 });
-
-  const { data: messagesData, isLoading: messagesLoading, error: messagesError } = useGetMessagesQuery(
-    { chat_room_id: activeChat ?? 0 },
-    { skip: !activeChat, refetchOnMountOrArgChange: true }
-  );
-
-  useEffect(() => {
-    if (messagesData && activeChat) {
-      dispatch(setMessages({ chatRoomId: activeChat, messages: messagesData }));
-    }
-  }, [messagesData, activeChat, dispatch]);
 
   useEffect(() => {
     if (activeChat && accessToken) {
@@ -52,15 +41,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col flex-1 h-full">
       {activeChat ? (
-        <ChatWindow
-          user={user}
-          activeChat={activeChat}
-          setActiveChat={setActiveChat}
-          isMobile={isMobile}
-          chatRooms={chatRooms}
-          messagesLoading={messagesLoading}
-          messagesError={messagesError}
-        />
+        <ChatWindow user={user} activeChat={activeChat} setActiveChat={setActiveChat} isMobile={isMobile} chatRooms={chatRooms} />
       ) : (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center border border-dashed border-border bg-muted/40">
           <span className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10 text-primary">

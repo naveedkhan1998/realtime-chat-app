@@ -12,6 +12,7 @@ export default function MessageBubble({ message, isSent }: MessageBubbleProps) {
   const sender: User = message.sender;
   const timestamp = new Date(message.timestamp);
   const formattedTime = format(timestamp, "HH:mm");
+  const formattedDate = format(timestamp, "MMM d, yyyy");
 
   return (
     <div className={cn("flex w-full gap-3", isSent ? "flex-row-reverse" : "flex-row")}>
@@ -28,11 +29,15 @@ export default function MessageBubble({ message, isSent }: MessageBubbleProps) {
         >
           <div className="flex items-center justify-between gap-3 text-xs">
             <span className={cn("font-semibold", isSent ? "text-primary-foreground/80" : "text-foreground/80")}>{isSent ? "You" : sender.name}</span>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{formattedTime}</span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              {formattedDate} at {formattedTime}
+            </span>
           </div>
           <p className={cn("mt-1 whitespace-pre-wrap leading-relaxed", isSent ? "text-primary-foreground" : "text-foreground")}>{message.content}</p>
         </div>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Delivered • {formattedTime}</span>
+        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          Delivered - {formattedDate} {formattedTime}
+        </span>
       </div>
     </div>
   );

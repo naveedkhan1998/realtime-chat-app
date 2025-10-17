@@ -36,10 +36,10 @@ export default function NewChat() {
         return;
       }
 
-      const response = await createChatRoom({ participants: [user, selectedUser] }).unwrap();
+      const response = await createChatRoom({ participant_ids: [selectedUser.id] }).unwrap();
       toast({
-        title: "Conversation created",
-        description: `We opened a direct line with ${selectedUser.name}.`,
+        title: "Chat ready",
+        description: `You're now chatting with ${selectedUser.name}.`,
       });
       navigate(`/chat/${response.id}`);
     } catch (error) {

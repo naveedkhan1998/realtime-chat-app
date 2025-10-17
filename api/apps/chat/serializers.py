@@ -80,12 +80,52 @@ class ChatRoomParticipantSerializer(serializers.ModelSerializer):
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
+    participant_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        write_only=True,
+        required=False,
+        allow_empty=True,
+    )
     is_group_chat = serializers.BooleanField(default=False)
     name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = ChatRoom
-        fields = ["id", "name", "is_group_chat", "participants", "created_at"]
+        fields = ["id", "name", "is_group_chat", "participants", "participant_ids", "created_at"]
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        participant_ids = attrs.get("participant_ids")
+        is_group_chat = attrs.get("is_group_chat", False)
+        name = attrs.get("name", "")
+
+        if participant_ids is None:
+            if self.instance is None:
+                raise serializers.ValidationError({"participant_ids": "Provide at least one participant."})
+            return attrs
+
+        # Ensure participant ids are unique and do not contain the requester
+        unique_participants = []
+        for participant_id in participant_ids:
+            if participant_id == request.user.id:
+                continue
+            if participant_id not in unique_participants:
+                unique_participants.append(participant_id)
+
+        if not unique_participants:
+            raise serializers.ValidationError({"participant_ids": "Select at least one other participant."})
+
+        if is_group_chat:
+            if not name or not name.strip():
+                raise serializers.ValidationError({"name": "Group chats require a name."})
+            if len(unique_participants) < 1:
+                raise serializers.ValidationError({"participant_ids": "Select at least one participant to start a group chat."})
+        else:
+            if len(unique_participants) != 1:
+                raise serializers.ValidationError({"participant_ids": "Direct chats require exactly one other participant."})
+
+        attrs["participant_ids"] = unique_participants
+        return attrs
 
 
 class MessageSerializer(serializers.ModelSerializer):

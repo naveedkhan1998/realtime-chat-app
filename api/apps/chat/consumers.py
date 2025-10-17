@@ -1,10 +1,8 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import (
-    ChatRoom,
-    Message,
-)
+from .models import ChatRoom, Message
+from .serializers import MessageSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -14,6 +12,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.chat_room_id = self.scope["url_route"]["kwargs"]["chat_room_id"]
         self.chat_room_group_name = f"chat_{self.chat_room_id}"
+        self.user = self.scope["user"]
+
+        if not self.user.is_authenticated:
+            await self.close(code=4001)
+            return
+
+        is_member = await self.is_participant()
+        if not is_member:
+            await self.close(code=4003)
+            return
+
+        self.chat_room = await self.get_chat_room()
+        if not self.chat_room:
+            await self.close(code=4004)
+            return
 
         # Join room group
         await self.channel_layer.group_add(self.chat_room_group_name, self.channel_name)
@@ -48,22 +61,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         #     await self.handle_read_receipt(message_id)
 
     async def handle_send_message(self, content):
-        message = await self.create_message(content)
-        message_data = {
+        if not content or not content.strip():
+            return
+        message_data = await self.create_message(content.strip())
+        event = {
             "type": "chat_message",
-            "message": {
-                "id": message.id,
-                "chat_room": message.chat_room.id,
-                "sender": {
-                    "id": message.sender.id,
-                    "name": message.sender.name,
-                },
-                "content": message.content,
-                "timestamp": message.timestamp.isoformat(),
-            },
+            "payload": message_data,
         }
         # Send message to room group
-        await self.channel_layer.group_send(self.chat_room_group_name, message_data)
+        await self.channel_layer.group_send(self.chat_room_group_name, event)
 
     # async def handle_typing(self, is_typing):
     #     await self.update_typing_status(is_typing)
@@ -98,7 +104,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def chat_message(self, event):
         # Send the entire event to WebSocket
-        await self.send(text_data=json.dumps(event))
+        await self.send(
+            text_data=json.dumps({"type": "chat_message", "message": event["payload"]})
+        )
 
     # async def typing_status(self, event):
     #     # Send the entire event to WebSocket
@@ -109,13 +117,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
     #     await self.send(text_data=json.dumps(event))
 
     @database_sync_to_async
+    def get_chat_room(self):
+        try:
+            return ChatRoom.objects.get(id=self.chat_room_id)
+        except ChatRoom.DoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def is_participant(self):
+        return ChatRoom.objects.filter(
+            id=self.chat_room_id, participants__id=self.user.id
+        ).exists()
+
+    @database_sync_to_async
     def create_message(self, content):
-        user = self.scope["user"]
-        chat_room = ChatRoom.objects.get(id=self.chat_room_id)
         message = Message.objects.create(
-            chat_room=chat_room, sender=user, content=content
+            chat_room=self.chat_room, sender=self.user, content=content
         )
-        return message
+        return MessageSerializer(message).data
 
     # @database_sync_to_async
     # def update_typing_status(self, is_typing):
