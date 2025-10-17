@@ -226,6 +226,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://chat-frontend.mnaveedk.com",
     "http://localhost:5173",
     "https://chat-backend.mnaveedk.com",
+    "https://chat.mnaveedk.com",
     "http://localhost:8000",
 ]
 
@@ -235,6 +236,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://chat-frontend.mnaveedk.com",
     "http://localhost:5173",
     "https://chat-backend.mnaveedk.com",
+    "https://chat.mnaveedk.com",
     "http://localhost:8000",
 ]
 
