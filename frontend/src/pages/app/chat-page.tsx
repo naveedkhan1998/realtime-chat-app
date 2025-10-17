@@ -105,14 +105,16 @@ export default function ChatPage() {
       {activeChat ? (
         <ChatWindow user={user} activeChat={activeChat} setActiveChat={setActiveChat} isMobile={isMobile} chatRooms={chatRooms} />
       ) : (
-        <div className="flex flex-col items-center justify-center h-full p-10 text-center border border-dashed border-border bg-muted/40">
-          <span className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10 text-primary">
-            <MessageSquareMore className="w-6 h-6" />
-          </span>
-          <h2 className="text-xl font-semibold text-foreground">Pick a conversation to get started</h2>
-          <p className="max-w-md mt-2 text-sm text-muted-foreground">
-            Open an existing thread from the sidebar or create a new chat to see live messages stream in real time.
-          </p>
+        <div className="flex flex-col items-center justify-center h-full p-10 text-center">
+          <div className="glass-card p-12 rounded-3xl shadow-glass max-w-md">
+            <span className="flex items-center justify-center w-16 h-16 mb-6 mx-auto rounded-2xl gradient-primary text-white shadow-glow animate-float">
+              <MessageSquareMore className="w-8 h-8" />
+            </span>
+            <h2 className="text-2xl font-bold text-foreground mb-3">Pick a conversation to get started</h2>
+            <p className="text-base text-muted-foreground leading-relaxed">
+              Open an existing thread from the sidebar or create a new chat to see live messages stream in real time.
+            </p>
+          </div>
         </div>
       )}
     </div>

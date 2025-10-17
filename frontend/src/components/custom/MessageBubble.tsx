@@ -29,9 +29,9 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
         isSent ? "flex-row-reverse" : "flex-row",
       )}
     >
-      <Avatar className="h-9 w-9 border border-border bg-muted/40 text-primary">
+      <Avatar className="h-9 w-9 border-2 border-primary/20 shadow-md">
         <AvatarImage src={sender.avatar} alt={sender.name} />
-        <AvatarFallback className="text-xs font-semibold text-primary">{sender.name.charAt(0)}</AvatarFallback>
+        <AvatarFallback className="text-xs font-semibold gradient-primary text-white">{sender.name.charAt(0)}</AvatarFallback>
       </Avatar>
       <div
         className={cn(
@@ -41,28 +41,30 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
       >
         <div
           className={cn(
-            "w-full rounded-2xl px-4 py-2 text-sm shadow-sm transition",
-            isSent ? "bg-primary text-primary-foreground" : "border border-border bg-background",
-            isEditing && "ring-2 ring-offset-2 ring-primary",
+            "w-full rounded-2xl px-4 py-2 text-sm shadow-md transition-all duration-300",
+            isSent 
+              ? "gradient-primary text-white shadow-glow" 
+              : "glass-card",
+            isEditing && "ring-2 ring-offset-2 ring-primary shadow-glow-strong",
           )}
         >
           <div className="flex items-start justify-between gap-3 text-xs">
             <div className="flex flex-col items-start gap-1">
-              <span className={cn("font-semibold", isSent ? "text-primary-foreground/80" : "text-foreground/80")}>{isSent ? "You" : sender.name}</span>
-              {edited && <span className="text-[10px] uppercase tracking-[0.2em] text-primary-foreground/70">Edited</span>}
+              <span className={cn("font-bold", isSent ? "text-white/90" : "text-foreground")}>{isSent ? "You" : sender.name}</span>
+              {edited && <span className="text-[10px] uppercase tracking-[0.2em] text-white/70 font-medium">Edited</span>}
             </div>
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground whitespace-nowrap">
+            <span className={cn("text-[10px] font-medium uppercase tracking-[0.2em] whitespace-nowrap", isSent ? "text-white/70" : "text-muted-foreground")}>
               {formattedDate} · {formattedTime}
             </span>
           </div>
-          <p className={cn("mt-2 whitespace-pre-wrap leading-relaxed", isSent ? "text-primary-foreground" : "text-foreground")}>{message.content}</p>
+          <p className={cn("mt-2 whitespace-pre-wrap leading-relaxed", isSent ? "text-white" : "text-foreground")}>{message.content}</p>
         </div>
         <div className="flex w-full items-center justify-between text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          <span>Delivered</span>
+          <span className="font-medium">Delivered</span>
           {isOwnMessage && (onEdit || onDelete) && (
             <div
               className={cn(
-                "flex items-center gap-1 text-[11px] font-medium transition",
+                "flex items-center gap-1 text-[11px] font-medium transition glass rounded-lg px-1",
                 isEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100",
               )}
             >
@@ -70,7 +72,7 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-6 w-6 hover:bg-primary/10"
                   onClick={() => onEdit(message)}
                   title="Edit message"
                   aria-label="Edit message"
@@ -82,7 +84,7 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => onDelete(message)}
                   title="Delete message"
                   aria-label="Delete message"

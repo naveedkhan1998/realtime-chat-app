@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { useTheme } from "@/hooks/useTheme";
 import { logOut } from "@/features/authSlice";
 import { Menu, Moon, Sun, Home, User, LogOut, Group } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ const Navbar: React.FC = () => {
   const showNavbar = useAppSelector((state) => state.ui.showNavbar);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState<"light" | "dark">(() => (localStorage.getItem("theme") as "light" | "dark") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -24,13 +25,6 @@ const Navbar: React.FC = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
   const handleLogout = () => {
     dispatch(logOut());

@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-full max-w-xs flex-col border-r border-border bg-background text-foreground shadow-lg transition-transform duration-200 ease-in-out lg:relative lg:max-w-[300px] lg:translate-x-0 lg:shadow-none',
+        'fixed inset-y-0 left-0 z-40 flex w-full max-w-xs flex-col glass-strong shadow-2xl transition-transform duration-200 ease-in-out lg:relative lg:max-w-[300px] lg:translate-x-0',
         isMobile
           ? isSidebarOpen
             ? 'translate-x-0'
@@ -76,9 +76,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex flex-col gap-6 px-4 py-6 sm:px-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Avatar className="border h-11 w-11 border-border">
+            <Avatar className="border-2 h-11 w-11 border-primary/20 shadow-md">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-sm font-semibold text-primary">
+              <AvatarFallback className="text-sm font-semibold gradient-primary text-white">
                 {user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -86,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span className="text-xs font-medium uppercase text-muted-foreground">
                 Workspace
               </span>
-              <h2 className="text-base font-semibold text-foreground">
+              <h2 className="text-base font-bold text-foreground">
                 {user.name}
               </h2>
             </div>
@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="border rounded-full border-border"
+              className="glass rounded-2xl hover:shadow-md transition-all duration-300"
               onClick={() =>
                 activeChat && onChatView ? setActiveChat(undefined) : onClose()
               }
@@ -105,17 +105,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <ThemeSwitch
               variant="ghost"
-              className="hidden border rounded-full border-border bg-background/80 text-foreground hover:bg-muted lg:inline-flex"
+              className="hidden glass rounded-2xl hover:shadow-md transition-all duration-300 lg:inline-flex"
             />
           )}
         </div>
 
-        <div className="p-4 text-sm border shadow-inner rounded-2xl border-border bg-muted/40">
-          <p className="text-xs font-semibold uppercase text-muted-foreground">
+        <div className="p-4 text-sm glass-card rounded-2xl shadow-md">
+          <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
             Status
           </p>
-          <p className="mt-2 font-medium text-foreground">Available</p>
-          <p className="text-xs text-muted-foreground">
+          <div className="mt-2 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-glow"></span>
+            <p className="font-semibold text-foreground">Available</p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
             Presence is shared across chats.
           </p>
         </div>
@@ -125,7 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Search className="absolute w-4 h-4 -translate-y-1/2 left-4 top-1/2 text-muted-foreground" />
             <Input
               placeholder="Search chats..."
-              className="text-sm border rounded-full h-11 border-border bg-background pl-11 focus:border-primary/30 focus:ring-2 focus:ring-primary/25"
+              className="text-sm glass-card h-11 pl-11 rounded-2xl shadow-sm focus:shadow-md transition-all duration-300 border-0"
             />
           </div>
         </div>
@@ -148,10 +151,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      <div className="flex flex-col flex-1 px-4 pt-4 pb-6 overflow-hidden border-t border-border bg-background/80">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase text-muted-foreground">
+      <div className="flex flex-col flex-1 px-4 pt-4 pb-6 overflow-hidden border-t border-border/50">
+        <div className="flex items-center justify-between text-xs font-bold uppercase text-muted-foreground tracking-wider">
           <span>Conversations</span>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+          <span className="glass rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm">
             Live
           </span>
         </div>
@@ -161,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
             </div>
           ) : chatRoomsError ? (
-            <p className="px-3 py-3 text-xs text-red-700 bg-red-100 border border-red-200 rounded-xl dark:border-red-400/60 dark:bg-red-900/30 dark:text-red-200">
+            <p className="glass-card px-3 py-3 text-xs font-medium text-red-600 dark:text-red-400 rounded-2xl shadow-md">
               Unable to load chats. Please try again.
             </p>
           ) : chatRooms && chatRooms.length > 0 ? (
@@ -180,16 +183,16 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             ))
           ) : (
-            <div className="px-4 py-6 text-sm border border-dashed rounded-xl border-border text-muted-foreground">
+            <div className="px-4 py-6 text-sm glass-card rounded-2xl text-muted-foreground shadow-inner">
               You have no conversations yet. Start by inviting teammates or
               creating a new chat.
             </div>
           )}
         </div>
-        <div className="px-4 py-3 mt-4 border rounded-xl border-border bg-background">
+        <div className="glass-card px-4 py-3 mt-4 rounded-2xl shadow-md">
           <Button
             variant="ghost"
-            className="flex items-center justify-center w-full gap-2 text-sm font-medium border rounded-full border-border"
+            className="flex items-center justify-center w-full gap-2 text-sm font-medium glass rounded-2xl hover:shadow-md transition-all duration-300"
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4" />
@@ -216,10 +219,10 @@ function SidebarLink({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-medium transition-colors',
+          'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-300',
           isActive
-            ? 'border-primary/20 bg-primary/10 text-primary'
-            : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground'
+            ? 'glass-card shadow-md text-primary'
+            : 'glass text-muted-foreground hover:shadow-md hover:text-foreground'
         )
       }
     >
@@ -253,20 +256,20 @@ function ConversationRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors',
+        'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all duration-300',
         active
-          ? 'border-primary/30 bg-primary/10 text-primary'
-          : 'border-border/60 bg-background hover:border-primary/20 hover:bg-primary/5'
+          ? 'glass-card shadow-md text-primary'
+          : 'glass hover:shadow-md'
       )}
     >
-      <Avatar className="w-10 h-10 border border-border bg-background">
+      <Avatar className="w-10 h-10 border-2 border-primary/20 shadow-sm">
         <AvatarImage src={avatar} alt={title} />
-        <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+        <AvatarFallback className="text-sm font-semibold gradient-primary text-white">
           {title?.charAt(0)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-sm font-bold text-foreground">{title}</p>
         <p className="text-xs text-muted-foreground">
           {room.is_group_chat
             ? `${room.participants.length} participants`
