@@ -224,6 +224,11 @@ export class WebSocketService {
     this.send({ type: "huddle_leave" });
   }
 
+  requestHuddleState() {
+    console.log('🎙️ Requesting huddle state (lazy load)');
+    this.send({ type: "request_huddle_state" });
+  }
+
   sendHuddleSignal(targetId: number, payload: {
     type: 'offer' | 'answer' | 'candidate';
     sdp?: RTCSessionDescriptionInit;

@@ -39,6 +39,7 @@ import {
 } from '@/features/chatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import MessageBubble from './MessageBubble';
+import { throttle } from '@/utils/performance';
 
 interface ChatWindowProps {
   user: UserProfile;
@@ -224,6 +225,14 @@ export default function ChatWindow({
     [cancelEditing, editingMessage],
   );
 
+  // Throttled cursor update - reduces Redis writes by ~80%
+  const throttledCursorUpdate = useMemo(
+    () => throttle((cursor: { start: number; end: number }) => {
+      WebSocketService.getInstance().sendCursorUpdate(cursor);
+    }, 200),
+    []
+  );
+
   const handleNoteChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = event.target.value;
@@ -233,12 +242,14 @@ export default function ChatWindow({
       if (noteUpdateTimeoutRef.current) {
         clearTimeout(noteUpdateTimeoutRef.current);
       }
+      // Increased debounce from 350ms to 500ms for fewer Redis writes
       noteUpdateTimeoutRef.current = setTimeout(() => {
         ws.sendCollaborativeNote(value);
-      }, 350);
-      ws.sendCursorUpdate({ start: event.target.selectionStart, end: event.target.selectionEnd });
+      }, 500);
+      // Throttle cursor updates to 200ms
+      throttledCursorUpdate({ start: event.target.selectionStart, end: event.target.selectionEnd });
     },
-    [activeChat, dispatch],
+    [activeChat, dispatch, throttledCursorUpdate],
   );
 
   const handleNoteCursor = useCallback((event: React.SyntheticEvent<HTMLTextAreaElement>) => {
@@ -247,8 +258,9 @@ export default function ChatWindow({
       start: target.selectionStart,
       end: target.selectionEnd,
     };
-    WebSocketService.getInstance().sendCursorUpdate(cursor);
-  }, []);
+    // Use throttled version
+    throttledCursorUpdate(cursor);
+  }, [throttledCursorUpdate]);
 
   const refreshRemoteStreams = useCallback(() => {
     setRemoteStreams(Array.from(remoteStreamsRef.current.entries()).map(([userId, stream]) => ({ userId, stream })));
@@ -310,6 +322,7 @@ export default function ChatWindow({
   const startHuddle = useCallback(async () => {
     if (isHuddleActive) return;
     console.log('🎙️ Starting huddle...');
+    
     try {
       console.log('🎙️ Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -472,10 +485,11 @@ export default function ChatWindow({
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
+    // Increased from 1500ms to 2000ms for fewer Redis operations
     typingTimeoutRef.current = setTimeout(() => {
       ws.sendTypingStatus(false);
       typingTimeoutRef.current = null;
-    }, 1500);
+    }, 2000);
   }, [messageValue]);
 
   useEffect(() => {

@@ -16,10 +16,12 @@ if TYPE_CHECKING:
 
 User = get_user_model()
 
-PRESENCE_TTL = 120
-TYPING_TTL = 8
-NOTE_TTL = 60 * 60
-CURSOR_TTL = 30
+# Optimized TTLs for production (free-tier Redis friendly)
+PRESENCE_TTL = 300  # 5 minutes - stable data, refresh less often
+TYPING_TTL = 5  # 5 seconds - very short-lived, expires quickly
+NOTE_TTL = 60 * 60 * 2  # 2 hours - increased for longer sessions
+CURSOR_TTL = 10  # 10 seconds - short-lived, frequent updates
+HUDDLE_TTL = 300  # 5 minutes - stable during huddle sessions
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -151,6 +153,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_collab_update(self, content: Optional[str]):
         if content is None:
             return
+        # Skip empty updates to save Redis operations
+        current_state = await self.get_note_state()
+        if current_state == content:
+            return
         await self.set_note_state(content)
         await self.channel_layer.group_send(
             self.chat_room_group_name,
@@ -200,7 +206,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             f"user_{target_id}",
             {
                 "type": "huddle_signal",
-                "from_user": await self._serialize_user(self.user),
+                "from": await self._serialize_user(self.user),
                 "payload": payload,
             },
         )
@@ -230,7 +236,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps({"type": "huddle_participants", "participants": event["participants"]}))
 
     async def huddle_signal(self, event):
-        await self.send(json.dumps({"type": "huddle_signal", "from": event["from_user"], "payload": event["payload"]}))
+        await self.send(json.dumps({"type": "huddle_signal", "from": event["from"], "payload": event["payload"]}))
 
     @database_sync_to_async
     def get_chat_room(self):
@@ -379,7 +385,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         payload = json.dumps({"id": self.user.id, "name": self.user.name})
         pipeline = conn.pipeline(True)
         pipeline.hset(key, self.user.id, payload)
-        pipeline.expire(key, PRESENCE_TTL)
+        pipeline.expire(key, HUDDLE_TTL)
         pipeline.execute()
         return [json.loads(value.decode()) for value in conn.hvals(key)]
 
@@ -391,7 +397,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return None
         pipeline = conn.pipeline(True)
         pipeline.hdel(key, self.user.id)
-        pipeline.expire(key, PRESENCE_TTL)
+        pipeline.expire(key, HUDDLE_TTL)
         pipeline.execute()
         values = conn.hvals(key)
         return [json.loads(value.decode()) for value in values]
