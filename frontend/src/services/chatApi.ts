@@ -36,6 +36,7 @@ export interface Message {
   sender: User;
   content: string;
   timestamp: string;
+  updated_at: string;
 }
 
 export interface MessageReadReceipt {

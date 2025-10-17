@@ -130,11 +130,16 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    chat_room = serializers.PrimaryKeyRelatedField(queryset=ChatRoom.objects.all())
+    chat_room = serializers.PrimaryKeyRelatedField(queryset=ChatRoom.objects.all(), required=False)
 
     class Meta:
         model = Message
-        fields = ["id", "chat_room", "sender", "content", "timestamp"]
+        fields = ["id", "chat_room", "sender", "content", "timestamp", "updated_at"]
+        read_only_fields = ("sender", "timestamp", "updated_at")
+
+    def update(self, instance, validated_data):
+        validated_data.pop("chat_room", None)
+        return super().update(instance, validated_data)
 
 
 class MessageReadReceiptSerializer(serializers.ModelSerializer):

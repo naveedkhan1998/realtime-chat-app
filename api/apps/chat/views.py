@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Count
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .models import (
     ChatRoom,
@@ -164,6 +166,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     renderer_classes = [ChatRenderer]
     pagination_class = MessageCursorPagination
+    http_method_names = ["get", "post", "patch", "delete", "head", "options", "trace"]
 
     def get_queryset(self):
         chat_room_id = self.request.query_params.get("chat_room")
@@ -185,6 +188,41 @@ class MessageViewSet(viewsets.ModelViewSet):
         if not chat_room.participants.filter(id=self.request.user.id).exists():
             raise PermissionDenied("You are not a participant in this chat room.")
         serializer.save(sender=self.request.user)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        if instance.sender != self.request.user:
+            raise PermissionDenied("You can only edit your own messages.")
+        content = serializer.validated_data.get("content")
+        if content is not None and not content.strip():
+            raise ValidationError({"content": "Message content cannot be blank."})
+        updated_message = serializer.save()
+        self._broadcast_message_event(
+            updated_message.chat_room_id,
+            "message_updated",
+            {"message": MessageSerializer(updated_message, context=self.get_serializer_context()).data},
+        )
+
+    def perform_destroy(self, instance):
+        if instance.sender != self.request.user:
+            raise PermissionDenied("You can only delete your own messages.")
+        chat_room_id = instance.chat_room_id
+        message_id = instance.id
+        super().perform_destroy(instance)
+        self._broadcast_message_event(
+            chat_room_id,
+            "message_deleted",
+            {"message_id": message_id},
+        )
+
+    def _broadcast_message_event(self, chat_room_id: int, event_type: str, payload: dict):
+        channel_layer = get_channel_layer()
+        if not channel_layer:
+            return
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{chat_room_id}",
+            {"type": event_type, **payload},
+        )
 
 
 ### Message Read Receipt Views ###
