@@ -11,7 +11,12 @@
       "!{projectRoot}/eslint.config.js",
       "!{projectRoot}/**/*.md"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": [
+      "{workspaceRoot}/.envs/**/*",
+      "{workspaceRoot}/docker-compose.yaml",
+      "{workspaceRoot}/api/Dockerfile",
+      "{workspaceRoot}/frontend/Dockerfile"
+    ]
   },
   "targetDefaults": {
     "install": {
@@ -50,7 +55,7 @@
       "inputs": ["production", "^production"]
     }
   },
-  "parallel": 2,
+  "parallel": 4,
   "cacheDirectory": ".nx/cache",
   "useInferencePlugins": false
 }

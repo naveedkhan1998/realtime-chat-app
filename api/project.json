@@ -3,6 +3,7 @@
   "$schema": "../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "api",
   "projectType": "application",
+  "implicitDependencies": [],
   "targets": {
     "install": {
       "executor": "nx:run-commands",
@@ -17,14 +18,15 @@
         "command": "docker compose up -d",
         "cwd": "."
       },
-      "dependsOn": ["build"]
+      "cache": false
     },
     "build": {
       "executor": "nx:run-commands",
       "options": {
         "command": "docker compose build",
         "cwd": "."
-      }
+      },
+      "outputs": []
     },
     "runserver": {
       "executor": "nx:run-commands",
@@ -37,15 +39,17 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "docker compose exec api python3 manage.py migrate",
-        "cwd": "api"
-      }
+        "cwd": "."
+      },
+      "cache": false
     },
     "makemigrations": {
       "executor": "nx:run-commands",
       "options": {
         "command": "docker compose exec api python3 manage.py makemigrations",
-        "cwd": "api"
-      }
+        "cwd": "."
+      },
+      "cache": false
     },
     "lint": {
       "executor": "nx:run-commands",
