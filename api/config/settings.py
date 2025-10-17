@@ -180,7 +180,7 @@ try:
     )
 except Exception as e:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-        "/etc/secret/gcpCredentials.json"
+        "/etc/secrets/gcpCredentials.json"
     )
 # Debug-based Configuration
 if DEBUG:
