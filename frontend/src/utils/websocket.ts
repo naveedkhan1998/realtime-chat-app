@@ -157,11 +157,18 @@ export class WebSocketService {
     }
   }
 
+  isConnected(): boolean {
+    return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
+  }
+
   send(data: any) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
     } else {
-      console.error("WebSocket is not open. Cannot send data");
+      // Only log in non-production to avoid noise during development StrictMode
+      if (import.meta.env.DEV) {
+        console.warn("WebSocket is not open. Cannot send data");
+      }
     }
   }
 

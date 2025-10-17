@@ -50,6 +50,10 @@ interface ChatWindowProps {
 }
 
 const emptyMessages: Message[] = [];
+const emptyPresence: UserProfile[] = [];
+const emptyTypingMap: Record<number, boolean> = {};
+const emptyCursors: Record<number, { start: number; end: number }> = {};
+const emptyHuddleParticipants: Array<{ id: number; name: string }> = [];
 
 export default function ChatWindow({
   user,
@@ -64,11 +68,11 @@ export default function ChatWindow({
   const messages = useAppSelector(
     state => state.chat.messages[activeChat] || emptyMessages
   );
-  const presence = useAppSelector(state => state.chat.presence[activeChat] ?? []);
-  const typingMap = useAppSelector(state => state.chat.typingStatuses[activeChat] ?? {});
+  const presence = useAppSelector(state => state.chat.presence[activeChat] ?? emptyPresence);
+  const typingMap = useAppSelector(state => state.chat.typingStatuses[activeChat] ?? emptyTypingMap);
   const collaborativeNote = useAppSelector(state => state.chat.collaborativeNotes[activeChat] ?? "");
-  const cursors = useAppSelector(state => state.chat.cursors[activeChat] ?? {});
-  const huddleParticipants = useAppSelector(state => state.chat.huddleParticipants[activeChat] ?? []);
+  const cursors = useAppSelector(state => state.chat.cursors[activeChat] ?? emptyCursors);
+  const huddleParticipants = useAppSelector(state => state.chat.huddleParticipants[activeChat] ?? emptyHuddleParticipants);
   const existingMessagesRef = useRef(messages);
   const nextCursor = useAppSelector(
     state => state.chat.pagination[activeChat]?.nextCursor ?? null
@@ -473,6 +477,12 @@ export default function ChatWindow({
 
   useEffect(() => {
     const ws = WebSocketService.getInstance();
+    
+    // Skip if WebSocket is not connected (e.g., during StrictMode remount)
+    if (!ws.isConnected()) {
+      return;
+    }
+    
     if (!messageValue) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -498,16 +508,21 @@ export default function ChatWindow({
     return () => {
       console.log('🧹 ChatWindow cleanup - component unmounting');
       const ws = WebSocketService.getInstance();
-      ws.sendTypingStatus(false);
+      
+      // Only send cleanup messages if WebSocket is connected
+      if (ws.isConnected()) {
+        ws.sendTypingStatus(false);
+        // Leave huddle on unmount if active
+        console.log('🧹 Sending final huddle_leave on unmount');
+        ws.sendHuddleLeave();
+      }
+      
       if (noteUpdateTimeoutRef.current) {
         clearTimeout(noteUpdateTimeoutRef.current);
       }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      // Leave huddle on unmount if active
-      console.log('🧹 Sending final huddle_leave on unmount');
-      ws.sendHuddleLeave();
     };
   }, []); // Empty deps - only run on mount/unmount
 
