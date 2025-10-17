@@ -1,0 +1,32 @@
+{
+  "name": "realtime-chat-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A realtime chat app built with Django + React monorepo managed with NX",
+  "scripts": {
+    "install": "nx run-many -t install --parallel --color",
+    "install:frontend": "cd frontend && npm install && cd ..",
+    "install:api": "cd api && uv sync && cd ..",
+    "dev": "nx run-many -t dev --parallel --color",
+    "dev:frontend": "nx run frontend:dev",
+    "dev:api": "nx run api:dev",
+    "lint": "nx run-many -t lint --color",
+    "lint:fix": "nx run-many -t lint-fix --color",
+    "format": "nx run-many -t format --color",
+    "format:check": "nx run-many -t format-check --color",
+    "test": "nx run-many -t test --color",
+    "test:coverage": "nx run-many -t test-coverage --color",
+    "build": "nx run-many -t build --color",
+    "docker:up": "docker compose up -d ",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f ",
+    "docker:clean": "docker compose down -v",
+    "migrate": "nx run api:migrate",
+    "makemigrations": "nx run api:makemigrations",
+    "api:shell": "nx run api:shell"
+  },
+  "devDependencies": {
+    "nx": "^20.0.0",
+    "@nx/js": "^20.0.0"
+  }
+}

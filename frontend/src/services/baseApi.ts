@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// services/baseApi.ts
-
 import { createApi, fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "@/app/store";
@@ -48,8 +45,8 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
         extraOptions
       );
       if (refreshResult.data) {
-        const newAccessToken = (refreshResult.data as any).access;
-        const newRefreshToken = (refreshResult.data as any).refresh;
+        const newAccessToken = (refreshResult.data as { access: string }).access;
+        const newRefreshToken = (refreshResult.data as { refresh: string }).refresh;
 
         // Update tokens in cookies
         setCookie("access_token", newAccessToken, { expires: 1 });
@@ -82,7 +79,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
 const getErrorMessage = (error: FetchBaseQueryError): string => {
   if ("status" in error) {
-    const data = error.data as any;
+    const data = error.data as { errors?: Record<string, string[]> };
     if (data && data.errors) {
       // Extract error messages from the 'errors' key
       const errorMessages = extractErrorMessages(data.errors);
@@ -94,7 +91,7 @@ const getErrorMessage = (error: FetchBaseQueryError): string => {
 };
 
 // Helper function to flatten error messages
-const extractErrorMessages = (errors: any): string[] => {
+const extractErrorMessages = (errors: Record<string, string[]>): string[] => {
   const messages: string[] = [];
   for (const key in errors) {
     if (Array.isArray(errors[key])) {
@@ -108,12 +105,10 @@ const extractErrorMessages = (errors: any): string[] => {
   return messages;
 };
 
-type TagType = "FriendRequests" | "Friendships" | "ChatRooms" | "Messages" | "TypingStatus" | "Users";
-
 // Create the base API slice
 export const baseApi = createApi({
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["FriendRequests", "Friendships", "ChatRooms", "Messages", "TypingStatus", "Users"] as TagType[],
+  tagTypes: ["FriendRequests", "Friendships", "ChatRooms", "Messages", "TypingStatus", "Users"],
   endpoints: (builder) => ({
     // Existing endpoints
 

@@ -3,13 +3,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, UserPlus, Search, Users, MessageCircle } from "lucide-react";
 import { Friendship, useCreateChatRoomMutation, useGetFriendshipsQuery, User } from "@/services/chatApi";
 import { useAppSelector } from "@/app/hooks";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
 
 const NewChatDialog: React.FC = () => {
   const { data: friendships, isLoading } = useGetFriendshipsQuery();
@@ -17,14 +18,23 @@ const NewChatDialog: React.FC = () => {
   const [isGroup, setIsGroup] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [selectedFriendIds, setSelectedFriendIds] = useState<number[]>([]);
-  const [createChatRoom] = useCreateChatRoomMutation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [createChatRoom, { isLoading: creatingChat }] = useCreateChatRoomMutation();
   const navigate = useNavigate();
 
   const currentUser = useAppSelector((state) => state.auth.user);
 
   const filteredFriends = friendships
     ?.flatMap((friendship: Friendship) => [friendship.user1, friendship.user2].filter((user) => user.id !== currentUser?.id))
-    .filter((user) => user && user.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    .filter((user): user is User => Boolean(user))
+    .reduce<User[]>((acc, user) => {
+      if (!user) return acc;
+      if (!acc.some((existing) => existing.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, [])
+    .filter((user) => user.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleFriendSelect = (friendId: number) => {
     if (isGroup) {
@@ -37,20 +47,29 @@ const NewChatDialog: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const payload = {
-        name: isGroup ? groupName : "",
+        name: isGroup ? groupName.trim() : undefined,
         is_group_chat: isGroup,
-        participants: selectedFriendIds,
+        participant_ids: selectedFriendIds,
       };
-      //@ts-expect-error ignore
-      const response = await createChatRoom(payload);
-      console.log("Chat Room Created:", response);
+      const chatRoom = await createChatRoom(payload).unwrap();
       // Reset state after successful creation
       setSearchQuery("");
       setIsGroup(false);
       setGroupName("");
       setSelectedFriendIds([]);
+      setIsDialogOpen(false);
+      navigate(`/chat/${chatRoom.id}`);
+      toast({
+        title: isGroup ? "Group ready" : "Chat ready",
+        description: isGroup ? `${chatRoom.name ?? "Group chat"} is live.` : "Reopening your direct chat.",
+      });
     } catch (error) {
       console.error("Error creating chat room:", error);
+      toast({
+        title: "Unable to create chat",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -60,7 +79,7 @@ const NewChatDialog: React.FC = () => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <Button className="w-full mb-4 text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
           <PlusCircle className="w-4 h-4 mr-2" /> New Chat
@@ -101,11 +120,18 @@ const NewChatDialog: React.FC = () => {
           <Button variant="outline" onClick={() => navigate("/friends")}>
             <UserPlus className="w-4 h-4 mr-2" /> Add Friends
           </Button>
-          <DialogClose asChild>
-            <Button onClick={handleSubmit} disabled={(isGroup && !groupName) || selectedFriendIds.length === 0} aria-label={isGroup ? "Start group chat" : "Start direct chat"}>
-              Start Chat
-            </Button>
-          </DialogClose>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              creatingChat ||
+              (isGroup
+                ? !groupName.trim() || selectedFriendIds.length === 0
+                : selectedFriendIds.length !== 1)
+            }
+            aria-label={isGroup ? "Start group chat" : "Start direct chat"}
+          >
+            {creatingChat ? "Creating..." : "Start Chat"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

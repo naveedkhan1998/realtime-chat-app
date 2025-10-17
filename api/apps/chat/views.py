@@ -1,7 +1,14 @@
-from rest_framework import viewsets, permissions, generics, status
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .renderers import ChatRenderer
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.db.models import Count
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from .models import (
     ChatRoom,
     ChatRoomParticipant,
@@ -13,16 +20,14 @@ from .models import (
 )
 from .serializers import (
     ChatRoomSerializer,
-    ChatRoomParticipantSerializer,
     MessageSerializer,
     MessageReadReceiptSerializer,
     TypingStatusSerializer,
     FriendRequestSerializer,
     FriendshipSerializer,
 )
-from django.contrib.auth import get_user_model
-from rest_framework.permissions import IsAuthenticated
-from django.db import models
+from .renderers import ChatRenderer
+from .pagination import MessageCursorPagination
 
 User = get_user_model()
 
@@ -94,24 +99,61 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
     renderer_classes = [ChatRenderer]
 
     def get_queryset(self):
-        return ChatRoom.objects.filter(participants=self.request.user)
+        return (
+            ChatRoom.objects.filter(participants=self.request.user)
+            .prefetch_related("participants")
+            .order_by("-created_at")
+        )
 
-    def perform_create(self, serializer):
-        chat_room = serializer.save()
-        # Add the creator as a participant
-        ChatRoomParticipant.objects.create(chat_room=chat_room, user=self.request.user)
-        # Add other participants if provided
-        participants_ids = self.request.data.get("participants", [])
-        for user_id in participants_ids:
-            if user_id != self.request.user.id:
-                user = User.objects.get(id=user_id)
-                ChatRoomParticipant.objects.create(chat_room=chat_room, user=user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        participant_ids = serializer.validated_data.pop("participant_ids", [])
+        is_group_chat = serializer.validated_data.get("is_group_chat", False)
+
+        # Fetch participants and validate existence
+        users = list(
+            User.objects.filter(id__in=[request.user.id, *participant_ids]).distinct()
+        )
+        if len(users) != len(set([request.user.id, *participant_ids])):
+            raise ValidationError({"participant_ids": "One or more participants were not found."})
+
+        if not is_group_chat:
+            other_user_id = participant_ids[0]
+            existing_room = (
+                ChatRoom.objects.filter(is_group_chat=False)
+                .annotate(participant_count=Count("participants", distinct=True))
+                .filter(participant_count=2, participants=request.user)
+                .filter(participants__id=other_user_id)
+                .first()
+            )
+            if existing_room:
+                existing_data = self.get_serializer(existing_room).data
+                return Response(existing_data, status=status.HTTP_200_OK)
+
+        chat_room = ChatRoom.objects.create(**serializer.validated_data)
+        ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=request.user)
+        other_participants = User.objects.filter(id__in=participant_ids).exclude(id=request.user.id)
+        for participant in other_participants:
+            ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=participant)
+
+        chat_room.refresh_from_db()
+        output = self.get_serializer(chat_room)
+        headers = self.get_success_headers(output.data)
+        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=True, methods=["post"])
     def add_participant(self, request, pk=None):
         chat_room = self.get_object()
         user_id = request.data.get("user_id")
-        user = User.objects.get(id=user_id)
+        if not user_id:
+            raise ValidationError({"user_id": "user_id is required."})
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"user_id": "User not found."})
+        if chat_room.participants.filter(id=user.id).exists():
+            return Response({"status": "participant already present"}, status=status.HTTP_200_OK)
         ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=user)
         return Response({"status": "participant added"})
 
@@ -123,15 +165,64 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
     renderer_classes = [ChatRenderer]
+    pagination_class = MessageCursorPagination
+    http_method_names = ["get", "post", "patch", "delete", "head", "options", "trace"]
 
     def get_queryset(self):
         chat_room_id = self.request.query_params.get("chat_room")
-        return Message.objects.filter(
-            chat_room__id=chat_room_id, chat_room__participants=self.request.user
+        if not chat_room_id:
+            raise ValidationError(
+                {"chat_room": "chat_room query parameter is required."}
+            )
+
+        return (
+            Message.objects.filter(
+                chat_room__id=chat_room_id, chat_room__participants=self.request.user
+            )
+            .select_related("sender", "chat_room")
+            .order_by("-timestamp")
         )
 
     def perform_create(self, serializer):
+        chat_room = serializer.validated_data["chat_room"]
+        if not chat_room.participants.filter(id=self.request.user.id).exists():
+            raise PermissionDenied("You are not a participant in this chat room.")
         serializer.save(sender=self.request.user)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        if instance.sender != self.request.user:
+            raise PermissionDenied("You can only edit your own messages.")
+        content = serializer.validated_data.get("content")
+        if content is not None and not content.strip():
+            raise ValidationError({"content": "Message content cannot be blank."})
+        updated_message = serializer.save()
+        self._broadcast_message_event(
+            updated_message.chat_room_id,
+            "message_updated",
+            {"message": MessageSerializer(updated_message, context=self.get_serializer_context()).data},
+        )
+
+    def perform_destroy(self, instance):
+        if instance.sender != self.request.user:
+            raise PermissionDenied("You can only delete your own messages.")
+        chat_room_id = instance.chat_room_id
+        message_id = instance.id
+        super().perform_destroy(instance)
+        self._broadcast_message_event(
+            chat_room_id,
+            "message_deleted",
+            {"message_id": message_id},
+        )
+
+    def _broadcast_message_event(self, chat_room_id: int, event_type: str, payload: dict):
+        channel_layer = get_channel_layer()
+        if not channel_layer:
+            return
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{chat_room_id}",
+            {"type": event_type, **payload},
+        )
 
 
 ### Message Read Receipt Views ###
