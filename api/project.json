@@ -16,7 +16,8 @@
       "options": {
         "command": "docker compose up -d",
         "cwd": "."
-      }
+      },
+      "dependsOn": ["build"]
     },
     "build": {
       "executor": "nx:run-commands",

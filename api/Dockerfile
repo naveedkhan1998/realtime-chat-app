@@ -1,24 +1,30 @@
+########## Base (unchanged) ##########
 ARG PY_TAG=3.13
 FROM python:${PY_TAG}-slim-bookworm AS base
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
-COPY --from=ghcr.io/astral-sh/uv:0.8.11 /uv /uvx /bin/
+    PYTHONDONTWRITEBYTECODE=1 \
+    VENV_PATH=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
-
+RUN python -m venv $VENV_PATH && \
+    mkdir -p /src
 
 ########## Builder ###############
 FROM base AS builder
 
+# 1. OS deps (note: libpq-dev added earlier)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential libpq-dev curl wget git chromium-driver \
   && rm -rf /var/lib/apt/lists/*
 
+# 2. Install uv **inside** the venv
+RUN $VENV_PATH/bin/pip install --no-cache-dir --upgrade pip uv
 
 WORKDIR /src
-COPY pyproject.toml uv.lock* /src/
+COPY pyproject.toml poetry.lock* /src/
 
-# 3. Install project deps 
-RUN uv sync --locked
+# 3. Install project deps *into the venv* (drop --system)
+RUN uv pip install --no-cache -r pyproject.toml
 
 ########## Runtime ###############
 FROM base AS runtime
@@ -26,6 +32,9 @@ FROM base AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
       netcat-openbsd libpq5 \
   && rm -rf /var/lib/apt/lists/*
+
+# Copy the populated venv
+COPY --from=builder $VENV_PATH $VENV_PATH
 
 WORKDIR /app
 COPY . /app
