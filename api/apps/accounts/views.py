@@ -59,11 +59,12 @@ class GoogleLoginView(APIView):
 
             # Update user data if necessary
             if created or not user.avatar:
-                # Download the image
+                # Download the avatar image from Google
                 response = NormalRequests.get(picture)
                 if response.status_code == 200:
                     image_content = ContentFile(response.content)
-                    user.avatar.save(f"{user.id}_avatar.jpg", image_content)
+                    # Save with original filename, upload_to will handle UUID generation
+                    user.avatar.save("avatar.jpg", image_content)
 
             # Update user data if necessary
             if not user.name:
