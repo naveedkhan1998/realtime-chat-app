@@ -1,5 +1,8 @@
 # models.py
 
+import uuid
+from pathlib import Path
+
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 
@@ -9,6 +12,16 @@ AUTH_PROVIDERS = {
     "facebook": "facebook",
     "twitter": "twitter",
 }
+
+
+def avatar_upload_path(instance, filename):
+    """
+    Generate a unique file path for user avatars using UUID.
+    Format: avatars/<uuid>.<extension>
+    """
+    ext = Path(filename).suffix  # Get file extension (e.g., .jpg, .png)
+    unique_filename = f"{uuid.uuid4()}{ext}"
+    return f"avatars/{unique_filename}"
 
 
 class UserManager(BaseUserManager):
@@ -61,6 +74,7 @@ class User(AbstractBaseUser):
     )
     avatar = models.ImageField(
         verbose_name="Avatar",
+        upload_to=avatar_upload_path,
         default="profile_icon.png",
         null=True,
         blank=True,
