@@ -22,21 +22,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  nginx:
-    build:
-      context: nginx
-    container_name: realtime-chat-nginx
-    ports:
-      - "8000:80"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      frontend:
-        condition: service_started
-      api:
-        condition: service_started
-
   api:
     build:
       context: api/
@@ -46,25 +31,14 @@ services:
       - ./.envs/env.dev
     volumes:
       - ./api/:/app/
+    ports:
+      - "8000:8000"
 
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: frontend/
-      dockerfile: Dockerfile
-    container_name: realtime-chat-frontend
-    environment:
-      - WATCHPACK_POLLING=true
-    volumes:
-      - ./frontend/src/:/app/src/
-      - ./frontend/public/:/app/public/
-      - ./frontend/package.json:/app/package.json
-      - ./frontend/package-lock.json:/app/package-lock.json
 
 volumes:
   redis-data:

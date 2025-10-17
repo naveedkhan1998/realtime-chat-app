@@ -1,0 +1,101 @@
+{
+  "name": "api",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "api",
+  "projectType": "application",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "api",
+        "command": "uv sync"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose up -d",
+        "cwd": "."
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose build",
+        "cwd": "."
+      }
+    },
+    "runserver": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run manage.py runserver",
+        "cwd": "api"
+      }
+    },
+    "migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose exec api python3 manage.py migrate",
+        "cwd": "api"
+      }
+    },
+    "makemigrations": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose exec api python3 manage.py makemigrations",
+        "cwd": "api"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uvx ruff check .",
+        "cwd": "api"
+      }
+    },
+    "lint-fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uvx ruff check --fix .",
+        "cwd": "api"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uvx black .",
+        "cwd": "api"
+      }
+    },
+    "format-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uvx black --check .",
+        "cwd": "api"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest",
+        "cwd": "api"
+      }
+    },
+    "test-coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest --cov",
+        "cwd": "api"
+      }
+    },
+
+    "shell": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose exec api sh",
+        "cwd": "."
+      }
+    }
+  },
+  "tags": ["type:app", "stack:django"]
+}
