@@ -6,6 +6,7 @@ import { GOOGLE_CLIENT_ID } from "../constants/routes/api";
 import ErrorToast from "./components/custom/ErrorToast";
 import AuthInitializer from "./components/custom/AuthInitializer";
 import HealthCheck from "./components/custom/HealthCheck";
+import { ThemeProvider } from "./components/providers/ThemeProvider";
 
 import LoginPage from "./pages/auth/login-page";
 import { useAppSelector } from "./app/hooks";
@@ -36,30 +37,32 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <HealthCheck>
-      <AuthInitializer />
-      <GoogleOAuthProvider clientId={clientId}>
-        <Router>
-          <Routes>
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<HomePage />} />
-            </Route>
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={isAuthenticated ? <Navigate to="/chat" replace /> : <LoginPage />} />
-            </Route>
-            <Route element={<PrivateRoute />}>
-              <Route element={<AppShell isMobile={isMobile} />}>
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/chat/:chatId" element={<ChatPage />} />
-                <Route path="/friends" element={<FriendsPage />} />
-                <Route path="/new-chat" element={<NewChat />} />
+    <ThemeProvider>
+      <HealthCheck>
+        <AuthInitializer />
+        <GoogleOAuthProvider clientId={clientId}>
+          <Router>
+            <Routes>
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<HomePage />} />
               </Route>
-            </Route>
-          </Routes>
-        </Router>
-        <ErrorToast />
-      </GoogleOAuthProvider>
-    </HealthCheck>
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={isAuthenticated ? <Navigate to="/chat" replace /> : <LoginPage />} />
+              </Route>
+              <Route element={<PrivateRoute />}>
+                <Route element={<AppShell isMobile={isMobile} />}>
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/chat/:chatId" element={<ChatPage />} />
+                  <Route path="/friends" element={<FriendsPage />} />
+                  <Route path="/new-chat" element={<NewChat />} />
+                </Route>
+              </Route>
+            </Routes>
+          </Router>
+          <ErrorToast />
+        </GoogleOAuthProvider>
+      </HealthCheck>
+    </ThemeProvider>
   );
 };
 

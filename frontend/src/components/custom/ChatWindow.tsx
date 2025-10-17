@@ -8,6 +8,9 @@ import {
   Loader2,
   Paperclip,
   Smile,
+  ChevronDown,
+  StickyNote,
+  Phone,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,6 +25,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger 
+} from '@/components/ui/collapsible';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 
 import {
   Message,
@@ -90,6 +106,8 @@ export default function ChatWindow({
   const noteUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [noteDraft, setNoteDraft] = useState(collaborativeNote);
   const [isHuddleActive, setIsHuddleActive] = useState(false);
+  const [isScratchpadDrawerOpen, setIsScratchpadDrawerOpen] = useState(false);
+  const [isHuddleDrawerOpen, setIsHuddleDrawerOpen] = useState(false);
   const huddleJoinTimeRef = useRef<number>(0); // Track when we last joined
   const localStreamRef = useRef<MediaStream | null>(null);
   const localAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -552,8 +570,8 @@ export default function ChatWindow({
   });
 
   return (
-    <div className="flex max-h-[calc(100dvh)] flex-1 flex-col overflow-hidden   bg-background">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border/60 sm:px-6">
+    <div className="flex flex-col flex-1 max-h-screen min-h-screen overflow-hidden">
+      <header className="flex items-center justify-between gap-3 px-4 py-3 shadow-md glass-strong sm:px-6">
         <div className="flex items-center flex-1 gap-3">
           {isMobile && (
             <Button
@@ -561,17 +579,17 @@ export default function ChatWindow({
               size="icon"
               onClick={() => setActiveChat(undefined)}
               aria-label="Back to conversations"
-              className="border rounded-full border-border"
+              className="transition-all duration-300 glass rounded-2xl hover:shadow-md"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
           )}
-          <Avatar className="border h-11 w-11 border-border bg-muted/60">
+          <Avatar className="border-2 shadow-md h-11 w-11 border-primary/20">
             <AvatarImage
               src={activeRoom?.is_group_chat ? '' : otherParticipant.avatar}
               alt={activeRoom?.name || otherParticipant.name}
             />
-            <AvatarFallback className="text-sm font-semibold text-primary">
+            <AvatarFallback className="text-sm font-semibold text-white gradient-primary">
               {(activeRoom?.is_group_chat
                 ? activeRoom.name
                 : otherParticipant.name
@@ -579,7 +597,7 @@ export default function ChatWindow({
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate text-foreground sm:text-base">
+            <p className="text-sm font-bold truncate text-foreground sm:text-base">
               {activeRoom?.name || otherParticipant.name}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -589,8 +607,8 @@ export default function ChatWindow({
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
               {presence.length > 0 ? (
                 presence.map(person => (
-                  <span key={person.id} className="flex items-center gap-1 px-2 py-1 border rounded-full border-border/80 bg-muted/40">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span key={person.id} className="flex items-center gap-1 px-2 py-1 rounded-full shadow-sm glass">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     {person.name}
                   </span>
                 ))
@@ -620,7 +638,7 @@ export default function ChatWindow({
           <Button
             variant="outline"
             size="sm"
-            className="text-xs font-medium rounded-full border-border"
+            className="text-xs font-medium transition-all duration-300 shadow-md glass-card hover:shadow-lg"
             onClick={handleLoadMore}
             disabled={loadingMore}
           >
@@ -647,10 +665,10 @@ export default function ChatWindow({
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : initialError ? (
-        <Card className="text-red-700 border border-red-200 bg-red-100/80 dark:border-red-400/40 dark:bg-red-900/40 dark:text-red-100">
-          <CardContent className="p-6 space-y-3 text-sm font-medium text-center">
+        <Card className="shadow-md glass-card">
+          <CardContent className="p-6 space-y-3 text-sm font-medium text-center text-destructive">
             <p>{initialError}</p>
-            <Button variant="outline" size="sm" onClick={handleRetry}>
+            <Button variant="outline" size="sm" onClick={handleRetry} className="glass-card">
               Retry
             </Button>
           </CardContent>
@@ -671,9 +689,9 @@ export default function ChatWindow({
           );
         })
       ) : (
-        <Card className="border border-dashed border-border bg-muted/40">
+        <Card className="shadow-md glass-card">
           <CardContent className="p-8 space-y-2 text-center">
-            <p className="text-base font-semibold text-foreground">
+            <p className="text-base font-bold text-foreground">
               Say hello
             </p>
             <p className="text-sm text-muted-foreground">
@@ -687,60 +705,211 @@ export default function ChatWindow({
     </div>
   </ScrollArea>
 
-      <Card className="mx-3 mb-3 border border-border bg-background sm:mx-6">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Shared scratchpad</h3>
-            {noteWatchers.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                Viewing: {noteWatchers.map(watcher => watcher.name).join(', ')}
-              </span>
-            )}
+      {/* Scratchpad - Drawer on mobile, Collapsible on desktop */}
+      {isMobile ? (
+        <div className="mx-3 mb-3 sm:mx-6">
+          <Drawer open={isScratchpadDrawerOpen} onOpenChange={setIsScratchpadDrawerOpen}>
+            <DrawerTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
+              >
+                <StickyNote className="w-4 h-4" />
+                <span className="font-semibold">Shared scratchpad</span>
+                {noteWatchers.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {noteWatchers.length} viewing
+                  </Badge>
+                )}
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="border-t glass-strong border-white/10">
+              <DrawerHeader className="text-left">
+                <DrawerTitle className="flex items-center gap-2">
+                  <StickyNote className="w-5 h-5" />
+                  Shared scratchpad
+                </DrawerTitle>
+                <DrawerDescription>
+                  {noteWatchers.length > 0 ? (
+                    <span>Viewing: {noteWatchers.map(watcher => watcher.name).join(', ')}</span>
+                  ) : (
+                    <span>Jot quick todos, links, or huddle notes...</span>
+                  )}
+                </DrawerDescription>
+              </DrawerHeader>
+              <div className="px-4 pb-6">
+                <textarea
+                  value={noteDraft}
+                  onChange={handleNoteChange}
+                  onSelect={handleNoteCursor}
+                  onKeyUp={handleNoteCursor}
+                  onClick={handleNoteCursor}
+                  placeholder="Start typing..."
+                  className="w-full h-64 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
+        </div>
+      ) : (
+        <Collapsible className="mx-3 mb-3 sm:mx-6" defaultOpen>
+          <div className="overflow-hidden shadow-md glass-card rounded-2xl">
+            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground">Shared scratchpad</h3>
+                {noteWatchers.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    Viewing: {noteWatchers.map(watcher => watcher.name).join(', ')}
+                  </span>
+                )}
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4">
+              <textarea
+                value={noteDraft}
+                onChange={handleNoteChange}
+                onSelect={handleNoteCursor}
+                onKeyUp={handleNoteCursor}
+                onClick={handleNoteCursor}
+                placeholder="Jot quick todos, links, or huddle notes..."
+                className="w-full h-32 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </CollapsibleContent>
           </div>
-          <textarea
-            value={noteDraft}
-            onChange={handleNoteChange}
-            onSelect={handleNoteCursor}
-            onKeyUp={handleNoteCursor}
-            onClick={handleNoteCursor}
-            placeholder="Jot quick todos, links, or huddle notes..."
-            className="w-full h-32 px-3 py-2 text-sm border shadow-inner resize-none rounded-xl border-border bg-muted/30 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </CardContent>
-      </Card>
+        </Collapsible>
+      )}
 
-      <Card className="mx-3 mb-4 border border-border bg-background sm:mx-6">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Huddle</h3>
-            <Button variant={isHuddleActive ? 'destructive' : 'default'} size="sm" onClick={isHuddleActive ? stopHuddle : startHuddle}>
-              {isHuddleActive ? 'Leave Huddle' : 'Start Huddle'}
-            </Button>
+      {/* Huddle - Drawer on mobile, Collapsible on desktop */}
+      {isMobile ? (
+        <div className="mx-3 mb-4 sm:mx-6">
+          <Drawer open={isHuddleDrawerOpen} onOpenChange={setIsHuddleDrawerOpen}>
+            <DrawerTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
+              >
+                <Phone className="w-4 h-4" />
+                <span className="font-semibold">Huddle</span>
+                {isHuddleActive && (
+                  <Badge variant="destructive" className="ml-auto">
+                    Active
+                  </Badge>
+                )}
+                {!isHuddleActive && huddleParticipants.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {huddleParticipants.length} in call
+                  </Badge>
+                )}
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="border-t glass-strong border-white/10">
+              <DrawerHeader className="text-left">
+                <DrawerTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-5 h-5" />
+                    Huddle
+                  </div>
+                  <Button 
+                    variant={isHuddleActive ? 'destructive' : 'default'} 
+                    size="sm" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isHuddleActive) {
+                        stopHuddle();
+                      } else {
+                        startHuddle();
+                      }
+                    }}
+                    className="transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    {isHuddleActive ? 'Leave' : 'Join'}
+                  </Button>
+                </DrawerTitle>
+                <DrawerDescription>
+                  {huddleParticipants.length > 0 ? (
+                    <span>{huddleParticipants.length} participant{huddleParticipants.length > 1 ? 's' : ''} in the call</span>
+                  ) : (
+                    <span>Start a huddle to jump into a quick voice chat</span>
+                  )}
+                </DrawerDescription>
+              </DrawerHeader>
+              <div className="px-4 pb-6 space-y-4">
+                <audio ref={localAudioRef} autoPlay muted className="hidden" />
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {huddleParticipants.length > 0 ? (
+                    huddleParticipants.map(participant => (
+                      <span key={participant.id} className="px-3 py-1.5 rounded-full shadow-sm glass font-medium">
+                        {participant.name}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground">No active huddle participants</span>
+                  )}
+                </div>
+                {remoteStreams.length > 0 && (
+                  <div className="space-y-2">
+                    {remoteStreams.map(({ userId, stream }) => {
+                      const participant = huddleParticipants.find(item => item.id === userId);
+                      return <HuddleAudio key={userId} stream={stream} label={participant?.name ?? `Participant ${userId}`} />;
+                    })}
+                  </div>
+                )}
+              </div>
+            </DrawerContent>
+          </Drawer>
+        </div>
+      ) : (
+        <Collapsible className="mx-3 mb-4 sm:mx-6" defaultOpen>
+          <div className="overflow-hidden shadow-md glass-card rounded-2xl">
+            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-bold text-foreground">Huddle</h3>
+                <Button 
+                  variant={isHuddleActive ? 'destructive' : 'default'} 
+                  size="sm" 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent collapsible toggle
+                    if (isHuddleActive) {
+                      stopHuddle();
+                    } else {
+                      startHuddle();
+                    }
+                  }}
+                  className="transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  {isHuddleActive ? 'Leave' : 'Join'}
+                </Button>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4 space-y-3">
+              <audio ref={localAudioRef} autoPlay muted className="hidden" />
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {huddleParticipants.length > 0 ? (
+                  huddleParticipants.map(participant => (
+                    <span key={participant.id} className="px-2 py-1 rounded-full shadow-sm glass">
+                      {participant.name}
+                    </span>
+                  ))
+                ) : (
+                  <span>No active huddle participants</span>
+                )}
+              </div>
+              {remoteStreams.length > 0 ? (
+                <div className="space-y-2">
+                  {remoteStreams.map(({ userId, stream }) => {
+                    const participant = huddleParticipants.find(item => item.id === userId);
+                    return <HuddleAudio key={userId} stream={stream} label={participant?.name ?? `Participant ${userId}`} />;
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Start a huddle to jump into a quick voice chat.</p>
+              )}
+            </CollapsibleContent>
           </div>
-          <audio ref={localAudioRef} autoPlay muted className="hidden" />
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {huddleParticipants.length > 0 ? (
-              huddleParticipants.map(participant => (
-                <span key={participant.id} className="px-2 py-1 border rounded-full border-border">
-                  {participant.name}
-                </span>
-              ))
-            ) : (
-              <span>No active huddle participants</span>
-            )}
-          </div>
-          {remoteStreams.length > 0 ? (
-            <div className="space-y-2">
-              {remoteStreams.map(({ userId, stream }) => {
-                const participant = huddleParticipants.find(item => item.id === userId);
-                return <HuddleAudio key={userId} stream={stream} label={participant?.name ?? `Participant ${userId}`} />;
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Start a huddle to jump into a quick voice chat.</p>
-          )}
-        </CardContent>
-      </Card>
+        </Collapsible>
+      )}
 
       {typingNames.length > 0 && (
         <p className="px-3 pb-2 text-xs text-muted-foreground sm:px-6">
@@ -750,17 +919,17 @@ export default function ChatWindow({
 
       <form
         onSubmit={onSubmit}
-        className="px-3 py-3 border-t border-border/60 bg-background sm:px-6"
+        className="px-3 py-3 shadow-md glass-strong sm:px-6"
       >
         {editingMessage && (
-          <div className="flex items-center justify-between px-3 py-2 mb-2 text-xs rounded-xl bg-secondary/80 text-secondary-foreground">
+          <div className="flex items-center justify-between px-3 py-2 mb-2 text-xs shadow-sm rounded-2xl glass-card">
             <span className="font-medium">Editing message</span>
             <Button variant="ghost" size="sm" onClick={cancelEditing}>
               Cancel
             </Button>
           </div>
         )}
-        <div className="flex flex-col gap-2 px-3 py-2 border rounded-2xl border-border/80 bg-muted/40 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+        <div className="flex flex-col gap-2 px-3 py-2 shadow-md glass-card rounded-2xl sm:flex-row sm:items-center sm:gap-3 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <ComposerIcon
               type="button"
@@ -783,7 +952,7 @@ export default function ChatWindow({
             <Button
               type="submit"
               size="icon"
-              className="rounded-full h-9 w-9 sm:h-10 sm:w-10"
+              className="transition-all duration-300 rounded-2xl h-9 w-9 sm:h-10 sm:w-10 gradient-primary shadow-glow hover:shadow-glow-strong"
               aria-label="Send message"
             >
               <Send className="w-4 h-4" />

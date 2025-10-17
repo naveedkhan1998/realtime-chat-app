@@ -63,7 +63,7 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen">
       <div className="flex flex-col w-full min-h-screen mx-auto lg:flex-row">
         <Sidebar
           activeChat={activeChat}
@@ -75,17 +75,17 @@ export default function AppShell({ isMobile }: AppShellProps) {
         />
         {isMobile && isSidebarOpen && (
           <div
-            className="fixed inset-0 z-30 bg-background/70 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-30 bg-background/80 backdrop-blur-md lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
-        <main className="relative flex flex-col flex-1 min-h-screen bg-background">
+        <main className="relative flex flex-col flex-1 min-h-screen">
           {isMobile && (
-            <div className="fixed top-0 px-4 pt-4 sm:px-6">
+            <div className="fixed top-4 left-4 z-10">
               <Button
                 variant="outline"
                 size="icon"
-                className="border rounded-full border-border"
+                className="glass-card shadow-lg hover:shadow-glow transition-all duration-300"
                 onClick={() => setIsSidebarOpen(true)}
                 aria-label="Open navigation"
               >
@@ -93,7 +93,7 @@ export default function AppShell({ isMobile }: AppShellProps) {
               </Button>
             </div>
           )}
-          <div className="flex-1 overflow-y-auto ">
+          <div className="flex-1 overflow-y-auto">
             <Outlet
               context={{
                 activeChat,
