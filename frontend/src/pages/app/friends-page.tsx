@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useAppSelector } from "@/app/hooks";
 import { useGetFriendshipsQuery, useGetFriendRequestsQuery, useSendFriendRequestMutation, useAcceptFriendRequestMutation, useDeclineFriendRequestMutation } from "@/services/chatApi";
 import { useSearchUsersQuery } from "@/services/userApi";
@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { Search, UserPlus, Check, X, Loader2, UserX } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import { Search, UserPlus, Check, X, Loader2, UserX, Sparkles, Users2, Shield, Filter } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export default function Friends() {
   const user = useAppSelector((state) => state.auth.user);
@@ -21,7 +22,6 @@ export default function Friends() {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const { data: friendships, isLoading: friendshipsLoading, error: friendshipsError, refetch: refetchFriendships } = useGetFriendshipsQuery(undefined, { pollingInterval: 10000 });
-
   const {
     data: receivedRequests,
     isLoading: receivedRequestsLoading,
@@ -29,26 +29,36 @@ export default function Friends() {
     refetch: refetchReceivedRequests,
   } = useGetFriendRequestsQuery(undefined, { pollingInterval: 10000 });
 
-  const filteredRequests = receivedRequests?.filter((request) => request.status === "pending");
-
   const [sendFriendRequest, { isLoading: sendingRequest }] = useSendFriendRequestMutation();
   const [acceptFriendRequest, { isLoading: acceptingRequest }] = useAcceptFriendRequestMutation();
   const [declineFriendRequest, { isLoading: decliningRequest }] = useDeclineFriendRequestMutation();
-
   const { data: searchResults, isLoading: searchLoading, error: searchError } = useSearchUsersQuery({ query: debouncedSearchQuery }, { skip: !debouncedSearchQuery });
+
+  const filteredRequests = receivedRequests?.filter((request) => request.status === "pending");
+
+  const filteredFriends = friendships?.flatMap((friendship) => {
+    const connections = [friendship.user1, friendship.user2].filter((connection) => connection.id !== user?.id);
+    return connections.filter((connection) => {
+      if (friendFilter === "all") return true;
+      return connection.name.toLowerCase().includes(friendFilter.toLowerCase());
+    });
+  });
+
+  const totalFriends = filteredFriends?.length ?? 0;
+  const pendingCount = filteredRequests?.length ?? 0;
 
   const handleSendFriendRequest = async (toUserId: number) => {
     try {
       await sendFriendRequest({ to_user_id: toUserId }).unwrap();
       toast({
-        title: "Friend request sent",
-        description: "Your friend request has been sent successfully.",
+        title: "Request sent",
+        description: "They'll receive your invite in their activity feed.",
       });
     } catch (error) {
       console.error("Failed to send friend request:", error);
       toast({
         title: "Error",
-        description: "Failed to send friend request. Please try again.",
+        description: "We couldn't send that invite. Give it another go.",
         variant: "destructive",
       });
     }
@@ -58,8 +68,8 @@ export default function Friends() {
     try {
       await acceptFriendRequest({ id: requestId }).unwrap();
       toast({
-        title: "Friend request accepted",
-        description: "You are now friends!",
+        title: "Connection confirmed",
+        description: "You're now connected and can start collaborating.",
       });
       refetchFriendships();
       refetchReceivedRequests();
@@ -67,7 +77,7 @@ export default function Friends() {
       console.error("Failed to accept friend request:", error);
       toast({
         title: "Error",
-        description: "Failed to accept friend request. Please try again.",
+        description: "We couldn't accept that invite. Try again shortly.",
         variant: "destructive",
       });
     }
@@ -77,192 +87,264 @@ export default function Friends() {
     try {
       await declineFriendRequest({ id: requestId }).unwrap();
       toast({
-        title: "Friend request declined",
-        description: "The friend request has been declined.",
+        title: "Invite dismissed",
+        description: "The requester has been notified.",
       });
       refetchReceivedRequests();
     } catch (error) {
       console.error("Failed to decline friend request:", error);
       toast({
         title: "Error",
-        description: "Failed to decline friend request. Please try again.",
+        description: "We couldn't remove that invite. Try again shortly.",
         variant: "destructive",
       });
     }
   };
 
-  const filteredFriends = friendships?.flatMap((friendship) => {
-    const friends = [friendship.user1, friendship.user2].filter((friend) => friend.id !== user?.id);
-    return friends.filter((friend) => {
-      if (friendFilter === "all") return true;
-      return friend.name.toLowerCase().includes(friendFilter.toLowerCase());
-    });
-  });
-
   return (
-    <div className="flex-grow overflow-y-auto p-4">
-      <div className="w-full max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Friends</h2>
-        <Tabs defaultValue="friends" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="friends">Friends</TabsTrigger>
-            <TabsTrigger value="requests">
-              Requests
-              {filteredRequests && filteredRequests.length > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {filteredRequests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="add">Add Friends</TabsTrigger>
-          </TabsList>
-          <TabsContent value="friends">
-            <div className="flex items-center mb-4 space-x-2">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Filter friends" value={friendFilter} onChange={(e) => setFriendFilter(e.target.value)} className="flex-grow" />
+    <div className="flex h-full flex-col gap-6">
+      <section className="rounded-2xl border border-border bg-background px-4 py-6 sm:px-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-medium uppercase text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5" />
+              Connections
             </div>
-            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-              {friendshipsLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : friendshipsError ? (
-                <p className="text-center text-red-500">Error loading friends</p>
-              ) : filteredFriends && filteredFriends.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredFriends.map((friend) => (
-                    <div key={friend.id} className="flex items-center justify-between p-3 transition-colors rounded-lg bg-muted hover:bg-muted/80">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={friend.avatar} alt={friend.name} />
-                          <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{friend.name}</p>
-                          <p className="text-sm text-muted-foreground">Online</p>
-                        </div>
-                      </div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <UserX className="w-5 h-5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Remove friend</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground">You have no friends yet.</p>
-              )}
-            </ScrollArea>
-          </TabsContent>
-          <TabsContent value="requests">
-            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-              {receivedRequestsLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : receivedRequestsError ? (
-                <p className="text-center text-red-500">Error loading friend requests</p>
-              ) : filteredRequests && filteredRequests.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredRequests.map((request) => (
-                    <div key={request.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={request.from_user.avatar} alt={request.from_user.name} />
-                          <AvatarFallback>{request.from_user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{request.from_user.name}</span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" onClick={() => handleAcceptFriendRequest(request.id)} disabled={acceptingRequest || request.status !== "pending"}>
-                                <Check className="w-5 h-5 text-green-500" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Accept request</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" onClick={() => handleDeclineFriendRequest(request.id)} disabled={decliningRequest || request.status !== "pending"}>
-                                <X className="w-5 h-5 text-red-500" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Decline request</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground">No pending friend requests</p>
-              )}
-            </ScrollArea>
-          </TabsContent>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">Manage the people you chat with</h1>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">Respond to invitations, keep an eye on active friends, and discover teammates to start new threads with.</p>
+            </div>
+          </div>
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:max-w-md">
+            <MetricCard icon={Users2} label="Friends" value={totalFriends.toString()} helper="Confirmed connections" />
+            <MetricCard icon={Shield} label="Requests" value={pendingCount.toString()} helper="Waiting for a response" />
+          </div>
+        </div>
+      </section>
 
-          <TabsContent value="add">
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search users" className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      <Card className="border border-border bg-background/70">
+        <CardContent className="space-y-6 p-4 sm:p-6">
+          <Tabs defaultValue="friends" className="w-full space-y-5">
+            <TabsList className="grid w-full grid-cols-3 rounded-xl border border-border bg-muted/40 p-1 text-sm">
+              <TabsTrigger value="friends" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground">
+                Friends
+              </TabsTrigger>
+              <TabsTrigger value="requests" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground">
+                Requests
+                {pendingCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 rounded-full bg-primary/10 text-[11px] text-primary">
+                    {pendingCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="discover" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground">
+                Discover
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="friends" className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex min-w-[220px] flex-1">
+                  <Filter className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Filter by name"
+                    value={friendFilter}
+                    onChange={(event) => setFriendFilter(event.target.value)}
+                    className="h-11 rounded-full border border-border bg-background pl-10 text-sm focus:border-primary/40 focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Total {totalFriends}</p>
               </div>
-              <ScrollArea className="h-[350px] w-full rounded-md border p-4">
-                {searchLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  </div>
-                ) : searchError ? (
-                  <p className="text-center text-red-500">Error searching users</p>
-                ) : searchResults && searchResults.length > 0 ? (
-                  <div className="space-y-3">
-                    {searchResults.map((searchUser) => (
-                      <div key={searchUser.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={searchUser.avatar} alt={searchUser.name} />
-                            <AvatarFallback>{searchUser.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{searchUser.name}</span>
-                        </div>
+              <GradientScrollArea loading={friendshipsLoading} error={friendshipsError && "Unable to load your connections."}>
+                {filteredFriends && filteredFriends.length > 0 ? (
+                  filteredFriends.map((friend) => (
+                    <ConnectionRow
+                      key={friend.id}
+                      title={friend.name}
+                      subtitle="Online"
+                      avatar={friend.avatar}
+                      action={
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" onClick={() => handleSendFriendRequest(searchUser.id)} disabled={sendingRequest}>
-                                <UserPlus className="w-5 h-5" />
+                              <Button variant="ghost" size="icon" className="rounded-full border border-border text-muted-foreground hover:text-destructive">
+                                <UserX className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Send friend request</p>
-                            </TooltipContent>
+                            <TooltipContent>Remove friend</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                      </div>
-                    ))}
-                  </div>
+                      }
+                    />
+                  ))
                 ) : (
-                  debouncedSearchQuery && <p className="text-center text-muted-foreground">No users found</p>
+                  <EmptyState message="No connections yet. Invite collaborators to start chatting." />
                 )}
-              </ScrollArea>
-            </div>
-          </TabsContent>
-        </Tabs>
+              </GradientScrollArea>
+            </TabsContent>
+
+            <TabsContent value="requests" className="space-y-5">
+              <GradientScrollArea loading={receivedRequestsLoading} error={receivedRequestsError && "Couldn't fetch pending invites."}>
+                {filteredRequests && filteredRequests.length > 0 ? (
+                  filteredRequests.map((request) => (
+                    <ConnectionRow
+                      key={request.id}
+                      title={request.from_user.name}
+                      subtitle={request.from_user.email}
+                      avatar={request.from_user.avatar}
+                      action={
+                        <div className="flex items-center gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="rounded-full border border-border text-green-600 hover:bg-green-500/10"
+                                  onClick={() => handleAcceptFriendRequest(request.id)}
+                                  disabled={acceptingRequest || request.status !== "pending"}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Accept request</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="rounded-full border border-border text-red-500 hover:bg-red-500/10"
+                                  onClick={() => handleDeclineFriendRequest(request.id)}
+                                  disabled={decliningRequest || request.status !== "pending"}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Decline request</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      }
+                    />
+                  ))
+                ) : (
+                  <EmptyState message="No pending invites right now." />
+                )}
+              </GradientScrollArea>
+            </TabsContent>
+
+            <TabsContent value="discover" className="space-y-5">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email"
+                  className="h-11 rounded-full border border-border bg-background pl-10 text-sm focus:border-primary/40 focus:ring-2 focus:ring-primary/30"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+              </div>
+              <GradientScrollArea loading={searchLoading} error={searchError && "We couldn't perform that lookup just yet."}>
+                {searchResults && searchResults.length > 0 ? (
+                  searchResults
+                    .filter((candidate) => candidate.id !== user?.id)
+                    .map((candidate) => (
+                      <ConnectionRow
+                        key={candidate.id}
+                        title={candidate.name}
+                        subtitle={candidate.email}
+                        avatar={candidate.avatar}
+                        action={
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="rounded-full border border-border text-primary hover:bg-primary/10"
+                                  onClick={() => handleSendFriendRequest(candidate.id)}
+                                  disabled={sendingRequest}
+                                >
+                                  <UserPlus className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Send request</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        }
+                      />
+                    ))
+                ) : debouncedSearchQuery ? (
+                  <EmptyState message="No matching profiles yet. Try another name or invite them directly." />
+                ) : (
+                  <EmptyState message="Search for teammates to add them to your chat list." />
+                )}
+              </GradientScrollArea>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ConnectionRow({ title, subtitle, avatar, action }: { title: string; subtitle: string; avatar?: string; action?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-3 py-3 transition hover:border-primary/30">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10 border border-border bg-muted/40">
+          <AvatarImage src={avatar} alt={title} />
+          <AvatarFallback className="text-sm font-semibold text-primary">{title.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
       </div>
+      {action}
+    </div>
+  );
+}
+
+function MetricCard({ icon: Icon, label, value, helper }: { icon: React.ElementType; label: string; value: string; helper: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm">
+      <span className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div>
+        <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
+        <p className="text-2xl font-semibold text-foreground">{value}</p>
+        <p className="text-xs text-muted-foreground">{helper}</p>
+      </div>
+    </div>
+  );
+}
+
+function GradientScrollArea({ children, loading, error }: { children: React.ReactNode; loading: boolean; error?: string | false }) {
+  return (
+    <ScrollArea className="h-[340px] w-full rounded-xl border border-border bg-background/60 p-3">
+      {loading ? (
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-300/60 bg-red-50 p-5 text-center text-sm text-red-600 dark:border-red-400/40 dark:bg-red-900/40 dark:text-red-100">
+          {error}
+        </div>
+      ) : (
+        <div className="space-y-3">{children}</div>
+      )}
+    </ScrollArea>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border px-6 py-8 text-center text-sm text-muted-foreground">
+      {message}
     </div>
   );
 }

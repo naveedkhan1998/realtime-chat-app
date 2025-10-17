@@ -1,46 +1,39 @@
-import React from "react";
-import { Message, User } from "@/services/chatApi";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Message, User } from "@/services/chatApi";
+import { cn } from "@/lib/utils";
 
 interface MessageBubbleProps {
   message: Message;
   isSent: boolean;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSent }) => {
+export default function MessageBubble({ message, isSent }: MessageBubbleProps) {
   const sender: User = message.sender;
   const timestamp = new Date(message.timestamp);
+  const formattedTime = format(timestamp, "HH:mm");
 
   return (
-    <div className={`flex ${isSent ? "justify-end" : "justify-start"} mb-4`}>
-      {!isSent && (
-        <Avatar className="w-8 h-8 mr-2">
-          <AvatarImage src={sender.avatar} alt={sender.name} />
-          <AvatarFallback>{sender.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-      )}
-      <div className={`flex flex-col ${isSent ? "items-end" : "items-start"}`}>
+    <div className={cn("flex w-full gap-3", isSent ? "flex-row-reverse" : "flex-row")}>
+      <Avatar className="h-9 w-9 border border-border bg-muted/40 text-primary">
+        <AvatarImage src={sender.avatar} alt={sender.name} />
+        <AvatarFallback className="text-xs font-semibold text-primary">{sender.name.charAt(0)}</AvatarFallback>
+      </Avatar>
+      <div className={cn("flex max-w-[80%] flex-col gap-1 sm:max-w-[70%]", isSent ? "items-end text-right" : "items-start text-left")}>
         <div
-          className={`rounded-lg p-3 max-w-xs break-words ${
-            isSent ? "bg-blue-500 text-white rounded-br-none" : "bg-gray-300 text-black rounded-bl-none"
-          }`}
+          className={cn(
+            "w-full rounded-2xl px-4 py-2 text-sm shadow-sm",
+            isSent ? "bg-primary text-primary-foreground" : "border border-border bg-background"
+          )}
         >
-          {!isSent && <p className="text-sm font-semibold mb-1">{sender.name}</p>}
-          <p>{message.content}</p>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className={cn("font-semibold", isSent ? "text-primary-foreground/80" : "text-foreground/80")}>{isSent ? "You" : sender.name}</span>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{formattedTime}</span>
+          </div>
+          <p className={cn("mt-1 whitespace-pre-wrap leading-relaxed", isSent ? "text-primary-foreground" : "text-foreground")}>{message.content}</p>
         </div>
-        <span className="text-xs text-gray-500 mt-1">
-          {format(timestamp, "p")}
-        </span>
+        <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Delivered • {formattedTime}</span>
       </div>
-      {isSent && (
-        <Avatar className="w-8 h-8 ml-2">
-          <AvatarImage src={sender.avatar} alt={sender.name} />
-          <AvatarFallback>{sender.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-      )}
     </div>
   );
-};
-
-export default MessageBubble;
+}
