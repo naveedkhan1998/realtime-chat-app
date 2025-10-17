@@ -172,10 +172,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Common Settings
 GS_BUCKET_NAME = "realtime-app-bucket"
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, "gcpCredentials.json")
-)
-
+GS_CREDENTIALS = None
+# Attempt to load credentials from local file, fallback to server path
+try:
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        os.path.join(BASE_DIR, "gcpCredentials.json")
+    )
+except Exception as e:
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+        "/etc/secret/gcpCredentials.json"
+    )
 # Debug-based Configuration
 if DEBUG:
     # Local development: Use the filesystem for static and media files
