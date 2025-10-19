@@ -1,4 +1,11 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Users,
@@ -25,10 +32,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger 
+  CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
   Drawer,
@@ -84,16 +91,29 @@ export default function ChatWindow({
   const messages = useAppSelector(
     state => state.chat.messages[activeChat] || emptyMessages
   );
-  const presence = useAppSelector(state => state.chat.presence[activeChat] ?? emptyPresence);
-  const typingMap = useAppSelector(state => state.chat.typingStatuses[activeChat] ?? emptyTypingMap);
-  const collaborativeNote = useAppSelector(state => state.chat.collaborativeNotes[activeChat] ?? "");
-  const cursors = useAppSelector(state => state.chat.cursors[activeChat] ?? emptyCursors);
-  const huddleParticipants = useAppSelector(state => state.chat.huddleParticipants[activeChat] ?? emptyHuddleParticipants);
+  const presence = useAppSelector(
+    state => state.chat.presence[activeChat] ?? emptyPresence
+  );
+  const typingMap = useAppSelector(
+    state => state.chat.typingStatuses[activeChat] ?? emptyTypingMap
+  );
+  const collaborativeNote = useAppSelector(
+    state => state.chat.collaborativeNotes[activeChat] ?? ''
+  );
+  const cursors = useAppSelector(
+    state => state.chat.cursors[activeChat] ?? emptyCursors
+  );
+  const huddleParticipants = useAppSelector(
+    state =>
+      state.chat.huddleParticipants[activeChat] ?? emptyHuddleParticipants
+  );
   const existingMessagesRef = useRef(messages);
   const nextCursor = useAppSelector(
     state => state.chat.pagination[activeChat]?.nextCursor ?? null
   );
-  const { register, handleSubmit, reset, setValue, watch } = useForm<{ message: string }>();
+  const { register, handleSubmit, reset, setValue, watch } = useForm<{
+    message: string;
+  }>();
   const [fetchMessagesPage] = useLazyGetMessagesPageQuery();
   const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
@@ -113,22 +133,31 @@ export default function ChatWindow({
   const localAudioRef = useRef<HTMLAudioElement | null>(null);
   const peersRef = useRef<Map<number, RTCPeerConnection>>(new Map());
   const remoteStreamsRef = useRef<Map<number, MediaStream>>(new Map());
-  const [remoteStreams, setRemoteStreams] = useState<Array<{ userId: number; stream: MediaStream }>>([]);
+  const [remoteStreams, setRemoteStreams] = useState<
+    Array<{ userId: number; stream: MediaStream }>
+  >([]);
   const typingNames = useMemo(
-    () => presence.filter(u => typingMap[u.id] && u.id !== user.id).map(u => u.name),
-    [presence, typingMap, user.id],
+    () =>
+      presence
+        .filter(u => typingMap[u.id] && u.id !== user.id)
+        .map(u => u.name),
+    [presence, typingMap, user.id]
   );
   const noteWatchers = useMemo(() => {
     return Object.keys(cursors)
       .map(id => presence.find(userEntry => userEntry.id === Number(id)))
       .filter(Boolean)
-      .filter(entry => entry!.id !== user.id) as Array<{ id: number; name: string; avatar?: string | null }>;
+      .filter(entry => entry!.id !== user.id) as Array<{
+      id: number;
+      name: string;
+      avatar?: string | null;
+    }>;
   }, [cursors, presence, user.id]);
 
   const scrollToBottom = useCallback(
-    (behavior: "auto" | "instant" | "smooth" = "smooth") => {
+    (behavior: 'auto' | 'instant' | 'smooth' = 'smooth') => {
       if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
+        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
       }
     },
     []
@@ -170,17 +199,17 @@ export default function ChatWindow({
         setMessagePagination({
           chatRoomId: activeChat,
           nextCursor: extractCursor(response.next),
-        }),
+        })
       );
       shouldAutoScrollRef.current = true;
-      requestAnimationFrame(() => scrollToBottom("auto"));
+      requestAnimationFrame(() => scrollToBottom('auto'));
       initialScrollDoneRef.current = true;
     } catch (error) {
       console.error('Failed to load messages', error);
       setInitialError('Unable to load messages. Try again.');
       dispatch(setMessages({ chatRoomId: activeChat, messages: [] }));
       dispatch(
-        setMessagePagination({ chatRoomId: activeChat, nextCursor: null }),
+        setMessagePagination({ chatRoomId: activeChat, nextCursor: null })
       );
     } finally {
       setInitialLoading(false);
@@ -206,7 +235,7 @@ export default function ChatWindow({
         setMessagePagination({
           chatRoomId: activeChat,
           nextCursor: extractCursor(response.next),
-        }),
+        })
       );
     } catch (error) {
       console.error('Failed to load older messages', error);
@@ -231,12 +260,14 @@ export default function ChatWindow({
       setValue('message', message.content);
       shouldAutoScrollRef.current = false;
     },
-    [setValue],
+    [setValue]
   );
 
   const handleDeleteMessage = useCallback(
     (message: Message) => {
-      const confirmed = window.confirm('Delete this message? This action cannot be undone.');
+      const confirmed = window.confirm(
+        'Delete this message? This action cannot be undone.'
+      );
       if (!confirmed) return;
       const ws = WebSocketService.getInstance();
       ws.sendDeleteMessage(message.id);
@@ -244,14 +275,15 @@ export default function ChatWindow({
         cancelEditing();
       }
     },
-    [cancelEditing, editingMessage],
+    [cancelEditing, editingMessage]
   );
 
   // Throttled cursor update - reduces Redis writes by ~80%
   const throttledCursorUpdate = useMemo(
-    () => throttle((cursor: { start: number; end: number }) => {
-      WebSocketService.getInstance().sendCursorUpdate(cursor);
-    }, 200),
+    () =>
+      throttle((cursor: { start: number; end: number }) => {
+        WebSocketService.getInstance().sendCursorUpdate(cursor);
+      }, 200),
     []
   );
 
@@ -259,7 +291,9 @@ export default function ChatWindow({
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = event.target.value;
       setNoteDraft(value);
-      dispatch(setCollaborativeNote({ chatRoomId: activeChat, content: value }));
+      dispatch(
+        setCollaborativeNote({ chatRoomId: activeChat, content: value })
+      );
       const ws = WebSocketService.getInstance();
       if (noteUpdateTimeoutRef.current) {
         clearTimeout(noteUpdateTimeoutRef.current);
@@ -269,23 +303,33 @@ export default function ChatWindow({
         ws.sendCollaborativeNote(value);
       }, 500);
       // Throttle cursor updates to 200ms
-      throttledCursorUpdate({ start: event.target.selectionStart, end: event.target.selectionEnd });
+      throttledCursorUpdate({
+        start: event.target.selectionStart,
+        end: event.target.selectionEnd,
+      });
     },
-    [activeChat, dispatch, throttledCursorUpdate],
+    [activeChat, dispatch, throttledCursorUpdate]
   );
 
-  const handleNoteCursor = useCallback((event: React.SyntheticEvent<HTMLTextAreaElement>) => {
-    const target = event.target as HTMLTextAreaElement;
-    const cursor = {
-      start: target.selectionStart,
-      end: target.selectionEnd,
-    };
-    // Use throttled version
-    throttledCursorUpdate(cursor);
-  }, [throttledCursorUpdate]);
+  const handleNoteCursor = useCallback(
+    (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      const target = event.target as HTMLTextAreaElement;
+      const cursor = {
+        start: target.selectionStart,
+        end: target.selectionEnd,
+      };
+      // Use throttled version
+      throttledCursorUpdate(cursor);
+    },
+    [throttledCursorUpdate]
+  );
 
   const refreshRemoteStreams = useCallback(() => {
-    setRemoteStreams(Array.from(remoteStreamsRef.current.entries()).map(([userId, stream]) => ({ userId, stream })));
+    setRemoteStreams(
+      Array.from(remoteStreamsRef.current.entries()).map(
+        ([userId, stream]) => ({ userId, stream })
+      )
+    );
   }, []);
 
   const ensurePeerConnection = useCallback(
@@ -322,7 +366,9 @@ export default function ChatWindow({
       };
 
       if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
+        localStreamRef.current
+          .getTracks()
+          .forEach(track => pc.addTrack(track, localStreamRef.current!));
       }
 
       if (initiator) {
@@ -338,13 +384,13 @@ export default function ChatWindow({
 
       return pc;
     },
-    [refreshRemoteStreams],
+    [refreshRemoteStreams]
   );
 
   const startHuddle = useCallback(async () => {
     if (isHuddleActive) return;
     console.log('🎙️ Starting huddle...');
-    
+
     try {
       console.log('🎙️ Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -359,7 +405,11 @@ export default function ChatWindow({
       WebSocketService.getInstance().sendHuddleJoin();
     } catch (error) {
       console.error('❌ Failed to start huddle:', error);
-      alert(`Failed to start huddle: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to start huddle: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   }, [isHuddleActive]);
 
@@ -394,7 +444,10 @@ export default function ChatWindow({
         await pc.setRemoteDescription(payload.sdp);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        WebSocketService.getInstance().sendHuddleSignal(from.id, { type: 'answer', sdp: answer });
+        WebSocketService.getInstance().sendHuddleSignal(from.id, {
+          type: 'answer',
+          sdp: answer,
+        });
       } else if (payload.type === 'answer' && payload.sdp) {
         await pc.setRemoteDescription(payload.sdp);
       } else if (payload.type === 'candidate' && payload.candidate) {
@@ -405,7 +458,7 @@ export default function ChatWindow({
         }
       }
     },
-    [ensurePeerConnection, isHuddleActive, user.id],
+    [ensurePeerConnection, isHuddleActive, user.id]
   );
 
   useEffect(() => {
@@ -419,26 +472,43 @@ export default function ChatWindow({
 
   useEffect(() => {
     if (!isHuddleActive || !localStreamRef.current) {
-      console.log('🎙️ Skipping peer connection setup:', { isHuddleActive, hasLocalStream: !!localStreamRef.current });
+      console.log('🎙️ Skipping peer connection setup:', {
+        isHuddleActive,
+        hasLocalStream: !!localStreamRef.current,
+      });
       return;
     }
-    console.log('🎙️ Setting up peer connections for participants:', huddleParticipants);
+    console.log(
+      '🎙️ Setting up peer connections for participants:',
+      huddleParticipants
+    );
     huddleParticipants.forEach(participant => {
       if (participant.id === user.id) return;
       const initiator = user.id < participant.id;
-      console.log(`🎙️ Creating peer connection with user ${participant.id}, initiator:`, initiator);
+      console.log(
+        `🎙️ Creating peer connection with user ${participant.id}, initiator:`,
+        initiator
+      );
       ensurePeerConnection(participant.id, initiator);
     });
     peersRef.current.forEach((pc, peerId) => {
       if (!huddleParticipants.some(participant => participant.id === peerId)) {
-        console.log(`🎙️ Closing peer connection with user ${peerId} (left huddle)`);
+        console.log(
+          `🎙️ Closing peer connection with user ${peerId} (left huddle)`
+        );
         pc.close();
         peersRef.current.delete(peerId);
         remoteStreamsRef.current.delete(peerId);
         refreshRemoteStreams();
       }
     });
-  }, [ensurePeerConnection, huddleParticipants, isHuddleActive, refreshRemoteStreams, user.id]);
+  }, [
+    ensurePeerConnection,
+    huddleParticipants,
+    isHuddleActive,
+    refreshRemoteStreams,
+    user.id,
+  ]);
 
   useEffect(() => {
     if (!isHuddleActive) {
@@ -448,12 +518,18 @@ export default function ChatWindow({
     // Grace period: skip check for 2 seconds after joining to avoid race condition
     const timeSinceJoin = Date.now() - huddleJoinTimeRef.current;
     if (timeSinceJoin < 2000) {
-      console.log(`🎙️ Skipping participant check (${timeSinceJoin}ms since join, waiting for server update)`);
+      console.log(
+        `🎙️ Skipping participant check (${timeSinceJoin}ms since join, waiting for server update)`
+      );
       return;
     }
 
     // Check if current user was removed from huddle by someone else
-    if (huddleParticipants && huddleParticipants.length > 0 && !huddleParticipants.some(participant => participant.id === user.id)) {
+    if (
+      huddleParticipants &&
+      huddleParticipants.length > 0 &&
+      !huddleParticipants.some(participant => participant.id === user.id)
+    ) {
       console.log('🎙️ User removed from huddle, stopping...');
       stopHuddle();
     }
@@ -472,7 +548,7 @@ export default function ChatWindow({
     if (messages.length === 0) {
       return;
     }
-    const behavior = initialScrollDoneRef.current ? "smooth" : "auto";
+    const behavior = initialScrollDoneRef.current ? 'smooth' : 'auto';
     if (!shouldAutoScrollRef.current) {
       shouldAutoScrollRef.current = true;
       return;
@@ -495,12 +571,12 @@ export default function ChatWindow({
 
   useEffect(() => {
     const ws = WebSocketService.getInstance();
-    
+
     // Skip if WebSocket is not connected (e.g., during StrictMode remount)
     if (!ws.isConnected()) {
       return;
     }
-    
+
     if (!messageValue) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -526,7 +602,7 @@ export default function ChatWindow({
     return () => {
       console.log('🧹 ChatWindow cleanup - component unmounting');
       const ws = WebSocketService.getInstance();
-      
+
       // Only send cleanup messages if WebSocket is connected
       if (ws.isConnected()) {
         ws.sendTypingStatus(false);
@@ -534,7 +610,7 @@ export default function ChatWindow({
         console.log('🧹 Sending final huddle_leave on unmount');
         ws.sendHuddleLeave();
       }
-      
+
       if (noteUpdateTimeoutRef.current) {
         clearTimeout(noteUpdateTimeoutRef.current);
       }
@@ -545,7 +621,10 @@ export default function ChatWindow({
   }, []); // Empty deps - only run on mount/unmount
 
   useEffect(() => {
-    if (editingMessage && !messages.some(message => message.id === editingMessage.id)) {
+    if (
+      editingMessage &&
+      !messages.some(message => message.id === editingMessage.id)
+    ) {
       cancelEditing();
     }
   }, [messages, editingMessage, cancelEditing]);
@@ -570,251 +649,359 @@ export default function ChatWindow({
   });
 
   return (
-    <div className="flex flex-col flex-1 max-h-screen min-h-screen overflow-hidden">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 shadow-md glass-strong sm:px-6">
-        <div className="flex items-center flex-1 gap-3">
-          {isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setActiveChat(undefined)}
-              aria-label="Back to conversations"
-              className="transition-all duration-300 glass rounded-2xl hover:shadow-md"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          )}
-          <Avatar className="border-2 shadow-md h-11 w-11 border-primary/20">
-            <AvatarImage
-              src={activeRoom?.is_group_chat ? '' : otherParticipant.avatar}
-              alt={activeRoom?.name || otherParticipant.name}
-            />
-            <AvatarFallback className="text-sm font-semibold text-white gradient-primary">
-              {(activeRoom?.is_group_chat
-                ? activeRoom.name
-                : otherParticipant.name
-              )?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="text-sm font-bold truncate text-foreground sm:text-base">
-              {activeRoom?.name || otherParticipant.name}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {activeRoom?.participants.length ?? 0} participant
-              {activeRoom && activeRoom.participants.length !== 1 ? 's' : ''}
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-              {presence.length > 0 ? (
-                presence.map(person => (
-                  <span key={person.id} className="flex items-center gap-1 px-2 py-1 rounded-full shadow-sm glass">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    {person.name}
-                  </span>
-                ))
-              ) : (
-                <span>No other participants</span>
-              )}
+    <>
+      <div
+        className="fixed top-0 left-0 w-0 h-0 overflow-hidden pointer-events-none"
+        aria-hidden="true"
+      >
+        <audio ref={localAudioRef} autoPlay muted playsInline />
+        {remoteStreams.map(({ userId, stream }) => (
+          <HiddenHuddleAudio key={userId} stream={stream} />
+        ))}
+      </div>
+
+      <div className="flex flex-col flex-1 max-h-screen min-h-screen overflow-hidden">
+        <header className="flex items-center justify-between gap-3 px-4 py-3 shadow-md glass-strong sm:px-6">
+          <div className="flex items-center flex-1 gap-3">
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setActiveChat(undefined)}
+                aria-label="Back to conversations"
+                className="transition-all duration-300 glass rounded-2xl hover:shadow-md"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            <Avatar className="border-2 shadow-md h-11 w-11 border-primary/20">
+              <AvatarImage
+                src={activeRoom?.is_group_chat ? '' : otherParticipant.avatar}
+                alt={activeRoom?.name || otherParticipant.name}
+              />
+              <AvatarFallback className="text-sm font-semibold text-white gradient-primary">
+                {(activeRoom?.is_group_chat
+                  ? activeRoom.name
+                  : otherParticipant.name
+                )?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-sm font-bold truncate text-foreground sm:text-base">
+                {activeRoom?.name || otherParticipant.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {activeRoom?.participants.length ?? 0} participant
+                {activeRoom && activeRoom.participants.length !== 1 ? 's' : ''}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                {presence.length > 0 ? (
+                  presence.map(person => (
+                    <span
+                      key={person.id}
+                      className="flex items-center gap-1 px-2 py-1 rounded-full shadow-sm glass"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      {person.name}
+                    </span>
+                  ))
+                ) : (
+                  <span>No other participants</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <IconButton
-            label="View participants"
-            onClick={() => setIsParticipantsModalOpen(true)}
-          >
-            <Users className="w-4 h-4" />
-          </IconButton>
-          <IconButton label="Channel settings">
-            <Settings className="w-4 h-4" />
-          </IconButton>
-        </div>
-      </header>
+          <div className="flex items-center gap-2">
+            <IconButton
+              label="View participants"
+              onClick={() => setIsParticipantsModalOpen(true)}
+            >
+              <Users className="w-4 h-4" />
+            </IconButton>
+            <IconButton label="Channel settings">
+              <Settings className="w-4 h-4" />
+            </IconButton>
+          </div>
+        </header>
 
-  <ScrollArea className="flex-1 px-4 py-4 sm:px-6">
-    <div className="space-y-4">
-      {!initialLoading && nextCursor && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs font-medium transition-all duration-300 shadow-md glass-card hover:shadow-lg"
-            onClick={handleLoadMore}
-            disabled={loadingMore}
-          >
-            {loadingMore ? 'Loading...' : 'Load previous messages'}
-          </Button>
-        </div>
-      )}
+        <ScrollArea className="flex-1 px-4 py-4 sm:px-6">
+          <div className="space-y-4">
+            {!initialLoading && nextCursor && (
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs font-medium transition-all duration-300 shadow-md glass-card hover:shadow-lg"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? 'Loading...' : 'Load previous messages'}
+                </Button>
+              </div>
+            )}
 
-      {loadMoreError && (
-        <div className="text-xs text-center text-destructive">
-          {loadMoreError}{' '}
-          <button
-            type="button"
-            className="font-semibold underline hover:no-underline"
-            onClick={handleLoadMore}
-          >
-            Retry
-          </button>
-        </div>
-      )}
+            {loadMoreError && (
+              <div className="text-xs text-center text-destructive">
+                {loadMoreError}{' '}
+                <button
+                  type="button"
+                  className="font-semibold underline hover:no-underline"
+                  onClick={handleLoadMore}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
-      {initialLoading ? (
-        <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
-      ) : initialError ? (
-        <Card className="shadow-md glass-card">
-          <CardContent className="p-6 space-y-3 text-sm font-medium text-center text-destructive">
-            <p>{initialError}</p>
-            <Button variant="outline" size="sm" onClick={handleRetry} className="glass-card">
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      ) : messages.length > 0 ? (
-        messages.map(message => {
-          const isOwnMessage = message.sender.id === user.id;
-          return (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isSent={isOwnMessage}
-            isOwnMessage={isOwnMessage}
-            onEdit={isOwnMessage ? () => startEditing(message) : undefined}
-            onDelete={isOwnMessage ? () => handleDeleteMessage(message) : undefined}
-            isEditing={editingMessage?.id === message.id}
-          />
-          );
-        })
-      ) : (
-        <Card className="shadow-md glass-card">
-          <CardContent className="p-8 space-y-2 text-center">
-            <p className="text-base font-bold text-foreground">
-              Say hello
-            </p>
-            <p className="text-sm text-muted-foreground">
-              No messages yet. Drop the first update to kick off the
-              conversation.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-      <div ref={messagesEndRef} />
-    </div>
-  </ScrollArea>
+            {initialLoading ? (
+              <div className="flex h-[40vh] items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : initialError ? (
+              <Card className="shadow-md glass-card">
+                <CardContent className="p-6 space-y-3 text-sm font-medium text-center text-destructive">
+                  <p>{initialError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="glass-card"
+                  >
+                    Retry
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : messages.length > 0 ? (
+              messages.map(message => {
+                const isOwnMessage = message.sender.id === user.id;
+                return (
+                  <MessageBubble
+                    key={message.id}
+                    message={message}
+                    isSent={isOwnMessage}
+                    isOwnMessage={isOwnMessage}
+                    onEdit={
+                      isOwnMessage ? () => startEditing(message) : undefined
+                    }
+                    onDelete={
+                      isOwnMessage
+                        ? () => handleDeleteMessage(message)
+                        : undefined
+                    }
+                    isEditing={editingMessage?.id === message.id}
+                  />
+                );
+              })
+            ) : (
+              <Card className="shadow-md glass-card">
+                <CardContent className="p-8 space-y-2 text-center">
+                  <p className="text-base font-bold text-foreground">
+                    Say hello
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    No messages yet. Drop the first update to kick off the
+                    conversation.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
 
-      {/* Scratchpad - Drawer on mobile, Collapsible on desktop */}
-      {isMobile ? (
-        <div className="mx-3 mb-3 sm:mx-6">
-          <Drawer open={isScratchpadDrawerOpen} onOpenChange={setIsScratchpadDrawerOpen}>
-            <DrawerTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
-              >
-                <StickyNote className="w-4 h-4" />
-                <span className="font-semibold">Shared scratchpad</span>
-                {noteWatchers.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {noteWatchers.length} viewing
-                  </Badge>
-                )}
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="border-t glass-strong border-white/10">
-              <DrawerHeader className="text-left">
-                <DrawerTitle className="flex items-center gap-2">
-                  <StickyNote className="w-5 h-5" />
-                  Shared scratchpad
-                </DrawerTitle>
-                <DrawerDescription>
-                  {noteWatchers.length > 0 ? (
-                    <span>Viewing: {noteWatchers.map(watcher => watcher.name).join(', ')}</span>
-                  ) : (
-                    <span>Jot quick todos, links, or huddle notes...</span>
+        {/* Scratchpad - Drawer on mobile, Collapsible on desktop */}
+        {isMobile ? (
+          <div className="mx-3 mb-3 sm:mx-6">
+            <Drawer
+              open={isScratchpadDrawerOpen}
+              onOpenChange={setIsScratchpadDrawerOpen}
+            >
+              <DrawerTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
+                >
+                  <StickyNote className="w-4 h-4" />
+                  <span className="font-semibold">Shared scratchpad</span>
+                  {noteWatchers.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto">
+                      {noteWatchers.length} viewing
+                    </Badge>
                   )}
-                </DrawerDescription>
-              </DrawerHeader>
-              <div className="px-4 pb-6">
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="border-t glass-strong border-white/10">
+                <DrawerHeader className="text-left">
+                  <DrawerTitle className="flex items-center gap-2">
+                    <StickyNote className="w-5 h-5" />
+                    Shared scratchpad
+                  </DrawerTitle>
+                  <DrawerDescription>
+                    {noteWatchers.length > 0 ? (
+                      <span>
+                        Viewing:{' '}
+                        {noteWatchers.map(watcher => watcher.name).join(', ')}
+                      </span>
+                    ) : (
+                      <span>Jot quick todos, links, or huddle notes...</span>
+                    )}
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 pb-6">
+                  <textarea
+                    value={noteDraft}
+                    onChange={handleNoteChange}
+                    onSelect={handleNoteCursor}
+                    onKeyUp={handleNoteCursor}
+                    onClick={handleNoteCursor}
+                    placeholder="Start typing..."
+                    className="w-full h-64 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        ) : (
+          <Collapsible className="mx-3 mb-3 sm:mx-6" defaultOpen>
+            <div className="overflow-hidden shadow-md glass-card rounded-2xl">
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-foreground">
+                    Shared scratchpad
+                  </h3>
+                  {noteWatchers.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      Viewing:{' '}
+                      {noteWatchers.map(watcher => watcher.name).join(', ')}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="px-4 pb-4">
                 <textarea
                   value={noteDraft}
                   onChange={handleNoteChange}
                   onSelect={handleNoteCursor}
                   onKeyUp={handleNoteCursor}
                   onClick={handleNoteCursor}
-                  placeholder="Start typing..."
-                  className="w-full h-64 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Jot quick todos, links, or huddle notes..."
+                  className="w-full h-32 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-              </div>
-            </DrawerContent>
-          </Drawer>
-        </div>
-      ) : (
-        <Collapsible className="mx-3 mb-3 sm:mx-6" defaultOpen>
-          <div className="overflow-hidden shadow-md glass-card rounded-2xl">
-            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-foreground">Shared scratchpad</h3>
-                {noteWatchers.length > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    Viewing: {noteWatchers.map(watcher => watcher.name).join(', ')}
-                  </span>
-                )}
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <textarea
-                value={noteDraft}
-                onChange={handleNoteChange}
-                onSelect={handleNoteCursor}
-                onKeyUp={handleNoteCursor}
-                onClick={handleNoteCursor}
-                placeholder="Jot quick todos, links, or huddle notes..."
-                className="w-full h-32 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
-      )}
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        )}
 
-      {/* Huddle - Drawer on mobile, Collapsible on desktop */}
-      {isMobile ? (
-        <div className="mx-3 mb-4 sm:mx-6">
-          <Drawer open={isHuddleDrawerOpen} onOpenChange={setIsHuddleDrawerOpen}>
-            <DrawerTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
-              >
-                <Phone className="w-4 h-4" />
-                <span className="font-semibold">Huddle</span>
-                {isHuddleActive && (
-                  <Badge variant="destructive" className="ml-auto">
-                    Active
-                  </Badge>
-                )}
-                {!isHuddleActive && huddleParticipants.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {huddleParticipants.length} in call
-                  </Badge>
-                )}
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="border-t glass-strong border-white/10">
-              <DrawerHeader className="text-left">
-                <DrawerTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-5 h-5" />
-                    Huddle
+        {/* Huddle - Drawer on mobile, Collapsible on desktop */}
+        {isMobile ? (
+          <div className="mx-3 mb-4 sm:mx-6">
+            <Drawer
+              open={isHuddleDrawerOpen}
+              onOpenChange={setIsHuddleDrawerOpen}
+            >
+              <DrawerTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span className="font-semibold">Huddle</span>
+                  {isHuddleActive && (
+                    <Badge variant="destructive" className="ml-auto">
+                      Active
+                    </Badge>
+                  )}
+                  {!isHuddleActive && huddleParticipants.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto">
+                      {huddleParticipants.length} in call
+                    </Badge>
+                  )}
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="border-t glass-strong border-white/10">
+                <DrawerHeader className="text-left">
+                  <DrawerTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-5 h-5" />
+                      Huddle
+                    </div>
+                    <Button
+                      variant={isHuddleActive ? 'destructive' : 'default'}
+                      size="sm"
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (isHuddleActive) {
+                          stopHuddle();
+                        } else {
+                          startHuddle();
+                        }
+                      }}
+                      className="transition-all duration-300 shadow-md hover:shadow-lg"
+                    >
+                      {isHuddleActive ? 'Leave' : 'Join'}
+                    </Button>
+                  </DrawerTitle>
+                  <DrawerDescription>
+                    {huddleParticipants.length > 0 ? (
+                      <span>
+                        {huddleParticipants.length} participant
+                        {huddleParticipants.length > 1 ? 's' : ''} in the call
+                      </span>
+                    ) : (
+                      <span>
+                        Start a huddle to jump into a quick voice chat
+                      </span>
+                    )}
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 pb-6 space-y-4">
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {huddleParticipants.length > 0 ? (
+                      huddleParticipants.map(participant => (
+                        <span
+                          key={participant.id}
+                          className="px-3 py-1.5 rounded-full shadow-sm glass font-medium"
+                        >
+                          {participant.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-muted-foreground">
+                        No active huddle participants
+                      </span>
+                    )}
                   </div>
-                  <Button 
-                    variant={isHuddleActive ? 'destructive' : 'default'} 
-                    size="sm" 
-                    onClick={(e) => {
-                      e.stopPropagation();
+                  {remoteStreams.length > 0 && (
+                    <div className="space-y-2">
+                      {remoteStreams.map(({ userId }) => {
+                        const participant = huddleParticipants.find(
+                          item => item.id === userId
+                        );
+                        return (
+                          <HuddleParticipantBadge
+                            key={userId}
+                            label={participant?.name ?? `Participant ${userId}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        ) : (
+          <Collapsible className="mx-3 mb-4 sm:mx-6" defaultOpen>
+            <div className="overflow-hidden shadow-md glass-card rounded-2xl">
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-sm font-bold text-foreground">Huddle</h3>
+                  <Button
+                    variant={isHuddleActive ? 'destructive' : 'default'}
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation(); // Prevent collapsible toggle
                       if (isHuddleActive) {
                         stopHuddle();
                       } else {
@@ -825,148 +1012,106 @@ export default function ChatWindow({
                   >
                     {isHuddleActive ? 'Leave' : 'Join'}
                   </Button>
-                </DrawerTitle>
-                <DrawerDescription>
-                  {huddleParticipants.length > 0 ? (
-                    <span>{huddleParticipants.length} participant{huddleParticipants.length > 1 ? 's' : ''} in the call</span>
-                  ) : (
-                    <span>Start a huddle to jump into a quick voice chat</span>
-                  )}
-                </DrawerDescription>
-              </DrawerHeader>
-              <div className="px-4 pb-6 space-y-4">
-                <audio ref={localAudioRef} autoPlay muted className="hidden" />
-                <div className="flex flex-wrap gap-2 text-xs">
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="px-4 pb-4 space-y-3">
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   {huddleParticipants.length > 0 ? (
                     huddleParticipants.map(participant => (
-                      <span key={participant.id} className="px-3 py-1.5 rounded-full shadow-sm glass font-medium">
+                      <span
+                        key={participant.id}
+                        className="px-2 py-1 rounded-full shadow-sm glass"
+                      >
                         {participant.name}
                       </span>
                     ))
                   ) : (
-                    <span className="text-muted-foreground">No active huddle participants</span>
+                    <span>No active huddle participants</span>
                   )}
                 </div>
-                {remoteStreams.length > 0 && (
+                {remoteStreams.length > 0 ? (
                   <div className="space-y-2">
-                    {remoteStreams.map(({ userId, stream }) => {
-                      const participant = huddleParticipants.find(item => item.id === userId);
-                      return <HuddleAudio key={userId} stream={stream} label={participant?.name ?? `Participant ${userId}`} />;
+                    {remoteStreams.map(({ userId }) => {
+                      const participant = huddleParticipants.find(
+                        item => item.id === userId
+                      );
+                      return (
+                        <HuddleParticipantBadge
+                          key={userId}
+                          label={participant?.name ?? `Participant ${userId}`}
+                        />
+                      );
                     })}
                   </div>
-                )}
-              </div>
-            </DrawerContent>
-          </Drawer>
-        </div>
-      ) : (
-        <Collapsible className="mx-3 mb-4 sm:mx-6" defaultOpen>
-          <div className="overflow-hidden shadow-md glass-card rounded-2xl">
-            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
-              <div className="flex items-center gap-3">
-                <h3 className="text-sm font-bold text-foreground">Huddle</h3>
-                <Button 
-                  variant={isHuddleActive ? 'destructive' : 'default'} 
-                  size="sm" 
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent collapsible toggle
-                    if (isHuddleActive) {
-                      stopHuddle();
-                    } else {
-                      startHuddle();
-                    }
-                  }}
-                  className="transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  {isHuddleActive ? 'Leave' : 'Join'}
-                </Button>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4 space-y-3">
-              <audio ref={localAudioRef} autoPlay muted className="hidden" />
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                {huddleParticipants.length > 0 ? (
-                  huddleParticipants.map(participant => (
-                    <span key={participant.id} className="px-2 py-1 rounded-full shadow-sm glass">
-                      {participant.name}
-                    </span>
-                  ))
                 ) : (
-                  <span>No active huddle participants</span>
+                  <p className="text-xs text-muted-foreground">
+                    Start a huddle to jump into a quick voice chat.
+                  </p>
                 )}
-              </div>
-              {remoteStreams.length > 0 ? (
-                <div className="space-y-2">
-                  {remoteStreams.map(({ userId, stream }) => {
-                    const participant = huddleParticipants.find(item => item.id === userId);
-                    return <HuddleAudio key={userId} stream={stream} label={participant?.name ?? `Participant ${userId}`} />;
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">Start a huddle to jump into a quick voice chat.</p>
-              )}
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
-      )}
-
-      {typingNames.length > 0 && (
-        <p className="px-3 pb-2 text-xs text-muted-foreground sm:px-6">
-          {typingNames.join(', ')} {typingNames.length === 1 ? 'is' : 'are'} typing...
-        </p>
-      )}
-
-      <form
-        onSubmit={onSubmit}
-        className="px-3 py-3 shadow-md glass-strong sm:px-6"
-      >
-        {editingMessage && (
-          <div className="flex items-center justify-between px-3 py-2 mb-2 text-xs shadow-sm rounded-2xl glass-card">
-            <span className="font-medium">Editing message</span>
-            <Button variant="ghost" size="sm" onClick={cancelEditing}>
-              Cancel
-            </Button>
-          </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         )}
-        <div className="flex flex-col gap-2 px-3 py-2 shadow-md glass-card rounded-2xl sm:flex-row sm:items-center sm:gap-3 sm:px-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <ComposerIcon
-              type="button"
-              icon={<Paperclip className="w-4 h-4" />}
-              label="Attach file"
-            />
-            <ComposerIcon
-              type="button"
-              icon={<Smile className="w-4 h-4" />}
-              label="Insert emoji"
-            />
-          </div>
-          <div className="flex items-center flex-1 gap-2 sm:gap-3">
-            <Input
-              {...register('message')}
-              placeholder="Write a message..."
-              autoComplete="off"
-              className="flex-1 h-10 px-0 text-sm bg-transparent border-none focus-visible:ring-0"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="transition-all duration-300 rounded-2xl h-9 w-9 sm:h-10 sm:w-10 gradient-primary shadow-glow hover:shadow-glow-strong"
-              aria-label="Send message"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </form>
 
-      <ParticipantsModal
-        isOpen={isParticipantsModalOpen}
-        onClose={() => setIsParticipantsModalOpen(false)}
-        participants={activeRoom?.participants || []}
-      />
-    </div>
+        {typingNames.length > 0 && (
+          <p className="px-3 pb-2 text-xs text-muted-foreground sm:px-6">
+            {typingNames.join(', ')} {typingNames.length === 1 ? 'is' : 'are'}{' '}
+            typing...
+          </p>
+        )}
+
+        <form
+          onSubmit={onSubmit}
+          className="px-3 py-3 shadow-md glass-strong sm:px-6"
+        >
+          {editingMessage && (
+            <div className="flex items-center justify-between px-3 py-2 mb-2 text-xs shadow-sm rounded-2xl glass-card">
+              <span className="font-medium">Editing message</span>
+              <Button variant="ghost" size="sm" onClick={cancelEditing}>
+                Cancel
+              </Button>
+            </div>
+          )}
+          <div className="flex flex-col gap-2 px-3 py-2 shadow-md glass-card rounded-2xl sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ComposerIcon
+                type="button"
+                icon={<Paperclip className="w-4 h-4" />}
+                label="Attach file"
+              />
+              <ComposerIcon
+                type="button"
+                icon={<Smile className="w-4 h-4" />}
+                label="Insert emoji"
+              />
+            </div>
+            <div className="flex items-center flex-1 gap-2 sm:gap-3">
+              <Input
+                {...register('message')}
+                placeholder="Write a message..."
+                autoComplete="off"
+                className="flex-1 h-10 px-0 text-sm bg-transparent border-none focus-visible:ring-0"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                className="transition-all duration-300 rounded-2xl h-9 w-9 sm:h-10 sm:w-10 gradient-primary shadow-glow hover:shadow-glow-strong"
+                aria-label="Send message"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </form>
+
+        <ParticipantsModal
+          isOpen={isParticipantsModalOpen}
+          onClose={() => setIsParticipantsModalOpen(false)}
+          participants={activeRoom?.participants || []}
+        />
+      </div>
+    </>
   );
 }
 
@@ -1021,19 +1166,30 @@ function ParticipantsModal({
   );
 }
 
-function HuddleAudio({ stream, label }: { stream: MediaStream; label: string }) {
+function HiddenHuddleAudio({ stream }: { stream: MediaStream }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.srcObject = stream;
+    if (!audioRef.current) return;
+    audioRef.current.srcObject = stream;
+    const playPromise = audioRef.current.play();
+    if (playPromise) {
+      playPromise.catch(() => {
+        // Ignore autoplay rejections; stream will start once browser allows it.
+      });
     }
   }, [stream]);
 
+  return <audio ref={audioRef} autoPlay playsInline />;
+}
+
+function HuddleParticipantBadge({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-between px-3 py-2 border rounded-lg border-border/80 bg-muted/30">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <audio ref={audioRef} autoPlay playsInline />
+      <span className="text-[10px] font-medium uppercase text-muted-foreground/80">
+        Live
+      </span>
     </div>
   );
 }
@@ -1095,7 +1251,6 @@ function mergeMessages(existing: Message[], incoming: Message[]): Message[] {
     byId.set(message.id, message);
   }
   return Array.from(byId.values()).sort(
-    (a, b) =>
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 }
