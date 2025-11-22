@@ -3,11 +3,12 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   MessageSquareMore,
   UsersRound,
-  PlusCircle,
+  Plus,
   Loader2,
   LogOut,
   Search,
-  ArrowLeft,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -28,9 +29,8 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { label: 'Messages', icon: MessageSquareMore, to: '/chat' },
-  { label: 'Connections', icon: UsersRound, to: '/friends' },
-  { label: 'New chat', icon: PlusCircle, to: '/new-chat' },
+  { label: 'Chats', icon: MessageSquareMore, to: '/chat' },
+  { label: 'Friends', icon: UsersRound, to: '/friends' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -51,10 +51,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   if (!user) return null;
 
-  const onChatView = location.pathname.startsWith('/chat');
-  const hideForActiveChat =
-    isMobile && onChatView && !!activeChat && !isSidebarOpen;
-
   const handleLogout = () => {
     dispatch(logOut());
   };
@@ -62,140 +58,132 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-full max-w-xs flex-col bg-card border-r border-border shadow-xl transition-transform duration-300 ease-in-out lg:relative lg:max-w-[300px] lg:translate-x-0 lg:shadow-none',
+        'fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col gap-4 transition-transform duration-300 ease-out lg:relative lg:translate-x-0',
         isMobile
           ? isSidebarOpen
             ? 'translate-x-0'
             : '-translate-x-full'
-          : 'translate-x-0',
-        hideForActiveChat
-          ? 'pointer-events-none opacity-0'
-          : 'pointer-events-auto opacity-100'
+          : 'translate-x-0'
       )}
     >
-      <div className="flex flex-col gap-6 px-4 py-6 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border border-border">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-sm font-semibold bg-primary text-primary-foreground">
-                {user.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Workspace
-              </span>
-              <h2 className="text-sm font-bold text-foreground truncate max-w-[140px]">
-                {user.name}
-              </h2>
-            </div>
-          </div>
-          {isMobile ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full hover:bg-accent"
-              onClick={() =>
-                activeChat && onChatView ? setActiveChat(undefined) : onClose()
-              }
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          ) : (
-            <ThemeSwitch
-              variant="ghost"
-              className="hidden h-8 w-8 rounded-full hover:bg-accent lg:inline-flex"
-            />
-          )}
-        </div>
-
-        <div className="p-3 text-sm bg-muted/30 rounded-xl border border-border/50">
+      {/* Glass Container */}
+      <div className="flex flex-col h-full w-full rounded-none lg:rounded-3xl bg-background/60 backdrop-blur-xl border-r lg:border border-white/10 shadow-2xl overflow-hidden">
+        
+        {/* Header Profile Section */}
+        <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
-              Status
-            </p>
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-          </div>
-          <p className="mt-1 font-medium text-foreground text-xs">Available</p>
-        </div>
-
-        <div>
-          <div className="relative">
-            <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search chats..."
-              className="h-10 pl-9 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all duration-200 rounded-xl text-sm"
-            />
-          </div>
-        </div>
-
-        <nav className="space-y-1">
-          {navItems.map(item => (
-            <SidebarLink
-              key={item.to}
-              item={item}
-              onClick={() => {
-                if (item.to === '/chat') {
-                  setActiveChat(undefined);
-                }
-                if (isMobile) {
-                  onClose();
-                }
-              }}
-            />
-          ))}
-        </nav>
-      </div>
-
-      <div className="flex flex-col flex-1 px-4 pt-4 pb-6 overflow-hidden border-t border-border/50">
-        <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-2">
-          <span>Conversations</span>
-          <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px]">
-            Live
-          </span>
-        </div>
-        <div className="flex-1 -mx-2 px-2 space-y-1 overflow-y-auto custom-scrollbar">
-          {chatRoomsLoading ? (
-            <div className="flex items-center justify-center h-20">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
+                    {user.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-foreground leading-none">{user.name}</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Online</span>
+              </div>
             </div>
-          ) : chatRoomsError ? (
-            <p className="p-3 text-xs text-destructive bg-destructive/10 rounded-xl">
-              Unable to load chats.
-            </p>
-          ) : chatRooms && chatRooms.length > 0 ? (
-            chatRooms.map(room => (
-              <ConversationRow
-                key={room.id}
-                room={room}
-                active={activeChat === room.id}
-                currentUserId={user.id}
-                onSelect={() => {
-                  setActiveChat(room.id);
-                  if (isMobile) {
-                    onClose();
-                  }
+            {isMobile ? (
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
+                <X className="h-4 w-4" />
+              </Button>
+            ) : (
+              <ThemeSwitch variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10" />
+            )}
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input 
+              placeholder="Search..." 
+              className="h-10 pl-9 bg-primary/5 border-transparent hover:bg-primary/10 focus:bg-background focus:border-primary/20 rounded-xl transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="px-4">
+          <nav className="flex p-1 space-x-1 bg-primary/5 rounded-xl">
+            {navItems.map(item => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => {
+                  if (item.to === '/chat') setActiveChat(undefined);
+                  if (isMobile) onClose();
                 }}
-              />
-            ))
-          ) : (
-            <div className="p-4 text-xs text-center text-muted-foreground bg-muted/30 rounded-xl border border-dashed border-border">
-              No conversations yet.
-            </div>
-          )}
+                className={({ isActive }) => cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  isActive 
+                    ? "bg-background text-primary shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
-        <div className="mt-4 pt-4 border-t border-border/50">
-          <Button
-            variant="ghost"
-            className="flex items-center justify-start w-full gap-3 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+
+        {/* Chat List */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
+          <div className="flex items-center justify-between px-2 py-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recent Messages</span>
+            <NavLink to="/new-chat">
+              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-primary/10 text-primary">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </NavLink>
+          </div>
+
+          <div className="space-y-1">
+            {chatRoomsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+              </div>
+            ) : chatRoomsError ? (
+              <div className="p-4 text-center">
+                <p className="text-xs text-destructive">Failed to load chats</p>
+              </div>
+            ) : chatRooms && chatRooms.length > 0 ? (
+              chatRooms.map(room => (
+                <ConversationRow
+                  key={room.id}
+                  room={room}
+                  active={activeChat === room.id}
+                  currentUserId={user.id}
+                  onSelect={() => {
+                    setActiveChat(room.id);
+                    if (isMobile) onClose();
+                  }}
+                />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center space-y-3 opacity-60">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">No conversations yet. Start a new chat!</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/5 bg-primary/5">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
             onClick={handleLogout}
           >
-            <LogOut className="w-4 h-4" />
-            Log out
+            <LogOut className="h-4 w-4" />
+            <span className="font-medium">Sign out</span>
           </Button>
         </div>
       </div>
@@ -204,32 +192,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 };
 
 export default Sidebar;
-
-function SidebarLink({
-  item,
-  onClick,
-}: {
-  item: { label: string; icon: React.ElementType; to: string };
-  onClick?: () => void;
-}) {
-  return (
-    <NavLink
-      to={item.to}
-      onClick={onClick}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-          isActive
-            ? 'bg-primary/10 text-primary shadow-sm'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-        )
-      }
-    >
-      <item.icon className="w-4 h-4" />
-      {item.label}
-    </NavLink>
-  );
-}
 
 function ConversationRow({
   room,
@@ -252,27 +214,40 @@ function ConversationRow({
 
   return (
     <button
-      type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200 group',
-        active
-          ? 'bg-primary text-primary-foreground shadow-md'
-          : 'hover:bg-muted/50'
+        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left group",
+        active 
+          ? "bg-primary/10 shadow-sm border border-primary/10" 
+          : "hover:bg-white/5 border border-transparent"
       )}
     >
-      <Avatar className={cn("w-9 h-9 border", active ? "border-primary-foreground/20" : "border-border")}>
+      <Avatar className={cn(
+        "h-10 w-10 border-2 transition-colors",
+        active ? "border-primary" : "border-transparent group-hover:border-primary/30"
+      )}>
         <AvatarImage src={avatar} alt={title} />
-        <AvatarFallback className={cn("text-xs font-semibold", active ? "bg-primary-foreground text-primary" : "bg-muted text-muted-foreground")}>
+        <AvatarFallback className={cn(
+          "text-xs font-bold",
+          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+        )}>
           {title?.charAt(0)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm font-semibold truncate", active ? "text-primary-foreground" : "text-foreground")}>{title}</p>
-        <p className={cn("text-xs truncate", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
+        <div className="flex items-center justify-between mb-0.5">
+          <span className={cn(
+            "text-sm font-semibold truncate transition-colors",
+            active ? "text-primary" : "text-foreground"
+          )}>
+            {title}
+          </span>
+          {active && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
+        </div>
+        <p className="text-xs text-muted-foreground truncate opacity-80">
           {room.is_group_chat
-            ? `${room.participants.length} participants`
-            : 'Direct message'}
+            ? `${room.participants.length} members`
+            : 'Click to open chat'}
         </p>
       </div>
     </button>

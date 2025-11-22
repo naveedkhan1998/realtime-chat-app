@@ -63,8 +63,14 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="flex flex-col w-full min-h-screen mx-auto lg:flex-row">
+    <div className="relative min-h-screen w-full overflow-hidden bg-background selection:bg-primary/20">
+      {/* Global Background Elements */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] pointer-events-none" />
+      <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none animate-pulse-slow delay-1000" />
+
+      <div className="relative z-10 flex h-screen w-full max-w-[1800px] mx-auto p-0 lg:p-4 gap-4">
+        {/* Sidebar Container */}
         <Sidebar
           activeChat={activeChat}
           setActiveChat={handleSetActiveChat}
@@ -73,27 +79,31 @@ export default function AppShell({ isMobile }: AppShellProps) {
           onClose={() => setIsSidebarOpen(false)}
           metadata={metadata}
         />
+
+        {/* Mobile Overlay */}
         {isMobile && isSidebarOpen && (
           <div
-            className="fixed inset-0 z-30 bg-background/80 backdrop-blur-md lg:hidden"
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
-        <main className="relative flex flex-col flex-1 min-h-screen">
+
+        {/* Main Content Area */}
+        <main className="relative flex flex-col flex-1 h-full overflow-hidden rounded-none lg:rounded-3xl bg-background/60 backdrop-blur-xl border-0 lg:border border-white/10 shadow-2xl">
           {isMobile && (
-            <div className="fixed top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-50">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="bg-background/80 backdrop-blur-md border-border shadow-sm hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                className="h-10 w-10 rounded-full bg-background/50 backdrop-blur-md border border-white/10 shadow-sm hover:bg-primary/10"
                 onClick={() => setIsSidebarOpen(true)}
-                aria-label="Open navigation"
               >
                 <Menu className="w-5 h-5" />
               </Button>
             </div>
           )}
-          <div className="flex-1 overflow-y-auto">
+          
+          <div className="flex-1 h-full overflow-hidden">
             <Outlet
               context={{
                 activeChat,

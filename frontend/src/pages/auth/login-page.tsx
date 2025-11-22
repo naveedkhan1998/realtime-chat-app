@@ -1,89 +1,106 @@
 import LoginRegistration from "@/components/custom/LoginRegistration";
 import { motion } from "framer-motion";
-import { MessageCircle, ShieldCheck, Sparkles, Waves } from "lucide-react";
-
-const highlights = [
-  "Built with React, TypeScript, Tailwind, and Vite",
-  "Django REST Framework API with Channels for realtime transport",
-  "Personal portfolio project while learning WebSockets and Redis",
-];
+import { MessageSquare, Code2, Zap, Database } from "lucide-react";
 
 export default function LoginPage() {
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_1.05fr] min-h-[600px]">
-      <motion.div
+    <div className="grid lg:grid-cols-2 gap-4 lg:gap-12 h-full min-h-[600px] items-center">
+      {/* Left Side - Visuals */}
+      <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative hidden overflow-hidden rounded-3xl bg-card border border-border p-8 shadow-xl lg:flex lg:flex-col"
+        className="hidden lg:flex flex-col justify-between h-full min-h-[600px] rounded-[2.5rem] bg-primary/5 border border-primary/10 p-12 relative overflow-hidden"
       >
-        <div className="absolute inset-0 -z-10 bg-muted/30" />
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute -left-12 top-12 h-48 w-48 rounded-full bg-primary/10 blur-3xl animate-float" />
-          <div className="absolute bottom-10 right-0 h-56 w-56 rounded-full bg-accent/10 blur-[130px] animate-float" style={{ animationDelay: '1s' }} />
-        </div>
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-30" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Waves className="h-5 w-5" />
-          </span>
-          <p className="text-sm font-bold uppercase tracking-widest text-foreground">MNK Chat</p>
-        </div>
-        
-        <div className="mt-10 space-y-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: 12 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.6, delay: 0.1 }} 
-            className="text-4xl font-bold text-foreground leading-tight"
-          >
-            A learning ground for realtime chat.
-          </motion.h1>
-          <p className="max-w-md text-base text-muted-foreground leading-relaxed">
-            This login takes you into my practice project for Django Channels, React, and realtime messaging. It lives in my portfolio so you can see the stack choices and UX decisions in context.
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-12">
+            <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
+              <MessageSquare className="h-6 w-6" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight">MNK Chat</span>
+          </div>
+
+          <h1 className="text-5xl font-bold leading-tight mb-6">
+            Real-time Chat <br />
+            <span className="text-primary">Portfolio Demo.</span>
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-md">
+            Explore this full-stack showcase featuring Django Channels, Redis, and React. Built to demonstrate scalable real-time architecture.
           </p>
         </div>
-        
-        <ul className="mt-10 space-y-4 text-sm">
-          {highlights.map((item, idx) => (
-            <motion.li
-              key={item}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 + idx * 0.1 }}
-              className="flex items-start gap-3 rounded-xl bg-background border border-border p-4 shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <span className="text-left text-sm font-medium text-foreground">{item}</span>
-            </motion.li>
-          ))}
-        </ul>
-        
-        <div className="mt-auto flex flex-col gap-3 rounded-xl bg-muted/50 p-5 text-sm border border-border">
-          <div className="flex items-center gap-2 text-primary">
-            <ShieldCheck className="h-4 w-4" />
-            <span className="font-semibold">What to expect</span>
-          </div>
-          <p className="text-muted-foreground leading-relaxed">
-            Accounts, friendships, groups, and messages run on Django, Postgres, Channels, and Redis. Treat it like a sandbox, not a production environment.
+
+        <div className="relative z-10 grid gap-6 mt-12">
+          <FeatureRow 
+            icon={Zap} 
+            title="WebSocket Powered" 
+            desc="Instant messaging using Django Channels & Redis" 
+            delay={0.2}
+          />
+          <FeatureRow 
+            icon={Code2} 
+            title="Modern Frontend" 
+            desc="React, TypeScript, and Tailwind CSS" 
+            delay={0.3}
+          />
+          <FeatureRow 
+            icon={Database} 
+            title="Full Stack" 
+            desc="PostgreSQL database with DRF API" 
+            delay={0.4}
+          />
+        </div>
+
+        <div className="relative z-10 mt-12 pt-8 border-t border-primary/10">
+          <p className="text-sm text-muted-foreground">
+            "Feel free to create an account and test the real-time capabilities. This is a personal learning project."
           </p>
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-            <MessageCircle className="h-3.5 w-3.5" />
-            React · Django · Redis · Postgres
-          </div>
         </div>
       </motion.div>
-      
+
+      {/* Right Side - Form */}
       <motion.div 
-        initial={{ opacity: 0, x: 20 }} 
-        animate={{ opacity: 1, x: 0 }} 
-        transition={{ duration: 0.6 }} 
-        className="flex w-full flex-col justify-center"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="flex flex-col justify-center w-full max-w-md mx-auto"
       >
-        <LoginRegistration />
+        <div className="mb-8 text-center lg:text-left">
+          <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
+          <p className="text-muted-foreground">
+            Sign in or register to start chatting.
+          </p>
+        </div>
+
+        <div className="bg-card border border-border/50 shadow-xl shadow-primary/5 rounded-3xl p-6 md:p-8">
+           <LoginRegistration />
+        </div>
+
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          This is a demo environment. Data may be reset periodically.
+        </p>
       </motion.div>
     </div>
+  );
+}
+
+function FeatureRow({ icon: Icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.5 }}
+      className="flex items-start gap-4 p-4 rounded-2xl bg-background/40 border border-primary/5 backdrop-blur-sm"
+    >
+      <div className="mt-1 p-2 rounded-lg bg-primary/10 text-primary">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <h3 className="font-semibold text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground">{desc}</p>
+      </div>
+    </motion.div>
   );
 }
