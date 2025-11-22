@@ -14,10 +14,18 @@ import {
   Globe,
   Cpu,
 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export default function HomePage() {
   return (
     <div className="space-y-32">
+      <Helmet>
+        <title>Home | MNK Chat</title>
+        <meta
+          name="description"
+          content="Welcome to MNK Chat - Realtime Communication App"
+        />
+      </Helmet>
       <HeroSection />
       <FeaturesGrid />
       <WorkflowSection />

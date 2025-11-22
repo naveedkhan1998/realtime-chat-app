@@ -35,6 +35,7 @@ import {
   LucideProps,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Helmet } from 'react-helmet-async';
 
 export default function Friends() {
   const user = useAppSelector(state => state.auth.user);
@@ -137,6 +138,13 @@ export default function Friends() {
 
   return (
     <div className="relative flex flex-col h-full gap-6 p-6 overflow-hidden">
+      <Helmet>
+        <title>Friends | MNK Chat</title>
+        <meta
+          name="description"
+          content="Manage your friends and connections"
+        />
+      </Helmet>
       {/* Decorative Background */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 

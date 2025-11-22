@@ -90,14 +90,19 @@ const Navbar: React.FC = () => {
   if (!showNavbar && isMobile) return null;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-background border-b border-border">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background border-border">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto">
         {/* Logo */}
         <Button
           variant="ghost"
-          className="text-2xl font-bold text-primary"
+          className="gap-2 text-2xl font-bold text-primary"
           onClick={() => navigate('/')}
         >
+          <img
+            src="/apple-touch-icon.png"
+            alt="MNK Chat"
+            className="w-8 h-8 rounded-lg"
+          />
           MNK Chat
         </Button>
 

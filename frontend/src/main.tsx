@@ -5,12 +5,15 @@ import App from './App.tsx';
 import { Provider } from 'react-redux';
 import { store } from './app/store.ts';
 import { Toaster } from './components/ui/toaster.tsx';
+import { HelmetProvider } from 'react-helmet-async';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <App />
-      <Toaster />
+      <HelmetProvider>
+        <App />
+        <Toaster />
+      </HelmetProvider>
     </Provider>
   </StrictMode>
 );

@@ -4,6 +4,7 @@ import { MessageSquare, Menu, X, Github } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThemeSwitch from '@/components/custom/ThemeSwitch';
 
 const navItems = [
   { label: 'Features', href: '#features' },
@@ -44,7 +45,11 @@ export default function PublicLayout() {
           >
             <Link to="/" className="flex items-center gap-2.5 group">
               <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-primary/30">
-                <MessageSquare className="h-5 w-5" />
+                <img
+                  src="/apple-touch-icon.png"
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
@@ -96,6 +101,11 @@ export default function PublicLayout() {
               >
                 <Link to="/login">Get Started</Link>
               </Button>
+              <ThemeSwitch
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+              />
             </div>
 
             <Button
@@ -182,6 +192,12 @@ function MobileMenu({
               >
                 <Link to="/login">Get Started</Link>
               </Button>
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Theme
+                </span>
+                <ThemeSwitch variant="outline" size="sm" showLabel={false} />
+              </div>
             </nav>
           </motion.div>
         </>
@@ -207,8 +223,12 @@ function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              <MessageSquare className="h-4 w-4" />
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
+              <img
+                src="/apple-touch-icon.png"
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="font-semibold text-sm">MNK Chat</span>
           </div>

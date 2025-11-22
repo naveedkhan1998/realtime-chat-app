@@ -1,10 +1,15 @@
 import LoginRegistration from '@/components/custom/LoginRegistration';
 import { motion } from 'framer-motion';
 import { MessageSquare, Code2, Zap, Database } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export default function LoginPage() {
   return (
     <div className="grid lg:grid-cols-2 gap-4 lg:gap-12 h-full min-h-[600px] items-center">
+      <Helmet>
+        <title>Login | MNK Chat</title>
+        <meta name="description" content="Login to MNK Chat Application" />
+      </Helmet>
       {/* Left Side - Visuals */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -17,8 +22,12 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-12">
-            <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
-              <MessageSquare className="h-6 w-6" />
+            <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
+              <img
+                src="/apple-touch-icon.png"
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="text-2xl font-bold tracking-tight">MNK Chat</span>
           </div>

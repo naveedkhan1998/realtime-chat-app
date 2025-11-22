@@ -46,6 +46,8 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const isMobileChatList = isMobile && location.pathname === '/chat';
+
   useEffect(() => {
     if (!isMobile) {
       setIsSidebarOpen(false);
@@ -76,16 +78,20 @@ export default function AppShell({ isMobile }: AppShellProps) {
           activeChat={activeChat}
           setActiveChat={handleSetActiveChat}
           isMobile={isMobile}
-          isSidebarOpen={isSidebarOpen}
+          isSidebarOpen={isMobileChatList || isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           metadata={metadata}
+          className={
+            isMobileChatList ? 'w-full translate-x-0 relative z-0' : ''
+          }
+          showCloseButton={!isMobileChatList}
         />
 
         {/* Mobile Overlay */}
         <div
           className={cn(
             'fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden transition-opacity duration-300',
-            isMobile && isSidebarOpen
+            isMobile && isSidebarOpen && !isMobileChatList
               ? 'opacity-100 pointer-events-auto'
               : 'opacity-0 pointer-events-none'
           )}
@@ -97,10 +103,11 @@ export default function AppShell({ isMobile }: AppShellProps) {
           className={cn(
             'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
             'lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl',
-            'bg-background/60 backdrop-blur-xl'
+            'bg-background/60 backdrop-blur-xl',
+            isMobileChatList ? 'hidden' : 'flex'
           )}
         >
-          {isMobile && (
+          {isMobile && !activeChat && !isMobileChatList && (
             <div className="absolute z-50 top-4 left-4">
               <Button
                 variant="ghost"

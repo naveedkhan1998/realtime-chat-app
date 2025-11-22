@@ -19,10 +19,12 @@ import { useAppSelector } from './app/hooks';
 import HomePage from './pages/app/home-page';
 import FriendsPage from './pages/app/friends-page';
 import ChatPage from './pages/app/chat-page';
-import NewChat from './components/custom/NewChat';
+import NewChatPage from './pages/app/new-chat-page';
 import AppShell from './layouts/AppShell';
 import PublicLayout from './layouts/PublicLayout';
 import AuthLayout from './layouts/AuthLayout';
+
+import { Helmet } from 'react-helmet-async';
 
 const clientId = GOOGLE_CLIENT_ID || '';
 
@@ -44,6 +46,10 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
+      <Helmet>
+        <title>MNK | CHAT APP</title>
+        <meta name="description" content="Realtime Chat Application" />
+      </Helmet>
       <HealthCheck>
         <AuthInitializer />
         <GoogleOAuthProvider clientId={clientId}>
@@ -69,7 +75,7 @@ const App: React.FC = () => {
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/chat/:chatId" element={<ChatPage />} />
                   <Route path="/friends" element={<FriendsPage />} />
-                  <Route path="/new-chat" element={<NewChat />} />
+                  <Route path="/new-chat" element={<NewChatPage />} />
                 </Route>
               </Route>
             </Routes>
