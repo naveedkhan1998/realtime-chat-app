@@ -7,24 +7,21 @@ import {
 } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  Users,
-  Settings,
   ArrowLeft,
   Send,
   Loader2,
   Paperclip,
   Smile,
   Phone,
-  Mic,
   Video,
   MoreVertical,
+  ChevronDown,
 } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +40,6 @@ import {
   prependMessages,
   setMessagePagination,
   setMessages,
-  setCollaborativeNote,
 } from '@/features/chatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import MessageBubble from './MessageBubble';
@@ -61,7 +57,6 @@ interface ChatWindowProps {
 const emptyMessages: Message[] = [];
 const emptyPresence: UserProfile[] = [];
 const emptyTypingMap: Record<number, boolean> = {};
-const emptyCursors: Record<number, { start: number; end: number }> = {};
 const emptyHuddleParticipants: Array<{ id: number; name: string }> = [];
 
 export default function ChatWindow({
@@ -83,12 +78,6 @@ export default function ChatWindow({
   const typingMap = useAppSelector(
     state => state.chat.typingStatuses[activeChat] ?? emptyTypingMap
   );
-  const collaborativeNote = useAppSelector(
-    state => state.chat.collaborativeNotes[activeChat] ?? ''
-  );
-  const cursors = useAppSelector(
-    state => state.chat.cursors[activeChat] ?? emptyCursors
-  );
   const huddleParticipants = useAppSelector(
     state =>
       state.chat.huddleParticipants[activeChat] ?? emptyHuddleParticipants
@@ -109,7 +98,6 @@ export default function ChatWindow({
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const noteUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [noteDraft, setNoteDraft] = useState(collaborativeNote);
   const [isHuddleActive, setIsHuddleActive] = useState(false);
   const huddleJoinTimeRef = useRef<number>(0);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -119,11 +107,15 @@ export default function ChatWindow({
   const [remoteStreams, setRemoteStreams] = useState<
     Array<{ userId: number; stream: MediaStream }>
   >([]);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const scrollToBottom = useCallback(
     (behavior: 'auto' | 'instant' | 'smooth' = 'smooth') => {
       if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+        // Add a small delay to ensure layout is complete
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+        }, 100);
       }
     },
     []
@@ -181,7 +173,6 @@ export default function ChatWindow({
   const handleLoadMore = useCallback(async () => {
     if (!activeChat || !nextCursor) return;
     setLoadingMore(true);
-    setLoadMoreError(null);
     try {
       const response = await fetchMessagesPage({
         chat_room_id: activeChat,
@@ -204,10 +195,6 @@ export default function ChatWindow({
       setLoadingMore(false);
     }
   }, [activeChat, dispatch, extractCursor, fetchMessagesPage, nextCursor]);
-
-  const handleRetry = useCallback(() => {
-    fetchInitialMessages();
-  }, [fetchInitialMessages]);
 
   const cancelEditing = useCallback(() => {
     setEditingMessage(null);
@@ -236,14 +223,6 @@ export default function ChatWindow({
       }
     },
     [cancelEditing, editingMessage]
-  );
-
-  const throttledCursorUpdate = useMemo(
-    () =>
-      throttle((cursor: { start: number; end: number }) => {
-        WebSocketService.getInstance().sendCursorUpdate(cursor);
-      }, 200),
-    []
   );
 
   const refreshRemoteStreams = useCallback(() => {
@@ -489,7 +468,7 @@ export default function ChatWindow({
     if (!activeRoom) return [];
     return huddleParticipants.map(hp => {
       const participant = activeRoom.participants.find(p => p.id === hp.id);
-      return participant || { ...hp, avatar: '' }; // Fallback if not found in room
+      return participant || { ...hp, avatar: '' };
     });
   }, [huddleParticipants, activeRoom]);
 
@@ -510,6 +489,18 @@ export default function ChatWindow({
     reset();
   });
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShowScrollButton(!isNearBottom);
+    
+    if (isNearBottom) {
+      shouldAutoScrollRef.current = true;
+    } else {
+      shouldAutoScrollRef.current = false;
+    }
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
@@ -519,21 +510,21 @@ export default function ChatWindow({
         ))}
       </div>
 
-      <div className="flex flex-col h-full w-full relative">
+      <div className="flex flex-col h-full w-full relative bg-background/30">
         {/* Floating Header */}
-        <header className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border border-white/10 bg-background/60 backdrop-blur-xl shadow-lg">
+        <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 bg-background/80 backdrop-blur-xl border-b border-white/5 shadow-sm">
           <div className="flex items-center flex-1 gap-3">
             {isMobile && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setActiveChat(undefined)}
-                className="h-8 w-8 rounded-full hover:bg-primary/10"
+                className="h-8 w-8 rounded-full hover:bg-primary/10 -ml-2"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+            <Avatar className="h-10 w-10 border-2 border-background shadow-sm ring-2 ring-primary/10">
               <AvatarImage
                 src={activeRoom?.is_group_chat ? '' : otherParticipant.avatar}
                 alt={activeRoom?.name || otherParticipant.name}
@@ -560,10 +551,10 @@ export default function ChatWindow({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {/* Huddle Participants */}
             {huddleUsers.length > 0 && (
-              <div className="flex items-center -space-x-2 mr-2">
+              <div className="flex items-center -space-x-2 mr-3">
                 {huddleUsers.map((p) => (
                   <Avatar key={p.id} className="h-8 w-8 border-2 border-background ring-2 ring-green-500/20">
                     <AvatarImage src={p.avatar} />
@@ -576,17 +567,17 @@ export default function ChatWindow({
             <Button
               variant={isHuddleActive ? "destructive" : "ghost"}
               size="icon"
-              className={cn("h-9 w-9 rounded-full transition-all", isHuddleActive && "animate-pulse")}
+              className={cn("h-9 w-9 rounded-full transition-all", isHuddleActive && "animate-pulse shadow-lg shadow-destructive/20")}
               onClick={isHuddleActive ? stopHuddle : startHuddle}
             >
-              {isHuddleActive ? <Phone className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+              <Phone className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary">
               <Video className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10">
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -600,8 +591,11 @@ export default function ChatWindow({
         </header>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 px-4 pt-24 pb-24">
-          <div className="space-y-6 max-w-3xl mx-auto">
+        <ScrollArea 
+          className="flex-1 px-0" 
+          onScrollCapture={handleScroll}
+        >
+          <div className="px-4 pt-24 space-y-6 max-w-4xl mx-auto">
             {!initialLoading && nextCursor && (
               <div className="flex justify-center py-4">
                 <Button
@@ -625,10 +619,17 @@ export default function ChatWindow({
               messages.map((message, index) => {
                 const isOwnMessage = message.sender.id === user.id;
                 const prevMessage = messages[index - 1];
-                const isConsecutive = prevMessage && prevMessage.sender.id === message.sender.id;
+                const nextMessage = messages[index + 1];
                 
+                const isConsecutive = prevMessage && prevMessage.sender.id === message.sender.id;
+                const isLastInSequence = !nextMessage || nextMessage.sender.id !== message.sender.id;
+                
+                // Find the most up-to-date sender profile from the room participants
+                const senderProfile = activeRoom?.participants.find(p => p.id === message.sender.id) 
+                  || (message.sender.id === user.id ? user : message.sender);
+
                 return (
-                  <div key={message.id} className={cn(isConsecutive && "mt-[-16px]")}>
+                  <div key={message.id} className={cn(isConsecutive && "mt-[-18px]")}>
                     <MessageBubble
                       message={message}
                       isSent={isOwnMessage}
@@ -636,81 +637,109 @@ export default function ChatWindow({
                       onEdit={isOwnMessage ? () => startEditing(message) : undefined}
                       onDelete={isOwnMessage ? () => handleDeleteMessage(message) : undefined}
                       isEditing={editingMessage?.id === message.id}
+                      showAvatar={isLastInSequence}
+                      isConsecutive={isConsecutive}
+                      senderAvatar={senderProfile.avatar}
+                      senderName={senderProfile.name}
                     />
                   </div>
                 );
               })
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
-                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Smile className="h-10 w-10 text-primary" />
+              <div className="flex flex-col items-center justify-center py-20 text-center opacity-60">
+                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center mb-6 shadow-inner">
+                  <Smile className="h-12 w-12 text-primary" />
                 </div>
-                <p className="text-lg font-medium">No messages yet</p>
-                <p className="text-sm text-muted-foreground">Start the conversation!</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">No messages yet</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                  Be the first to break the ice! Start the conversation by typing a message below.
+                </p>
               </div>
             )}
+            {/* Spacer to ensure last message is visible above the floating input */}
+            <div className="h-32" />
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
-        {/* Floating Input Area */}
-        <div className="absolute bottom-4 left-4 right-4 z-20 max-w-3xl mx-auto w-full">
-          <form
-            onSubmit={onSubmit}
-            className="relative flex items-end gap-2 p-2 rounded-[24px] border border-white/10 bg-background/80 backdrop-blur-xl shadow-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20"
+        {/* Scroll to Bottom Button */}
+        {showScrollButton && (
+          <Button
+            size="icon"
+            className="absolute bottom-24 right-8 h-10 w-10 rounded-full shadow-lg bg-background/80 backdrop-blur-md border border-white/10 text-primary hover:bg-background animate-in fade-in zoom-in duration-200 z-30"
+            onClick={() => scrollToBottom('smooth')}
           >
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"
-            >
-              <Paperclip className="h-5 w-5" />
-            </Button>
-            
-            <Input
-              {...register('message')}
-              placeholder="Type a message..."
-              className="flex-1 min-h-[40px] max-h-[120px] py-2.5 px-0 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 resize-none"
-              autoComplete="off"
-            />
+            <ChevronDown className="h-5 w-5" />
+          </Button>
+        )}
 
-            <div className="flex items-center gap-1 pr-1">
+        {/* Input Area */}
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
+          <div className="max-w-4xl mx-auto w-full relative">
+             {/* Typing Indicator */}
+             <div className="absolute -top-8 left-0 h-6 flex items-center gap-2">
+              {typingUsers.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur-md border border-white/5 text-[10px] font-medium text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                  <div className="flex gap-0.5">
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0].name} is typing...`
+                    : "Several people are typing..."}
+                </div>
+              )}
+            </div>
+
+            <form
+              onSubmit={onSubmit}
+              className="relative flex items-end gap-2 p-2 rounded-[28px] border border-white/10 bg-background/80 backdrop-blur-2xl shadow-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/20"
+            >
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                className="h-10 w-10 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"
               >
-                <Smile className="h-5 w-5" />
+                <Paperclip className="h-5 w-5" />
               </Button>
-              <Button
-                type="submit"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-md hover:shadow-lg hover:bg-primary/90 transition-all"
-                disabled={!watch('message')?.trim()}
-              >
-                {editingMessage ? (
-                  <div className="text-[10px] font-bold uppercase">Save</div>
-                ) : (
-                  <Send className="h-5 w-5 ml-0.5" />
-                )}
-              </Button>
-            </div>
-          </form>
-          
-          {/* Typing Indicator */}
-          <div className="absolute -top-8 left-4 h-6 flex items-center gap-2">
-            {typingUsers.length > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-background/60 backdrop-blur-md border border-white/5 text-[10px] font-medium text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                {typingUsers.length === 1
-                  ? `${typingUsers[0].name} is typing...`
-                  : typingUsers.length === 2
-                  ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
-                  : "Several people are typing..."}
+              
+              <Input
+                {...register('message')}
+                placeholder="Type a message..."
+                className="flex-1 min-h-[44px] max-h-[120px] py-3 px-2 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 resize-none text-base"
+                autoComplete="off"
+              />
+
+              <div className="flex items-center gap-1 pr-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                >
+                  <Smile className="h-5 w-5" />
+                </Button>
+                <Button
+                  type="submit"
+                  size="icon"
+                  className={cn(
+                    "h-10 w-10 rounded-full shadow-md transition-all duration-300",
+                    watch('message')?.trim() 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 hover:shadow-lg" 
+                      : "bg-muted text-muted-foreground"
+                  )}
+                  disabled={!watch('message')?.trim()}
+                >
+                  {editingMessage ? (
+                    <div className="text-[10px] font-bold uppercase">Save</div>
+                  ) : (
+                    <Send className="h-5 w-5 ml-0.5" />
+                  )}
+                </Button>
               </div>
-            )}
+            </form>
           </div>
         </div>
       </div>

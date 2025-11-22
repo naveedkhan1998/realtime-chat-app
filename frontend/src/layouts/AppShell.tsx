@@ -3,6 +3,7 @@ import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from '@/components/custom/Sidebar';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -64,12 +65,12 @@ export default function AppShell({ isMobile }: AppShellProps) {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background selection:bg-primary/20">
-      {/* Global Background Elements */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] pointer-events-none" />
-      <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none animate-pulse-slow delay-1000" />
+      {/* Global Background Elements - Refined for Premium Feel */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none" />
+      <div className="absolute -top-[20%] -right-[10%] w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
+      <div className="absolute -bottom-[20%] -left-[10%] w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow delay-1000" />
 
-      <div className="relative z-10 flex h-screen w-full max-w-[1800px] mx-auto p-0 lg:p-4 gap-4">
+      <div className="relative z-10 flex h-screen w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
         {/* Sidebar Container */}
         <Sidebar
           activeChat={activeChat}
@@ -81,15 +82,20 @@ export default function AppShell({ isMobile }: AppShellProps) {
         />
 
         {/* Mobile Overlay */}
-        {isMobile && isSidebarOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
+        <div
+          className={cn(
+            "fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden transition-opacity duration-300",
+            isMobile && isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )}
+          onClick={() => setIsSidebarOpen(false)}
+        />
 
         {/* Main Content Area */}
-        <main className="relative flex flex-col flex-1 h-full overflow-hidden rounded-none lg:rounded-3xl bg-background/60 backdrop-blur-xl border-0 lg:border border-white/10 shadow-2xl">
+        <main className={cn(
+          "relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300",
+          "lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl",
+          "bg-background/60 backdrop-blur-xl"
+        )}>
           {isMobile && (
             <div className="absolute top-4 left-4 z-50">
               <Button

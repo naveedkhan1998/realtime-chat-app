@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   MessageSquareMore,
   UsersRound,
@@ -9,6 +9,7 @@ import {
   Search,
   X,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -47,7 +48,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     isLoading: chatRoomsLoading,
     error: chatRoomsError,
   } = useGetChatRoomsQuery(undefined, { pollingInterval: 10000 });
-  const location = useLocation();
 
   if (!user) return null;
 
@@ -58,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col gap-4 transition-transform duration-300 ease-out lg:relative lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-50 flex w-[320px] flex-col gap-4 transition-transform duration-300 ease-out lg:relative lg:translate-x-0',
         isMobile
           ? isSidebarOpen
             ? 'translate-x-0'
@@ -67,48 +67,66 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
     >
       {/* Glass Container */}
-      <div className="flex flex-col h-full w-full rounded-none lg:rounded-3xl bg-background/60 backdrop-blur-xl border-r lg:border border-white/10 shadow-2xl overflow-hidden">
+      <div className="flex flex-col h-full w-full rounded-none lg:rounded-3xl bg-background/80 backdrop-blur-2xl border-r lg:border border-white/10 shadow-2xl overflow-hidden">
         
-        {/* Header Profile Section */}
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
-                    {user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-foreground leading-none">{user.name}</span>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Online</span>
-              </div>
+        {/* Brand Header */}
+        <div className="p-6 pb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-lg shadow-primary/20">
+              <Zap className="h-5 w-5 text-white fill-white" />
             </div>
-            {isMobile ? (
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
-                <X className="h-4 w-4" />
-              </Button>
-            ) : (
-              <ThemeSwitch variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10" />
-            )}
+            <div>
+              <h1 className="font-bold text-lg tracking-tight leading-none">Antigravity</h1>
+              <p className="text-[10px] font-medium text-muted-foreground tracking-wider uppercase mt-0.5">Workspace</p>
+            </div>
           </div>
+          {isMobile ? (
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
+              <X className="h-4 w-4" />
+            </Button>
+          ) : (
+            <ThemeSwitch variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10" />
+          )}
+        </div>
 
-          {/* Search Bar */}
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Search..." 
-              className="h-10 pl-9 bg-primary/5 border-transparent hover:bg-primary/10 focus:bg-background focus:border-primary/20 rounded-xl transition-all"
-            />
+        {/* User Profile Card */}
+        <div className="px-4 py-4">
+          <div className="p-3 rounded-2xl bg-secondary/30 border border-white/5 flex items-center gap-3">
+            <div className="relative">
+              <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
+                  {user.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background ring-1 ring-green-500/20" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate">{user.name}</p>
+              <p className="text-xs text-muted-foreground truncate">Online</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="px-4">
-          <nav className="flex p-1 space-x-1 bg-primary/5 rounded-xl">
+        {/* Navigation & Search */}
+        <div className="px-4 space-y-4">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input 
+              placeholder="Search conversations..." 
+              className="h-10 pl-9 bg-secondary/50 border-transparent hover:bg-secondary/80 focus:bg-background focus:border-primary/20 rounded-xl transition-all placeholder:text-muted-foreground/70"
+            />
+          </div>
+
+          <nav className="flex p-1 space-x-1 bg-secondary/30 rounded-xl">
             {navItems.map(item => (
               <NavLink
                 key={item.to}
@@ -121,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                   isActive 
                     ? "bg-background text-primary shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -132,9 +150,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
-          <div className="flex items-center justify-between px-2 py-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recent Messages</span>
+        <div className="flex-1 overflow-y-auto px-2 py-2 mt-2 custom-scrollbar">
+          <div className="flex items-center justify-between px-4 py-2 mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Recent Messages</span>
             <NavLink to="/new-chat">
               <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-primary/10 text-primary">
                 <Plus className="h-4 w-4" />
@@ -142,7 +160,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </NavLink>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 px-2">
             {chatRoomsLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
@@ -174,18 +192,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-white/5 bg-primary/5">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="font-medium">Sign out</span>
-          </Button>
-        </div>
       </div>
     </aside>
   );
@@ -216,25 +222,29 @@ function ConversationRow({
     <button
       onClick={onSelect}
       className={cn(
-        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left group",
+        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left group relative overflow-hidden",
         active 
           ? "bg-primary/10 shadow-sm border border-primary/10" 
-          : "hover:bg-white/5 border border-transparent"
+          : "hover:bg-secondary/40 border border-transparent"
       )}
     >
+      {active && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
+      )}
+      
       <Avatar className={cn(
-        "h-10 w-10 border-2 transition-colors",
-        active ? "border-primary" : "border-transparent group-hover:border-primary/30"
+        "h-11 w-11 border-2 transition-all duration-300",
+        active ? "border-primary ring-2 ring-primary/20" : "border-transparent group-hover:border-primary/30"
       )}>
         <AvatarImage src={avatar} alt={title} />
         <AvatarFallback className={cn(
           "text-xs font-bold",
-          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+          active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
         )}>
           {title?.charAt(0)}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 ml-1">
         <div className="flex items-center justify-between mb-0.5">
           <span className={cn(
             "text-sm font-semibold truncate transition-colors",
@@ -242,9 +252,12 @@ function ConversationRow({
           )}>
             {title}
           </span>
-          {active && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
+          {/* You might want to add a timestamp here if available in the room object */}
         </div>
-        <p className="text-xs text-muted-foreground truncate opacity-80">
+        <p className={cn(
+          "text-xs truncate transition-colors",
+          active ? "text-primary/70" : "text-muted-foreground opacity-80"
+        )}>
           {room.is_group_chat
             ? `${room.participants.length} members`
             : 'Click to open chat'}
