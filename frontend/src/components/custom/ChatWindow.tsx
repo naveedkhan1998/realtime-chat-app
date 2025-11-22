@@ -27,6 +27,7 @@ import {
   Message,
   ChatRoom,
   useLazyGetMessagesPageQuery,
+  useGetIceServersQuery,
 } from '@/services/chatApi';
 import { WebSocketService, type HuddleSignalEvent } from '@/utils/websocket';
 import { UserProfile } from '@/services/userApi';
@@ -83,6 +84,7 @@ export default function ChatWindow({
     message: string;
   }>();
   const [fetchMessagesPage] = useLazyGetMessagesPageQuery();
+  const { data: iceServers } = useGetIceServersQuery();
   const [initialLoading, setInitialLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const initialScrollDoneRef = useRef(false);
@@ -228,7 +230,7 @@ export default function ChatWindow({
         return peersRef.current.get(peerId)!;
       }
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        iceServers: iceServers || [{ urls: 'stun:stun.l.google.com:19302' }],
       });
       peersRef.current.set(peerId, pc);
 
@@ -274,7 +276,7 @@ export default function ChatWindow({
 
       return pc;
     },
-    [refreshRemoteStreams]
+    [iceServers, refreshRemoteStreams]
   );
 
   const startHuddle = useCallback(async () => {
