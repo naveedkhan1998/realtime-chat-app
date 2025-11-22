@@ -331,7 +331,7 @@ function GradientScrollArea({ children, loading, error }: { children: React.Reac
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-red-300/60 bg-red-50 p-5 text-center text-sm text-red-600 dark:border-red-400/40 dark:bg-red-900/40 dark:text-red-100">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-5 text-center text-sm text-destructive">
           {error}
         </div>
       ) : (

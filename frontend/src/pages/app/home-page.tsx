@@ -104,7 +104,7 @@ function HeroSection() {
         transition={{ duration: 0.5 }}
         className="relative"
       >
-        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-white shadow-lg shadow-primary/15 dark:border-primary/25 dark:bg-slate-950">
+        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-lg shadow-primary/15">
           <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-primary/5 via-transparent to-accent/10" />
           <aside className="relative grid gap-4 p-6">
             <header className="flex items-center justify-between">
@@ -114,7 +114,7 @@ function HeroSection() {
               </div>
               <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Live</span>
             </header>
-            <div className="space-y-3 rounded-2xl border border-primary/10 bg-white/80 p-4 text-sm shadow-sm shadow-primary/10 backdrop-blur dark:bg-slate-900/80">
+            <div className="space-y-3 rounded-2xl border border-primary/10 bg-background/80 p-4 text-sm shadow-sm shadow-primary/10 backdrop-blur">
               <PreviewMessage author="Hailey" time="08:05" text="Rolled out the new incident triage labels. Docs updated 🔧" />
               <PreviewMessage author="Zhang" time="08:07" text="Handled the support backlog from EU shift—queue is clear." highlight />
               <PreviewMessage author="Iris" time="08:09" text="Staging deploy succeeded. Production handoff at 10:30." />
@@ -142,7 +142,7 @@ function FeaturesSection() {
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {featureList.map((feature) => (
-          <Card key={feature.title} className="h-full border border-border bg-white/90 shadow-sm shadow-primary/5 backdrop-blur dark:border-primary/25 dark:bg-slate-950/80">
+          <Card key={feature.title} className="h-full border border-border bg-card/90 shadow-sm shadow-primary/5 backdrop-blur">
             <CardContent className="space-y-3 p-6">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <feature.icon className="h-5 w-5" />
@@ -159,15 +159,15 @@ function FeaturesSection() {
 
 function WorkflowSection() {
   return (
-    <section className="grid gap-10 rounded-3xl border border-primary/15 bg-white/80 p-8 shadow-lg shadow-primary/10 backdrop-blur-lg lg:grid-cols-[0.8fr_1.2fr] dark:border-primary/25 dark:bg-slate-950/80">
+    <section className="grid gap-10 rounded-3xl border border-primary/15 bg-card/80 p-8 shadow-lg shadow-primary/10 backdrop-blur-lg lg:grid-cols-[0.8fr_1.2fr]">
       <div className="space-y-4">
-        <Badge className="w-fit bg-primary text-white hover:bg-primary/90">How to explore</Badge>
+        <Badge className="w-fit bg-primary text-primary-foreground hover:bg-primary/90">How to explore</Badge>
         <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">Test the stack in three steps</h2>
         <p className="text-base text-muted-foreground">Follow the flow to see the Channels-powered experience from authentication to realtime updates.</p>
       </div>
       <div className="space-y-4">
         {workflowHighlights.map((item, index) => (
-          <Card key={item.title} className="border border-primary/15 bg-white/90 shadow-sm shadow-primary/5 dark:border-primary/25 dark:bg-slate-950/70">
+          <Card key={item.title} className="border border-primary/15 bg-card/90 shadow-sm shadow-primary/5">
             <CardContent className="flex items-start gap-4 p-6">
               <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
               <div>
@@ -194,7 +194,7 @@ function InfrastructureSection() {
       </div>
       <div className="grid gap-4">
         {infrastructureCallouts.map((item) => (
-          <div key={item.label} className="flex items-start gap-3 rounded-2xl border border-primary/15 bg-white/90 p-4 text-sm text-foreground shadow-sm shadow-primary/5 dark:border-primary/25 dark:bg-slate-950/70">
+          <div key={item.label} className="flex items-start gap-3 rounded-2xl border border-primary/15 bg-card/90 p-4 text-sm text-foreground shadow-sm shadow-primary/5">
             <item.icon className="mt-0.5 h-4 w-4 text-primary" />
             <p>{item.label}</p>
           </div>
@@ -206,9 +206,9 @@ function InfrastructureSection() {
 
 function CallToAction() {
   return (
-    <section className="rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/10 via-white to-accent/10 p-10 text-center shadow-lg shadow-primary/15 dark:border-primary/25 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+    <section className="rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/10 via-background to-accent/10 p-10 text-center shadow-lg shadow-primary/15">
       <div className="mx-auto max-w-2xl space-y-4">
-        <Badge className="mx-auto w-fit bg-white/70 text-primary">Personal demo</Badge>
+        <Badge className="mx-auto w-fit bg-background/70 text-primary">Personal demo</Badge>
         <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">Explore the project and see the stack in action</h2>
         <p className="text-base text-muted-foreground">Sign in to click through the flows, and scroll for a quick look at the tools and services involved. Feedback is always welcome.</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -235,7 +235,7 @@ function PreviewMessage({ author, time, text, highlight }: { author: string; tim
   return (
     <div
       className={`rounded-2xl border px-4 py-3 shadow-sm transition-colors ${
-        highlight ? "border-primary/40 bg-primary/10 text-primary" : "border-primary/10 bg-white/70 text-foreground dark:bg-slate-900/50"
+        highlight ? "border-primary/40 bg-primary/10 text-primary" : "border-primary/10 bg-background/70 text-foreground"
       }`}
     >
       <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -249,7 +249,7 @@ function PreviewMessage({ author, time, text, highlight }: { author: string; tim
 
 function FeatureFlag({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground">
       <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
       {label}
     </span>

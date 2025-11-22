@@ -29,9 +29,9 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
         isSent ? "flex-row-reverse" : "flex-row",
       )}
     >
-      <Avatar className="h-9 w-9 border-2 border-primary/20 shadow-md">
+      <Avatar className="h-8 w-8 border border-border">
         <AvatarImage src={sender.avatar} alt={sender.name} />
-        <AvatarFallback className="text-xs font-semibold gradient-primary text-white">{sender.name.charAt(0)}</AvatarFallback>
+        <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">{sender.name.charAt(0)}</AvatarFallback>
       </Avatar>
       <div
         className={cn(
@@ -41,30 +41,30 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
       >
         <div
           className={cn(
-            "w-full rounded-2xl px-4 py-2 text-sm shadow-md transition-all duration-300",
+            "w-full rounded-2xl px-4 py-2 text-sm shadow-sm transition-all duration-200",
             isSent 
-              ? "gradient-primary text-white shadow-glow" 
-              : "glass-card",
-            isEditing && "ring-2 ring-offset-2 ring-primary shadow-glow-strong",
+              ? "bg-primary text-primary-foreground" 
+              : "bg-card border border-border text-foreground",
+            isEditing && "ring-2 ring-offset-2 ring-primary",
           )}
         >
-          <div className="flex items-start justify-between gap-3 text-xs">
-            <div className="flex flex-col items-start gap-1">
-              <span className={cn("font-bold", isSent ? "text-white/90" : "text-foreground")}>{isSent ? "You" : sender.name}</span>
-              {edited && <span className="text-[10px] uppercase tracking-[0.2em] text-white/70 font-medium">Edited</span>}
+          <div className="flex items-start justify-between gap-3 text-xs mb-1">
+            <div className="flex flex-col items-start gap-0.5">
+              <span className={cn("font-bold text-[11px]", isSent ? "text-primary-foreground/90" : "text-foreground")}>{isSent ? "You" : sender.name}</span>
+              {edited && <span className={cn("text-[9px] uppercase tracking-wider font-medium", isSent ? "text-primary-foreground/70" : "text-muted-foreground")}>Edited</span>}
             </div>
-            <span className={cn("text-[10px] font-medium uppercase tracking-[0.2em] whitespace-nowrap", isSent ? "text-white/70" : "text-muted-foreground")}>
+            <span className={cn("text-[10px] whitespace-nowrap opacity-70", isSent ? "text-primary-foreground" : "text-muted-foreground")}>
               {formattedDate} · {formattedTime}
             </span>
           </div>
-          <p className={cn("mt-2 whitespace-pre-wrap leading-relaxed", isSent ? "text-white" : "text-foreground")}>{message.content}</p>
+          <p className={cn("whitespace-pre-wrap leading-relaxed", isSent ? "text-primary-foreground" : "text-foreground")}>{message.content}</p>
         </div>
-        <div className="flex w-full items-center justify-between text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          <span className="font-medium">Delivered</span>
+        <div className="flex w-full items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground px-1">
+          <span className="font-medium opacity-0 group-hover:opacity-100 transition-opacity">Delivered</span>
           {isOwnMessage && (onEdit || onDelete) && (
             <div
               className={cn(
-                "flex items-center gap-1 text-[11px] font-medium transition glass rounded-lg px-1",
+                "flex items-center gap-1 transition-opacity",
                 isEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100",
               )}
             >
@@ -72,24 +72,24 @@ export default function MessageBubble({ message, isSent, isOwnMessage = false, o
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 hover:bg-primary/10"
+                  className="h-6 w-6 hover:bg-muted hover:text-foreground rounded-full"
                   onClick={() => onEdit(message)}
                   title="Edit message"
                   aria-label="Edit message"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-3 w-3" />
                 </Button>
               )}
               {onDelete && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                  className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive rounded-full"
                   onClick={() => onDelete(message)}
                   title="Delete message"
                   aria-label="Delete message"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               )}
             </div>

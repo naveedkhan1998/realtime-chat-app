@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-full max-w-xs flex-col glass-strong shadow-2xl transition-transform duration-200 ease-in-out lg:relative lg:max-w-[300px] lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-40 flex w-full max-w-xs flex-col bg-card border-r border-border shadow-xl transition-transform duration-300 ease-in-out lg:relative lg:max-w-[300px] lg:translate-x-0 lg:shadow-none',
         isMobile
           ? isSidebarOpen
             ? 'translate-x-0'
@@ -76,17 +76,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex flex-col gap-6 px-4 py-6 sm:px-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Avatar className="border-2 h-11 w-11 border-primary/20 shadow-md">
+            <Avatar className="h-10 w-10 border border-border">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-sm font-semibold gradient-primary text-white">
+              <AvatarFallback className="text-sm font-semibold bg-primary text-primary-foreground">
                 {user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-xs font-medium uppercase text-muted-foreground">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Workspace
               </span>
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-sm font-bold text-foreground truncate max-w-[140px]">
                 {user.name}
               </h2>
             </div>
@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="glass rounded-2xl hover:shadow-md transition-all duration-300"
+              className="h-8 w-8 rounded-full hover:bg-accent"
               onClick={() =>
                 activeChat && onChatView ? setActiveChat(undefined) : onClose()
               }
@@ -105,30 +105,30 @@ const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <ThemeSwitch
               variant="ghost"
-              className="hidden glass rounded-2xl hover:shadow-md transition-all duration-300 lg:inline-flex"
+              className="hidden h-8 w-8 rounded-full hover:bg-accent lg:inline-flex"
             />
           )}
         </div>
 
-        <div className="p-4 text-sm glass-card rounded-2xl shadow-md">
-          <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-            Status
-          </p>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-glow"></span>
-            <p className="font-semibold text-foreground">Available</p>
+        <div className="p-3 text-sm bg-muted/30 rounded-xl border border-border/50">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
+              Status
+            </p>
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Presence is shared across chats.
-          </p>
+          <p className="mt-1 font-medium text-foreground text-xs">Available</p>
         </div>
 
         <div>
           <div className="relative">
-            <Search className="absolute w-4 h-4 -translate-y-1/2 left-4 top-1/2 text-muted-foreground" />
+            <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-muted-foreground" />
             <Input
               placeholder="Search chats..."
-              className="text-sm glass-card h-11 pl-11 rounded-2xl shadow-sm focus:shadow-md transition-all duration-300 border-0"
+              className="h-10 pl-9 bg-muted/50 border-transparent focus:bg-background focus:border-primary/20 transition-all duration-200 rounded-xl text-sm"
             />
           </div>
         </div>
@@ -152,20 +152,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="flex flex-col flex-1 px-4 pt-4 pb-6 overflow-hidden border-t border-border/50">
-        <div className="flex items-center justify-between text-xs font-bold uppercase text-muted-foreground tracking-wider">
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-2">
           <span>Conversations</span>
-          <span className="glass rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm">
+          <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px]">
             Live
           </span>
         </div>
-        <div className="flex-1 pr-1 mt-4 space-y-2 overflow-y-auto">
+        <div className="flex-1 -mx-2 px-2 space-y-1 overflow-y-auto custom-scrollbar">
           {chatRoomsLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : chatRoomsError ? (
-            <p className="glass-card px-3 py-3 text-xs font-medium text-red-600 dark:text-red-400 rounded-2xl shadow-md">
-              Unable to load chats. Please try again.
+            <p className="p-3 text-xs text-destructive bg-destructive/10 rounded-xl">
+              Unable to load chats.
             </p>
           ) : chatRooms && chatRooms.length > 0 ? (
             chatRooms.map(room => (
@@ -183,16 +183,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             ))
           ) : (
-            <div className="px-4 py-6 text-sm glass-card rounded-2xl text-muted-foreground shadow-inner">
-              You have no conversations yet. Start by inviting teammates or
-              creating a new chat.
+            <div className="p-4 text-xs text-center text-muted-foreground bg-muted/30 rounded-xl border border-dashed border-border">
+              No conversations yet.
             </div>
           )}
         </div>
-        <div className="glass-card px-4 py-3 mt-4 rounded-2xl shadow-md">
+        <div className="mt-4 pt-4 border-t border-border/50">
           <Button
             variant="ghost"
-            className="flex items-center justify-center w-full gap-2 text-sm font-medium glass rounded-2xl hover:shadow-md transition-all duration-300"
+            className="flex items-center justify-start w-full gap-3 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4" />
@@ -219,10 +218,10 @@ function SidebarLink({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-300',
+          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
           isActive
-            ? 'glass-card shadow-md text-primary'
-            : 'glass text-muted-foreground hover:shadow-md hover:text-foreground'
+            ? 'bg-primary/10 text-primary shadow-sm'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         )
       }
     >
@@ -256,21 +255,21 @@ function ConversationRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all duration-300',
+        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200 group',
         active
-          ? 'glass-card shadow-md text-primary'
-          : 'glass hover:shadow-md'
+          ? 'bg-primary text-primary-foreground shadow-md'
+          : 'hover:bg-muted/50'
       )}
     >
-      <Avatar className="w-10 h-10 border-2 border-primary/20 shadow-sm">
+      <Avatar className={cn("w-9 h-9 border", active ? "border-primary-foreground/20" : "border-border")}>
         <AvatarImage src={avatar} alt={title} />
-        <AvatarFallback className="text-sm font-semibold gradient-primary text-white">
+        <AvatarFallback className={cn("text-xs font-semibold", active ? "bg-primary-foreground text-primary" : "bg-muted text-muted-foreground")}>
           {title?.charAt(0)}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1">
-        <p className="text-sm font-bold text-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground">
+      <div className="flex-1 min-w-0">
+        <p className={cn("text-sm font-semibold truncate", active ? "text-primary-foreground" : "text-foreground")}>{title}</p>
+        <p className={cn("text-xs truncate", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
           {room.is_group_chat
             ? `${room.participants.length} participants`
             : 'Direct message'}

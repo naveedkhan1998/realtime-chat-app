@@ -80,7 +80,7 @@ export default function HealthCheck({ children }: HealthCheckProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
-          <Alert className="mb-4 bg-white dark:bg-gray-800 border-primary/20">
+          <Alert className="mb-4 bg-card border-primary/20">
             <AlertCircle className="w-4 h-4 text-primary" />
             <AlertTitle className="font-semibold text-primary">Starting up backend server</AlertTitle>
             <AlertDescription>
@@ -94,7 +94,7 @@ export default function HealthCheck({ children }: HealthCheckProps) {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-sm text-gray-600 dark:text-gray-300"
+                    className="text-sm text-muted-foreground"
                   >
                     {currentMessage}
                   </motion.div>
@@ -103,7 +103,7 @@ export default function HealthCheck({ children }: HealthCheckProps) {
             </AlertDescription>
           </Alert>
 
-          <div className="p-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
+          <div className="p-6 bg-card rounded-lg shadow-lg">
             <div className="mb-4">
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium text-primary dark:text-primary-foreground">Loading progress</span>
@@ -128,7 +128,7 @@ export default function HealthCheck({ children }: HealthCheckProps) {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -10, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="text-sm text-center text-gray-600 dark:text-gray-300"
+                className="text-sm text-center text-muted-foreground"
               >
                 <span className="font-semibold">Fun Fact:</span> {currentFact}
               </motion.div>

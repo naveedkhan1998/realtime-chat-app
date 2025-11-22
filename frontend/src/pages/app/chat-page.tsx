@@ -107,7 +107,7 @@ export default function ChatPage() {
       ) : (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center">
           <div className="glass-card p-12 rounded-3xl shadow-glass max-w-md">
-            <span className="flex items-center justify-center w-16 h-16 mb-6 mx-auto rounded-2xl gradient-primary text-white shadow-glow animate-float">
+            <span className="flex items-center justify-center w-16 h-16 mb-6 mx-auto rounded-2xl bg-primary text-primary-foreground shadow-glow animate-float">
               <MessageSquareMore className="w-8 h-8" />
             </span>
             <h2 className="text-2xl font-bold text-foreground mb-3">Pick a conversation to get started</h2>

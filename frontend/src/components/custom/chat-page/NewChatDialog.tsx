@@ -81,7 +81,7 @@ const NewChatDialog: React.FC = () => {
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full mb-4 text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+        <Button className="w-full mb-4 bg-primary text-primary-foreground hover:bg-primary/90">
           <PlusCircle className="w-4 h-4 mr-2" /> New Chat
         </Button>
       </DialogTrigger>
@@ -102,7 +102,7 @@ const NewChatDialog: React.FC = () => {
           </TabsList>
           <TabsContent value="direct" className="space-y-4">
             <div className="relative">
-              <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
+              <Search className="absolute w-4 h-4 text-muted-foreground transform -translate-y-1/2 left-3 top-1/2" />
               <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" aria-label="Search friends for direct chat" />
             </div>
             <FriendList friends={filteredFriends || []} selectedFriendIds={selectedFriendIds} onFriendSelect={handleFriendSelect} isLoading={isLoading} />
@@ -110,7 +110,7 @@ const NewChatDialog: React.FC = () => {
           <TabsContent value="group" className="space-y-4">
             <Input placeholder="Enter group name" value={groupName} onChange={(e) => setGroupName(e.target.value)} aria-label="Enter group name" />
             <div className="relative">
-              <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
+              <Search className="absolute w-4 h-4 text-muted-foreground transform -translate-y-1/2 left-3 top-1/2" />
               <Input placeholder="Search friends" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" aria-label="Search friends for group chat" />
             </div>
             <FriendList friends={filteredFriends || []} selectedFriendIds={selectedFriendIds} onFriendSelect={handleFriendSelect} isLoading={isLoading} isGroup />
@@ -151,7 +151,7 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
     <ScrollArea className="h-[300px] rounded-md border p-4">
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
-          <div className="w-8 h-8 border-b-2 border-gray-900 rounded-full animate-spin" aria-label="Loading friends"></div>
+          <div className="w-8 h-8 border-b-2 border-primary rounded-full animate-spin" aria-label="Loading friends"></div>
         </div>
       ) : (
         <AnimatePresence>
@@ -163,7 +163,7 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
               className={`flex items-center p-2 rounded-md cursor-pointer transition-all ${
-                friend && selectedFriendIds.includes(friend.id) ? "bg-blue-100 dark:bg-blue-800" : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                friend && selectedFriendIds.includes(friend.id) ? "bg-accent" : "hover:bg-muted"
               }`}
               onClick={() => friend && onFriendSelect(friend.id)}
               role="button"
@@ -176,7 +176,7 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
               </Avatar>
               <span className="flex-grow">{friend?.name}</span>
               {isGroup && (
-                <div className={`w-5 h-5 rounded-full border-2 ${selectedFriendIds.includes(friend?.id) ? "bg-blue-500 border-blue-500" : "border-gray-300"}`} aria-hidden="true">
+                <div className={`w-5 h-5 rounded-full border-2 ${selectedFriendIds.includes(friend?.id) ? "bg-primary border-primary" : "border-muted"}`} aria-hidden="true">
                   {selectedFriendIds.includes(friend?.id) && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -186,7 +186,7 @@ const FriendList: React.FC<FriendListProps> = ({ friends, selectedFriendIds, onF
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-full h-full text-white"
+                      className="w-full h-full text-primary-foreground"
                     >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>

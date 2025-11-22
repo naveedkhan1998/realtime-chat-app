@@ -10,7 +10,7 @@ export default function AuthLayout() {
       </div>
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8">
         <Link to="/" className="flex items-center gap-3 text-lg font-semibold text-primary">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30">
             <MessageSquare className="h-5 w-5" />
           </span>
           MNK Chat
@@ -20,7 +20,7 @@ export default function AuthLayout() {
         </Link>
       </header>
       <main className="mx-auto flex w-full flex-1 items-center justify-center px-4 pb-12 pt-4">
-        <div className="relative w-full max-w-5xl rounded-3xl border border-white/30 bg-white/70 p-6 shadow-2xl shadow-primary/20 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/80">
+        <div className="relative w-full max-w-5xl rounded-3xl border border-border/30 bg-card/70 p-6 shadow-2xl shadow-primary/20 backdrop-blur-2xl">
           <Outlet />
         </div>
       </main>

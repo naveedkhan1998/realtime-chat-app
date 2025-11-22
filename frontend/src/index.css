@@ -1,225 +1,114 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
-    /* Modern Light Theme with Vibrant Colors */
-    --background: 220 25% 97%;
-    --foreground: 222 47% 11%;
+    /* Premium Light Theme - Clean & Crisp */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 10% 3.9%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 10% 3.9%;
     
-    /* Vibrant Primary - Blue-Purple Gradient */
-    --primary: 250 85% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Sophisticated Primary - Deep Violet */
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
     
-    /* Soft Secondary */
-    --secondary: 220 20% 95%;
-    --secondary-foreground: 222 47% 11%;
+    /* Subtle Secondary */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
     
-    /* Subtle Muted */
-    --muted: 220 15% 94%;
-    --muted-foreground: 215 16% 47%;
+    /* Muted for less emphasis */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
     
-    /* Vibrant Accent - Cyan */
-    --accent: 190 95% 50%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent for interactions */
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     
-    /* Destructive Red */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Semantic Colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 262.1 83.3% 57.8%;
     
-    /* Borders & Inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 250 85% 60%;
-    
-    /* Chart Colors */
-    --chart-1: 250 85% 60%;
-    --chart-2: 190 95% 50%;
-    --chart-3: 280 70% 60%;
-    --chart-4: 340 80% 60%;
-    --chart-5: 160 70% 50%;
-    
-    --radius: 1rem;
+    --radius: 0.75rem;
   }
+
   .dark {
-    /* Modern Dark Theme with Rich Colors */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    /* Premium Dark Theme - Deep & Rich (Not just black) */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
     
-    /* Vibrant Primary - Blue-Purple */
-    --primary: 250 85% 65%;
-    --primary-foreground: 222 47% 11%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
     
-    /* Rich Secondary */
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Vibrant Primary in Dark Mode */
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Dark Secondary */
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
     
     /* Dark Muted */
-    --muted: 215 27% 16%;
-    --muted-foreground: 217 20% 65%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
     
-    /* Vibrant Accent - Cyan */
-    --accent: 190 95% 55%;
-    --accent-foreground: 222 47% 11%;
+    /* Dark Accent */
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     
-    /* Destructive Red */
-    --destructive: 0 84% 65%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
     
-    /* Borders & Inputs */
-    --border: 215 27% 20%;
-    --input: 215 27% 20%;
-    --ring: 250 85% 65%;
-    
-    /* Chart Colors */
-    --chart-1: 250 85% 65%;
-    --chart-2: 190 95% 55%;
-    --chart-3: 280 70% 65%;
-    --chart-4: 340 80% 65%;
-    --chart-5: 160 70% 55%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
   }
 }
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply antialiased bg-background text-foreground;
-    font-feature-settings: "salt";
-    font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background-image: 
-      radial-gradient(circle at 20% 10%, rgba(139, 92, 246, 0.15), transparent 50%),
-      radial-gradient(circle at 80% 90%, rgba(6, 182, 212, 0.15), transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05), transparent 70%);
-    background-attachment: fixed;
-  }
-  .dark body {
-    background-image: 
-      radial-gradient(circle at 20% 10%, rgba(139, 92, 246, 0.25), transparent 50%),
-      radial-gradient(circle at 80% 90%, rgba(6, 182, 212, 0.2), transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.1), transparent 70%);
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Custom Glassy Utilities */
+/* Premium Glassmorphism Utilities */
 @layer utilities {
   .glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-  
-  .dark .glass {
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    @apply bg-background/70 backdrop-blur-xl border border-border/20;
   }
   
   .glass-card {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(30px) saturate(150%);
-    -webkit-backdrop-filter: blur(30px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 
-      0 8px 32px 0 rgba(139, 92, 246, 0.1),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
-  }
-  
-  .dark .glass-card {
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
-      0 8px 32px 0 rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-  }
-  
-  .glass-strong {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-  }
-  
-  .dark .glass-strong {
-    background: rgba(30, 41, 59, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  }
-  
-  .gradient-mesh {
-    background: 
-      radial-gradient(at 40% 20%, hsla(250, 85%, 65%, 0.3) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, hsla(190, 95%, 55%, 0.3) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, hsla(280, 70%, 65%, 0.3) 0px, transparent 50%);
+    @apply bg-card/80 backdrop-blur-lg border border-border/50 shadow-sm;
   }
 }
 
-/* Modern Scrollbar Design */
-::-webkit-scrollbar-button {
-  display: none;
-}
-
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 20px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(139, 92, 246, 0.6),
-    rgba(6, 182, 212, 0.6)
-  );
-  border-radius: 20px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(139, 92, 246, 0.8),
-    rgba(6, 182, 212, 0.8)
-  );
-  background-clip: padding-box;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(139, 92, 246, 0.7),
-    rgba(6, 182, 212, 0.7)
-  );
-  background-clip: padding-box;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(139, 92, 246, 0.9),
-    rgba(6, 182, 212, 0.9)
-  );
-  background-clip: padding-box;
-}
-
-/* Hide scrollbar arrows in Firefox */
-html {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(59, 130, 246, 0.6) rgba(148, 163, 255, 0.12);
-}

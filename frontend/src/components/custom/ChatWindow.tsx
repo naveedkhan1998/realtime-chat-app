@@ -661,7 +661,7 @@ export default function ChatWindow({
       </div>
 
       <div className="flex flex-col flex-1 max-h-screen min-h-screen overflow-hidden">
-        <header className="flex items-center justify-between gap-3 px-4 py-3 shadow-md glass-strong sm:px-6">
+        <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md sm:px-6">
           <div className="flex items-center flex-1 gap-3">
             {isMobile && (
               <Button
@@ -674,12 +674,12 @@ export default function ChatWindow({
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            <Avatar className="border-2 shadow-md h-11 w-11 border-primary/20">
+            <Avatar className="h-10 w-10 border border-border">
               <AvatarImage
                 src={activeRoom?.is_group_chat ? '' : otherParticipant.avatar}
                 alt={activeRoom?.name || otherParticipant.name}
               />
-              <AvatarFallback className="text-sm font-semibold text-white gradient-primary">
+              <AvatarFallback className="text-sm font-semibold bg-primary text-primary-foreground">
                 {(activeRoom?.is_group_chat
                   ? activeRoom.name
                   : otherParticipant.name
@@ -699,9 +699,9 @@ export default function ChatWindow({
                   presence.map(person => (
                     <span
                       key={person.id}
-                      className="flex items-center gap-1 px-2 py-1 rounded-full shadow-sm glass"
+                      className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/50 text-foreground"
                     >
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                       {person.name}
                     </span>
                   ))
@@ -819,7 +819,7 @@ export default function ChatWindow({
               <DrawerTrigger asChild>
                 <Button
                   variant="outline"
-                  className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
+                  className="justify-start w-full gap-2 transition-all bg-card border-border hover:bg-accent hover:text-accent-foreground"
                 >
                   <StickyNote className="w-4 h-4" />
                   <span className="font-semibold">Shared scratchpad</span>
@@ -830,7 +830,7 @@ export default function ChatWindow({
                   )}
                 </Button>
               </DrawerTrigger>
-              <DrawerContent className="border-t glass-strong border-white/10">
+              <DrawerContent className="border-t border-border bg-background">
                 <DrawerHeader className="text-left">
                   <DrawerTitle className="flex items-center gap-2">
                     <StickyNote className="w-5 h-5" />
@@ -855,7 +855,7 @@ export default function ChatWindow({
                     onKeyUp={handleNoteCursor}
                     onClick={handleNoteCursor}
                     placeholder="Start typing..."
-                    className="w-full h-64 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full h-64 px-3 py-2 text-sm resize-none bg-muted/30 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary border-transparent"
                   />
                 </div>
               </DrawerContent>
@@ -863,8 +863,8 @@ export default function ChatWindow({
           </div>
         ) : (
           <Collapsible className="mx-3 mb-3 sm:mx-6" defaultOpen>
-            <div className="overflow-hidden shadow-md glass-card rounded-2xl">
-              <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
+            <div className="overflow-hidden border border-border bg-card rounded-xl">
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-muted/50 group">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-foreground">
                     Shared scratchpad
@@ -886,7 +886,7 @@ export default function ChatWindow({
                   onKeyUp={handleNoteCursor}
                   onClick={handleNoteCursor}
                   placeholder="Jot quick todos, links, or huddle notes..."
-                  className="w-full h-32 px-3 py-2 text-sm shadow-inner resize-none glass rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full h-32 px-3 py-2 text-sm resize-none bg-muted/30 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary border-transparent"
                 />
               </CollapsibleContent>
             </div>
@@ -903,7 +903,7 @@ export default function ChatWindow({
               <DrawerTrigger asChild>
                 <Button
                   variant="outline"
-                  className="justify-start w-full gap-2 transition-all shadow-md glass-card hover:glass-strong"
+                  className="justify-start w-full gap-2 transition-all bg-card border-border hover:bg-accent hover:text-accent-foreground"
                 >
                   <Phone className="w-4 h-4" />
                   <span className="font-semibold">Huddle</span>
@@ -919,7 +919,7 @@ export default function ChatWindow({
                   )}
                 </Button>
               </DrawerTrigger>
-              <DrawerContent className="border-t glass-strong border-white/10">
+              <DrawerContent className="border-t border-border bg-background">
                 <DrawerHeader className="text-left">
                   <DrawerTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -961,7 +961,7 @@ export default function ChatWindow({
                       huddleParticipants.map(participant => (
                         <span
                           key={participant.id}
-                          className="px-3 py-1.5 rounded-full shadow-sm glass font-medium"
+                          className="px-3 py-1.5 rounded-full bg-muted/50 font-medium"
                         >
                           {participant.name}
                         </span>
@@ -993,8 +993,8 @@ export default function ChatWindow({
           </div>
         ) : (
           <Collapsible className="mx-3 mb-4 sm:mx-6" defaultOpen>
-            <div className="overflow-hidden shadow-md glass-card rounded-2xl">
-              <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-white/5 group">
+            <div className="overflow-hidden border border-border bg-card rounded-xl">
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 transition-colors hover:bg-muted/50 group">
                 <div className="flex items-center gap-3">
                   <h3 className="text-sm font-bold text-foreground">Huddle</h3>
                   <Button
@@ -1021,7 +1021,7 @@ export default function ChatWindow({
                     huddleParticipants.map(participant => (
                       <span
                         key={participant.id}
-                        className="px-2 py-1 rounded-full shadow-sm glass"
+                        className="px-2 py-1 rounded-full bg-muted/50"
                       >
                         {participant.name}
                       </span>
@@ -1063,7 +1063,7 @@ export default function ChatWindow({
 
         <form
           onSubmit={onSubmit}
-          className="px-3 py-3 shadow-md glass-strong sm:px-6"
+          className="px-3 py-3 border-t border-border bg-background/80 backdrop-blur-md sm:px-6"
         >
           {editingMessage && (
             <div className="flex items-center justify-between px-3 py-2 mb-2 text-xs shadow-sm rounded-2xl glass-card">
@@ -1073,7 +1073,7 @@ export default function ChatWindow({
               </Button>
             </div>
           )}
-          <div className="flex flex-col gap-2 px-3 py-2 shadow-md glass-card rounded-2xl sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+          <div className="flex flex-col gap-2 px-3 py-2 border border-border bg-muted/30 rounded-2xl sm:flex-row sm:items-center sm:gap-3 sm:px-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <ComposerIcon
                 type="button"
@@ -1096,7 +1096,7 @@ export default function ChatWindow({
               <Button
                 type="submit"
                 size="icon"
-                className="transition-all duration-300 rounded-2xl h-9 w-9 sm:h-10 sm:w-10 gradient-primary shadow-glow hover:shadow-glow-strong"
+                className="transition-all duration-200 rounded-xl h-9 w-9 sm:h-10 sm:w-10 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />

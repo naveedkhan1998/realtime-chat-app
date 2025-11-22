@@ -18,9 +18,9 @@ export default function PublicLayout() {
     <div className="relative min-h-screen overflow-hidden">
       <DecorativeBackdrop />
       <header className="fixed inset-x-0 top-0 z-30">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-full border border-white/40 bg-white/60 px-6 py-3 shadow-lg shadow-primary/10 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-full border border-border/40 bg-background/60 px-6 py-3 shadow-lg shadow-primary/10 backdrop-blur-md">
           <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <MessageSquare className="h-5 w-5" />
             </span>
             <span>MNK Chat</span>
@@ -46,7 +46,7 @@ export default function PublicLayout() {
         </div>
         <div
           className={cn(
-            "mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-3xl border border-white/30 bg-white/70 px-6 py-4 shadow-lg shadow-primary/10 backdrop-blur-md transition-all md:hidden dark:border-white/10 dark:bg-slate-900/80",
+            "mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-3xl border border-border/30 bg-background/70 px-6 py-4 shadow-lg shadow-primary/10 backdrop-blur-md transition-all md:hidden",
             isMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
           )}
         >

@@ -110,7 +110,7 @@ export default function LoginRegistration() {
   };
 
   return (
-    <Card className="relative w-full overflow-hidden border border-primary/20 bg-white/80 shadow-2xl shadow-primary/20 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
+    <Card className="relative w-full overflow-hidden border border-primary/20 bg-card/80 shadow-2xl shadow-primary/20 backdrop-blur-xl">
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 opacity-80" />
       <CardHeader className="space-y-4 pb-8">
         <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-primary">
@@ -124,11 +124,11 @@ export default function LoginRegistration() {
       </CardHeader>
       <CardContent className="space-y-8">
         <Tabs defaultValue="login" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-2 rounded-full bg-white/60 p-1 backdrop-blur">
-            <TabsTrigger value="login" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-2 rounded-full bg-muted/60 p-1 backdrop-blur">
+            <TabsTrigger value="login" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Sign in
             </TabsTrigger>
-            <TabsTrigger value="register" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="register" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Create account
             </TabsTrigger>
           </TabsList>
@@ -190,7 +190,7 @@ export default function LoginRegistration() {
         <div className="space-y-5">
           <Divider label="Or continue with" />
           <div className="flex flex-col gap-4">
-            <div className="w-full rounded-2xl border border-white/40 bg-white/70 p-3 text-center shadow-inner shadow-primary/10 backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
+            <div className="w-full rounded-2xl border border-border/40 bg-muted/70 p-3 text-center shadow-inner shadow-primary/10 backdrop-blur">
               {isGoogleLoginLoading ? (
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -243,7 +243,7 @@ function FormRow({ id, label, type = "text", icon: Icon, value, onChange, placeh
           placeholder={placeholder}
           onChange={(event) => onChange(event.target.value)}
           autoComplete={autoComplete}
-          className="h-12 rounded-2xl border border-primary/20 bg-white/80 pl-11 text-sm shadow-sm shadow-primary/10 backdrop-blur transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:bg-slate-950/70"
+          className="h-12 rounded-2xl border border-primary/20 bg-background/80 pl-11 text-sm shadow-sm shadow-primary/10 backdrop-blur transition focus:border-primary focus:ring-2 focus:ring-primary/30"
           required
         />
       </div>

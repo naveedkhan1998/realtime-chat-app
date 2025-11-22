@@ -85,7 +85,7 @@ export default function AppShell({ isMobile }: AppShellProps) {
               <Button
                 variant="outline"
                 size="icon"
-                className="glass-card shadow-lg hover:shadow-glow transition-all duration-300"
+                className="bg-background/80 backdrop-blur-md border-border shadow-sm hover:bg-accent hover:text-accent-foreground transition-all duration-200"
                 onClick={() => setIsSidebarOpen(true)}
                 aria-label="Open navigation"
               >

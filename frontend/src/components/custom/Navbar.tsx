@@ -85,7 +85,7 @@ const Navbar: React.FC = () => {
   if (!showNavbar && isMobile) return null;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b dark:bg-gray-900 dark:border-gray-800">
+    <nav className="sticky top-0 z-50 w-full bg-background border-b border-border">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto">
         {/* Logo */}
         <Button variant="ghost" className="text-2xl font-bold text-primary" onClick={() => navigate("/")}>
