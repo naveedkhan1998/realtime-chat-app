@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
 import { useGetChatRoomsQuery, ChatRoom } from '@/services/chatApi';
+import { baseApi } from '@/services/baseApi';
 import ThemeSwitch from './ThemeSwitch';
 import { cn } from '@/lib/utils';
 
@@ -56,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleLogout = () => {
     dispatch(logOut());
+    dispatch(baseApi.util.resetApiState());
   };
 
   return (

@@ -4,6 +4,7 @@ import { useGetUserProfileQuery } from '@/services/userApi';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut, setCredentials, setUser } from '@/features/authSlice';
 import { getCookie } from '@/utils/cookie';
+import { baseApi } from '@/services/baseApi';
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
@@ -36,6 +37,7 @@ export default function AuthInitializer() {
     } else if (error) {
       console.error('Error fetching user profile:', error);
       dispatch(logOut());
+      dispatch(baseApi.util.resetApiState());
     }
   }, [userData, error, dispatch]);
 

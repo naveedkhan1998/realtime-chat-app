@@ -77,10 +77,12 @@ const baseQueryWithReauth: BaseQueryFn<
       } else {
         // Refresh token invalid, log out
         api.dispatch(logOut());
+        api.dispatch({ type: 'api/resetApiState' });
       }
     } else {
       // No refresh token, log out
       api.dispatch(logOut());
+      api.dispatch({ type: 'api/resetApiState' });
     }
   }
 
