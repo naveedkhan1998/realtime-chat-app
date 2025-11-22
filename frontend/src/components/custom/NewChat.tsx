@@ -9,16 +9,18 @@ import { toast } from '@/hooks/use-toast';
 
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 import {
   Search,
   Loader2,
-  MessageSquare,
+  MessageSquarePlus,
   Sparkles,
-  ShieldCheck,
+  Globe,
+  Mail,
+  UserPlus,
+  ArrowRight
 } from 'lucide-react';
 
 export default function NewChat() {
@@ -30,7 +32,6 @@ export default function NewChat() {
   const {
     data: searchResults,
     isLoading: searchLoading,
-    error: searchError,
   } = useSearchUsersQuery(
     { query: debouncedSearchQuery },
     { skip: !debouncedSearchQuery }
@@ -72,118 +73,117 @@ export default function NewChat() {
   };
 
   return (
-    <div className="flex flex-col h-full gap-6">
-      <section className="px-4 py-6 border rounded-2xl border-border bg-background sm:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium uppercase border rounded-full border-border text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              New chat
-            </div>
-            <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-              Start a direct conversation
-            </h1>
-            <p className="max-w-xl text-sm text-muted-foreground">
-              Find a teammate or friend to open a new chat. We handle the room
-              and realtime setup automatically.
-            </p>
-          </div>
-          <div className="px-4 py-3 text-sm border rounded-xl border-border bg-muted/40 text-muted-foreground sm:max-w-xs">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <ShieldCheck className="w-4 h-4" />
-              Secure defaults
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Chats inherit the same Channels, Redis, and Postgres stack you use
-              elsewhere in the app.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="relative flex flex-col h-full gap-6 p-6 overflow-hidden">
+      {/* Decorative Background */}
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
-      <Card className="border border-border bg-background/70">
-        <CardContent className="p-4 space-y-5 sm:p-6">
+      {/* Header */}
+      <div className="relative z-10 flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Directory</h1>
+          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+            <Globe className="w-3 h-3 mr-1" />
+            Global Search
+          </Badge>
+        </div>
+        <p className="text-lg text-muted-foreground">Discover people and start new conversations.</p>
+      </div>
+
+      {/* Search Area */}
+      <div className="relative z-10 w-full max-w-3xl mx-auto mt-4">
+        <div className="relative group">
+          <div className="absolute transition duration-1000 -inset-1 bg-gradient-to-r from-primary to-violet-600 rounded-3xl blur opacity-20 group-hover:opacity-40 group-hover:duration-200"></div>
           <div className="relative">
-            <Search className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
+            <Search className="absolute w-6 h-6 transition-colors -translate-y-1/2 left-5 top-1/2 text-muted-foreground group-focus-within:text-primary" />
             <Input
-              placeholder="Search by name or email"
-              className="pl-10 text-sm border rounded-full h-11 border-border bg-background focus:border-primary/40 focus:ring-2 focus:ring-primary/30"
+              placeholder="Search for anyone by name or email..."
+              className="h-16 text-lg transition-all shadow-xl pl-14 bg-background border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/20"
               value={searchQuery}
-              onChange={event => setSearchQuery(event.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              autoFocus
             />
           </div>
+        </div>
+      </div>
 
-          <ScrollArea className="h-[340px] w-full rounded-xl border border-border bg-background/60 p-3">
-            {searchLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              </div>
-            ) : searchError ? (
-              <div className="p-5 text-sm text-center border rounded-lg border-destructive/50 bg-destructive/10 text-destructive">
-                We couldn't search right now. Refresh and try again.
-              </div>
-            ) : searchResults && searchResults.length > 0 ? (
-              <div className="space-y-3">
-                {searchResults
-                  .filter(candidate => candidate.id !== user?.id)
-                  .map(candidate => (
-                    <div
-                      key={candidate.id}
-                      className="flex items-center justify-between gap-3 px-3 py-3 transition border rounded-xl border-border bg-background hover:border-primary/30"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10 border border-border bg-muted/40">
-                          <AvatarImage
-                            src={candidate.avatar}
-                            alt={candidate.name}
-                          />
-                          <AvatarFallback className="text-sm font-semibold text-primary">
-                            {candidate.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">
-                            {candidate.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {candidate.email}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 text-sm font-semibold border rounded-full border-border text-primary hover:bg-primary/10"
-                        onClick={() => handleCreateChat(candidate.id)}
-                        disabled={creatingChatRoom}
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        Create
-                      </Button>
-                    </div>
-                  ))}
-              </div>
-            ) : debouncedSearchQuery ? (
-              <EmptyResults message="No matching teammates yet. Invite them or try a different email." />
-            ) : (
-              <EmptyResults message="Search for someone to start a conversation." />
-            )}
-          </ScrollArea>
-
-          <div className="px-4 py-3 text-xs border rounded-xl border-border bg-background text-muted-foreground">
-            Start a multi-person conversation from the sidebar by creating a
-            group chat after selecting the participants you need.
+      {/* Results Area */}
+      <div className="relative z-10 flex-1 pr-2 mt-4 overflow-y-auto custom-scrollbar">
+        {searchLoading ? (
+          <div className="flex flex-col items-center justify-center gap-4 h-60">
+            <Loader2 className="w-10 h-10 animate-spin text-primary/50" />
+            <p className="text-muted-foreground animate-pulse">Searching the directory...</p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function EmptyResults({ message }: { message: string }) {
-  return (
-    <div className="px-6 py-8 text-sm text-center border border-dashed rounded-xl border-border text-muted-foreground">
-      {message}
+        ) : searchResults && searchResults.length > 0 ? (
+          <div className="grid max-w-5xl grid-cols-1 gap-4 mx-auto md:grid-cols-2 lg:grid-cols-3">
+            {searchResults
+              .filter(candidate => candidate.id !== user?.id)
+              .map(candidate => (
+                <div
+                  key={candidate.id}
+                  className="relative flex items-center gap-4 p-4 transition-all duration-300 border group rounded-3xl border-white/5 bg-background/40 backdrop-blur-xl hover:bg-background/60 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
+                >
+                  <Avatar className="transition-transform border-2 shadow-sm h-14 w-14 border-background group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/10">
+                    <AvatarImage src={candidate.avatar} alt={candidate.name} />
+                    <AvatarFallback className="text-lg font-bold text-white bg-gradient-to-br from-primary to-violet-600">
+                      {candidate.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <h3 className="text-base font-semibold truncate text-foreground">{candidate.name}</h3>
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                      <Mail className="w-3 h-3 opacity-70" />
+                      {candidate.email}
+                    </p>
+                  </div>
+                  <Button
+                    size="icon"
+                    className="transition-all translate-x-2 rounded-full shadow-none opacity-0 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md group-hover:opacity-100 group-hover:translate-x-0"
+                    onClick={() => handleCreateChat(candidate.id)}
+                    disabled={creatingChatRoom}
+                  >
+                    <MessageSquarePlus className="w-5 h-5" />
+                  </Button>
+                </div>
+              ))}
+          </div>
+        ) : debouncedSearchQuery ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center opacity-60">
+            <div className="flex items-center justify-center w-20 h-20 mb-6 border rounded-3xl bg-destructive/5 border-destructive/10">
+              <UserPlus className="w-10 h-10 text-destructive/40" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-foreground">No users found</h3>
+            <p className="max-w-sm mx-auto text-base text-muted-foreground">
+              We couldn't find anyone matching "{searchQuery}". Try a different name or email.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 opacity-50">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
+              <div className="relative flex items-center justify-center w-24 h-24 border shadow-2xl rounded-3xl bg-gradient-to-br from-primary/10 to-violet-500/10 border-white/10">
+                <Sparkles className="w-12 h-12 text-primary" />
+              </div>
+            </div>
+            <h3 className="mb-3 text-2xl font-bold text-foreground">Global Directory</h3>
+            <p className="max-w-md text-lg leading-relaxed text-center text-muted-foreground">
+              Search for anyone in the organization to start a secure, encrypted conversation instantly.
+            </p>
+            
+            <div className="grid w-full max-w-2xl grid-cols-1 gap-4 mt-12 sm:grid-cols-3 opacity-70">
+              {[
+                { icon: Search, label: "Search" },
+                { icon: ArrowRight, label: "Select" },
+                { icon: MessageSquarePlus, label: "Chat" }
+              ].map((step, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 p-4 border rounded-2xl bg-white/5 border-white/5">
+                  <step.icon className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-medium">{step.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -151,13 +151,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto px-2 py-2 mt-2 custom-scrollbar">
-          <div className="flex items-center justify-between px-4 py-2 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Recent Messages</span>
+          <div className="px-4 mb-2">
             <NavLink to="/new-chat">
-              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-primary/10 text-primary">
+              <Button 
+                variant="default" 
+                className="w-full justify-start gap-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 shadow-none border border-primary/20 h-10 font-semibold"
+              >
                 <Plus className="h-4 w-4" />
+                Start New Chat
               </Button>
             </NavLink>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Recent Messages</span>
           </div>
 
           <div className="space-y-1 px-2">
