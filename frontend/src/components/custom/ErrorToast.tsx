@@ -1,12 +1,12 @@
 // components/ErrorToast.tsx
 
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { clearError } from "@/features/errorSlice";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { clearError } from '@/features/errorSlice';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 export default function ErrorToast() {
-  const errorMessage = useAppSelector((state) => state.error.message);
+  const errorMessage = useAppSelector(state => state.error.message);
   const dispatch = useAppDispatch();
   const { toast } = useToast();
 
@@ -14,9 +14,9 @@ export default function ErrorToast() {
     if (errorMessage) {
       // Display the toast
       toast({
-        title: "Error",
+        title: 'Error',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
         duration: 3000,
       });
 

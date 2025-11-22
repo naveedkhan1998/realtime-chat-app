@@ -1,12 +1,12 @@
-import LoginRegistration from "@/components/custom/LoginRegistration";
-import { motion } from "framer-motion";
-import { MessageSquare, Code2, Zap, Database } from "lucide-react";
+import LoginRegistration from '@/components/custom/LoginRegistration';
+import { motion } from 'framer-motion';
+import { MessageSquare, Code2, Zap, Database } from 'lucide-react';
 
 export default function LoginPage() {
   return (
     <div className="grid lg:grid-cols-2 gap-4 lg:gap-12 h-full min-h-[600px] items-center">
       {/* Left Side - Visuals */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
@@ -14,7 +14,7 @@ export default function LoginPage() {
       >
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-30" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-12">
             <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
@@ -28,40 +28,42 @@ export default function LoginPage() {
             <span className="text-primary">Portfolio Demo.</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-md">
-            Explore this full-stack showcase featuring Django Channels, Redis, and React. Built to demonstrate scalable real-time architecture.
+            Explore this full-stack showcase featuring Django Channels, Redis,
+            and React. Built to demonstrate scalable real-time architecture.
           </p>
         </div>
 
         <div className="relative z-10 grid gap-6 mt-12">
-          <FeatureRow 
-            icon={Zap} 
-            title="WebSocket Powered" 
-            desc="Instant messaging using Django Channels & Redis" 
+          <FeatureRow
+            icon={Zap}
+            title="WebSocket Powered"
+            desc="Instant messaging using Django Channels & Redis"
             delay={0.2}
           />
-          <FeatureRow 
-            icon={Code2} 
-            title="Modern Frontend" 
-            desc="React, TypeScript, and Tailwind CSS" 
+          <FeatureRow
+            icon={Code2}
+            title="Modern Frontend"
+            desc="React, TypeScript, and Tailwind CSS"
             delay={0.3}
           />
-          <FeatureRow 
-            icon={Database} 
-            title="Full Stack" 
-            desc="PostgreSQL database with DRF API" 
+          <FeatureRow
+            icon={Database}
+            title="Full Stack"
+            desc="PostgreSQL database with DRF API"
             delay={0.4}
           />
         </div>
 
         <div className="relative z-10 mt-12 pt-8 border-t border-primary/10">
           <p className="text-sm text-muted-foreground">
-            "Feel free to create an account and test the real-time capabilities. This is a personal learning project."
+            "Feel free to create an account and test the real-time capabilities.
+            This is a personal learning project."
           </p>
         </div>
       </motion.div>
 
       {/* Right Side - Form */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
@@ -75,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-card border border-border/50 shadow-xl shadow-primary/5 rounded-3xl p-6 md:p-8">
-           <LoginRegistration />
+          <LoginRegistration />
         </div>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
@@ -86,9 +88,19 @@ export default function LoginPage() {
   );
 }
 
-function FeatureRow({ icon: Icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) {
+function FeatureRow({
+  icon: Icon,
+  title,
+  desc,
+  delay,
+}: {
+  icon: any;
+  title: string;
+  desc: string;
+  delay: number;
+}) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}

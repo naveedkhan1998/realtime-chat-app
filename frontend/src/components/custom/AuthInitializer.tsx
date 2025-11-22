@@ -1,19 +1,19 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
-import { useGetUserProfileQuery } from "@/services/userApi";
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { logOut, setCredentials, setUser } from "@/features/authSlice";
-import { getCookie } from "@/utils/cookie";
+import { useGetUserProfileQuery } from '@/services/userApi';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { logOut, setCredentials, setUser } from '@/features/authSlice';
+import { getCookie } from '@/utils/cookie';
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
-  const user = useAppSelector((state) => state.auth.user);
+  const accessToken = useAppSelector(state => state.auth.accessToken);
+  const user = useAppSelector(state => state.auth.user);
 
   useEffect(() => {
     if (!accessToken || !user) {
-      const accessTokenFromCookie = getCookie("access_token");
-      const refreshToken = getCookie("refresh_token");
+      const accessTokenFromCookie = getCookie('access_token');
+      const refreshToken = getCookie('refresh_token');
       if (accessTokenFromCookie && refreshToken) {
         dispatch(
           setCredentials({
@@ -34,7 +34,7 @@ export default function AuthInitializer() {
     if (userData) {
       dispatch(setUser(userData));
     } else if (error) {
-      console.error("Error fetching user profile:", error);
+      console.error('Error fetching user profile:', error);
       dispatch(logOut());
     }
   }, [userData, error, dispatch]);

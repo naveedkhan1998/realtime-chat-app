@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   ArrowLeft,
@@ -27,7 +21,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 import {
   Message,
@@ -43,7 +37,6 @@ import {
 } from '@/features/chatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import MessageBubble from './MessageBubble';
-import { throttle } from '@/utils/performance';
 import { cn } from '@/lib/utils';
 
 interface ChatWindowProps {
@@ -91,9 +84,7 @@ export default function ChatWindow({
   }>();
   const [fetchMessagesPage] = useLazyGetMessagesPageQuery();
   const [initialLoading, setInitialLoading] = useState(false);
-  const [initialError, setInitialError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const initialScrollDoneRef = useRef(false);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -139,8 +130,7 @@ export default function ChatWindow({
   const fetchInitialMessages = useCallback(async () => {
     if (!activeChat) return;
     setInitialLoading(true);
-    setInitialError(null);
-    setLoadMoreError(null);
+
     try {
       const response = await fetchMessagesPage({
         chat_room_id: activeChat,
@@ -160,7 +150,7 @@ export default function ChatWindow({
       initialScrollDoneRef.current = true;
     } catch (error) {
       console.error('Failed to load messages', error);
-      setInitialError('Unable to load messages. Try again.');
+
       dispatch(setMessages({ chatRoomId: activeChat, messages: [] }));
       dispatch(
         setMessagePagination({ chatRoomId: activeChat, nextCursor: null })
@@ -190,7 +180,6 @@ export default function ChatWindow({
       );
     } catch (error) {
       console.error('Failed to load older messages', error);
-      setLoadMoreError("Couldn't load older messages. Try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -375,7 +364,13 @@ export default function ChatWindow({
         refreshRemoteStreams();
       }
     });
-  }, [ensurePeerConnection, huddleParticipants, isHuddleActive, refreshRemoteStreams, user.id]);
+  }, [
+    ensurePeerConnection,
+    huddleParticipants,
+    isHuddleActive,
+    refreshRemoteStreams,
+    user.id,
+  ]);
 
   useEffect(() => {
     if (!isHuddleActive) return;
@@ -438,14 +433,16 @@ export default function ChatWindow({
   }, [messageValue]);
 
   useEffect(() => {
+    const noteTimeout = noteUpdateTimeoutRef.current;
+    const typingTimeout = typingTimeoutRef.current;
     return () => {
       const ws = WebSocketService.getInstance();
       if (ws.isConnected()) {
         ws.sendTypingStatus(false);
         ws.sendHuddleLeave();
       }
-      if (noteUpdateTimeoutRef.current) clearTimeout(noteUpdateTimeoutRef.current);
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (noteTimeout) clearTimeout(noteTimeout);
+      if (typingTimeout) clearTimeout(typingTimeout);
     };
   }, []);
 
@@ -460,7 +457,9 @@ export default function ChatWindow({
 
   const typingUsers = useMemo(() => {
     if (!activeRoom) return [];
-    const typingIds = Object.keys(typingMap).map(Number).filter(id => typingMap[id] && id !== user.id);
+    const typingIds = Object.keys(typingMap)
+      .map(Number)
+      .filter(id => typingMap[id] && id !== user.id);
     return activeRoom.participants.filter(p => typingIds.includes(p.id));
   }, [activeRoom, typingMap, user.id]);
 
@@ -493,7 +492,7 @@ export default function ChatWindow({
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setShowScrollButton(!isNearBottom);
-    
+
     if (isNearBottom) {
       shouldAutoScrollRef.current = true;
     } else {
@@ -503,34 +502,40 @@ export default function ChatWindow({
 
   return (
     <>
-      <div className="fixed top-0 left-0 w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div
+        className="fixed top-0 left-0 w-0 h-0 overflow-hidden pointer-events-none"
+        aria-hidden="true"
+      >
         <audio ref={localAudioRef} autoPlay muted playsInline />
         {remoteStreams.map(({ userId, stream }) => (
           <HiddenHuddleAudio key={userId} stream={stream} />
         ))}
       </div>
 
-      <div className="flex flex-col h-full w-full relative bg-background/30">
+      <div className="relative flex flex-col w-full h-full bg-background/30">
         {/* Floating Header */}
-        <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 bg-background/80 backdrop-blur-xl border-b border-white/5 shadow-sm">
+        <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 border-b shadow-sm bg-background/80 backdrop-blur-xl border-white/5">
           <div className="flex items-center flex-1 gap-3">
             {isMobile && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setActiveChat(undefined)}
-                className="h-8 w-8 rounded-full hover:bg-primary/10 -ml-2"
+                className="w-8 h-8 -ml-2 rounded-full hover:bg-primary/10"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            <Avatar className="h-10 w-10 border-2 border-background shadow-sm ring-2 ring-primary/10">
+            <Avatar className="w-10 h-10 border-2 shadow-sm border-background ring-2 ring-primary/10">
               <AvatarImage
                 src={activeRoom?.is_group_chat ? '' : otherParticipant.avatar}
                 alt={activeRoom?.name || otherParticipant.name}
               />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
-                {(activeRoom?.is_group_chat ? activeRoom.name : otherParticipant.name)?.charAt(0)}
+              <AvatarFallback className="font-bold bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                {(activeRoom?.is_group_chat
+                  ? activeRoom.name
+                  : otherParticipant.name
+                )?.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
@@ -540,13 +545,15 @@ export default function ChatWindow({
               <div className="flex items-center gap-2">
                 {presence.filter(p => p.id !== user.id).length > 0 ? (
                   <>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    <span className="relative flex w-2 h-2">
+                      <span className="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
+                      <span className="relative inline-flex w-2 h-2 bg-green-500 rounded-full"></span>
                     </span>
                     <p className="text-xs text-muted-foreground">
-                      {activeRoom?.is_group_chat 
-                        ? `${presence.filter(p => p.id !== user.id).length} active` 
+                      {activeRoom?.is_group_chat
+                        ? `${
+                            presence.filter(p => p.id !== user.id).length
+                          } active`
                         : 'Active now'}
                     </p>
                   </>
@@ -556,52 +563,68 @@ export default function ChatWindow({
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1">
             {/* Huddle Participants */}
             {huddleUsers.length > 0 && (
-              <div className="flex items-center -space-x-2 mr-3">
-                {huddleUsers.map((p) => (
-                  <Avatar key={p.id} className="h-8 w-8 border-2 border-background ring-2 ring-green-500/20">
+              <div className="flex items-center mr-3 -space-x-2">
+                {huddleUsers.map(p => (
+                  <Avatar
+                    key={p.id}
+                    className="w-8 h-8 border-2 border-background ring-2 ring-green-500/20"
+                  >
                     <AvatarImage src={p.avatar} />
-                    <AvatarFallback className="text-[10px] bg-muted">{p.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="text-[10px] bg-muted">
+                      {p.name.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                 ))}
               </div>
             )}
 
             <Button
-              variant={isHuddleActive ? "destructive" : "ghost"}
+              variant={isHuddleActive ? 'destructive' : 'ghost'}
               size="icon"
-              className={cn("h-9 w-9 rounded-full transition-all", isHuddleActive && "animate-pulse shadow-lg shadow-destructive/20")}
+              className={cn(
+                'h-9 w-9 rounded-full transition-all',
+                isHuddleActive &&
+                  'animate-pulse shadow-lg shadow-destructive/20'
+              )}
               onClick={isHuddleActive ? stopHuddle : startHuddle}
             >
-              <Phone className="h-4 w-4" />
+              <Phone className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary">
-              <Video className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+            >
+              <Video className="w-4 h-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary">
-                  <MoreVertical className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                >
+                  <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 rounded-xl">
                 <DropdownMenuItem>View Profile</DropdownMenuItem>
                 <DropdownMenuItem>Search in Chat</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">Block User</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive">
+                  Block User
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
 
         {/* Messages Area */}
-        <ScrollArea 
-          className="flex-1 px-0" 
-          onScrollCapture={handleScroll}
-        >
-          <div className="px-4 pt-24 space-y-6 max-w-4xl mx-auto">
+        <ScrollArea className="flex-1 px-0" onScrollCapture={handleScroll}>
+          <div className="max-w-4xl px-4 pt-24 mx-auto space-y-6">
             {!initialLoading && nextCursor && (
               <div className="flex justify-center py-4">
                 <Button
@@ -611,7 +634,9 @@ export default function ChatWindow({
                   onClick={handleLoadMore}
                   disabled={loadingMore}
                 >
-                  {loadingMore ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
+                  {loadingMore ? (
+                    <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                  ) : null}
                   Load older messages
                 </Button>
               </div>
@@ -626,22 +651,35 @@ export default function ChatWindow({
                 const isOwnMessage = message.sender.id === user.id;
                 const prevMessage = messages[index - 1];
                 const nextMessage = messages[index + 1];
-                
-                const isConsecutive = prevMessage && prevMessage.sender.id === message.sender.id;
-                const isLastInSequence = !nextMessage || nextMessage.sender.id !== message.sender.id;
-                
+
+                const isConsecutive =
+                  prevMessage && prevMessage.sender.id === message.sender.id;
+                const isLastInSequence =
+                  !nextMessage || nextMessage.sender.id !== message.sender.id;
+
                 // Find the most up-to-date sender profile from the room participants
-                const senderProfile = activeRoom?.participants.find(p => p.id === message.sender.id) 
-                  || (message.sender.id === user.id ? user : message.sender);
+                const senderProfile =
+                  activeRoom?.participants.find(
+                    p => p.id === message.sender.id
+                  ) || (message.sender.id === user.id ? user : message.sender);
 
                 return (
-                  <div key={message.id} className={cn(isConsecutive && "mt-[-18px]")}>
+                  <div
+                    key={message.id}
+                    className={cn(isConsecutive && 'mt-[-18px]')}
+                  >
                     <MessageBubble
                       message={message}
                       isSent={isOwnMessage}
                       isOwnMessage={isOwnMessage}
-                      onEdit={isOwnMessage ? () => startEditing(message) : undefined}
-                      onDelete={isOwnMessage ? () => handleDeleteMessage(message) : undefined}
+                      onEdit={
+                        isOwnMessage ? () => startEditing(message) : undefined
+                      }
+                      onDelete={
+                        isOwnMessage
+                          ? () => handleDeleteMessage(message)
+                          : undefined
+                      }
                       isEditing={editingMessage?.id === message.id}
                       showAvatar={isLastInSequence}
                       isConsecutive={isConsecutive}
@@ -653,12 +691,15 @@ export default function ChatWindow({
               })
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-center opacity-60">
-                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center mb-6 shadow-inner">
-                  <Smile className="h-12 w-12 text-primary" />
+                <div className="flex items-center justify-center w-24 h-24 mb-6 shadow-inner rounded-3xl bg-gradient-to-br from-primary/20 to-violet-500/20">
+                  <Smile className="w-12 h-12 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">No messages yet</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  Be the first to break the ice! Start the conversation by typing a message below.
+                <h3 className="mb-2 text-xl font-bold text-foreground">
+                  No messages yet
+                </h3>
+                <p className="max-w-xs mx-auto text-sm text-muted-foreground">
+                  Be the first to break the ice! Start the conversation by
+                  typing a message below.
                 </p>
               </div>
             )}
@@ -672,28 +713,37 @@ export default function ChatWindow({
         {showScrollButton && (
           <Button
             size="icon"
-            className="absolute bottom-24 right-8 h-10 w-10 rounded-full shadow-lg bg-background/80 backdrop-blur-md border border-white/10 text-primary hover:bg-background animate-in fade-in zoom-in duration-200 z-30"
+            className="absolute z-30 w-10 h-10 duration-200 border rounded-full shadow-lg bottom-24 right-8 bg-background/80 backdrop-blur-md border-white/10 text-primary hover:bg-background animate-in fade-in zoom-in"
             onClick={() => scrollToBottom('smooth')}
           >
-            <ChevronDown className="h-5 w-5" />
+            <ChevronDown className="w-5 h-5" />
           </Button>
         )}
 
         {/* Input Area */}
         <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
-          <div className="max-w-4xl mx-auto w-full relative">
-             {/* Typing Indicator */}
-             <div className="absolute -top-8 left-0 h-6 flex items-center gap-2">
+          <div className="relative w-full max-w-4xl mx-auto">
+            {/* Typing Indicator */}
+            <div className="absolute left-0 flex items-center h-6 gap-2 -top-8">
               {typingUsers.length > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur-md border border-white/5 text-[10px] font-medium text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex gap-0.5">
-                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span
+                      className="w-1 h-1 rounded-full bg-primary animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    />
+                    <span
+                      className="w-1 h-1 rounded-full bg-primary animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <span
+                      className="w-1 h-1 rounded-full bg-primary animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    />
                   </div>
                   {typingUsers.length === 1
                     ? `${typingUsers[0].name} is typing...`
-                    : "Several people are typing..."}
+                    : 'Several people are typing...'}
                 </div>
               )}
             </div>
@@ -706,11 +756,11 @@ export default function ChatWindow({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"
+                className="flex-shrink-0 w-10 h-10 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
               >
-                <Paperclip className="h-5 w-5" />
+                <Paperclip className="w-5 h-5" />
               </Button>
-              
+
               <Input
                 {...register('message')}
                 placeholder="Type a message..."
@@ -723,18 +773,18 @@ export default function ChatWindow({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                  className="rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
                 >
-                  <Smile className="h-5 w-5" />
+                  <Smile className="w-5 h-5" />
                 </Button>
                 <Button
                   type="submit"
                   size="icon"
                   className={cn(
-                    "h-10 w-10 rounded-full shadow-md transition-all duration-300",
-                    watch('message')?.trim() 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 hover:shadow-lg" 
-                      : "bg-muted text-muted-foreground"
+                    'h-10 w-10 rounded-full shadow-md transition-all duration-300',
+                    watch('message')?.trim()
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 hover:shadow-lg'
+                      : 'bg-muted text-muted-foreground'
                   )}
                   disabled={!watch('message')?.trim()}
                 >

@@ -70,11 +70,11 @@ export function compressString(str: string, threshold = 1024): string {
   if (str.length < threshold) {
     return str;
   }
-  
+
   // Simple run-length encoding for repeated characters
   let compressed = '';
   let count = 1;
-  
+
   for (let i = 0; i < str.length; i++) {
     if (i < str.length - 1 && str[i] === str[i + 1]) {
       count++;
@@ -87,7 +87,7 @@ export function compressString(str: string, threshold = 1024): string {
       count = 1;
     }
   }
-  
+
   // Only return compressed if it's actually smaller
   return compressed.length < str.length ? compressed : str;
 }
@@ -102,7 +102,7 @@ export function decompressString(str: string): string {
   if (!str.includes('×')) {
     return str;
   }
-  
+
   return str.replace(/(.?)×(\d+)/g, (_, char, count) => {
     return char.repeat(parseInt(count, 10));
   });

@@ -1,13 +1,13 @@
 // store.ts
 
-import { configureStore } from "@reduxjs/toolkit";
-import { setupListeners } from "@reduxjs/toolkit/query";
-import { baseApi } from "@/services/baseApi";
-import authReducer from "@/features/authSlice";
-import errorReducer from "@/features/errorSlice";
-import themeReducer from "@/features/themeSlice";
-import chatReducer from "@/features/chatSlice";
-import uiReducer from "@/features/uiSlice";
+import { configureStore } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { baseApi } from '@/services/baseApi';
+import authReducer from '@/features/authSlice';
+import errorReducer from '@/features/errorSlice';
+import themeReducer from '@/features/themeSlice';
+import chatReducer from '@/features/chatSlice';
+import uiReducer from '@/features/uiSlice';
 
 export const store = configureStore({
   reducer: {
@@ -19,7 +19,10 @@ export const store = configureStore({
     ui: uiReducer,
     // Add other reducers here
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }).concat(baseApi.middleware),
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({ serializableCheck: false }).concat(
+      baseApi.middleware
+    ),
 });
 
 setupListeners(store.dispatch);

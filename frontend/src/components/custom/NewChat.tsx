@@ -20,7 +20,7 @@ import {
   Globe,
   Mail,
   UserPlus,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 
 export default function NewChat() {
@@ -29,10 +29,7 @@ export default function NewChat() {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const navigate = useNavigate();
 
-  const {
-    data: searchResults,
-    isLoading: searchLoading,
-  } = useSearchUsersQuery(
+  const { data: searchResults, isLoading: searchLoading } = useSearchUsersQuery(
     { query: debouncedSearchQuery },
     { skip: !debouncedSearchQuery }
   );
@@ -80,13 +77,20 @@ export default function NewChat() {
       {/* Header */}
       <div className="relative z-10 flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Directory</h1>
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Directory
+          </h1>
+          <Badge
+            variant="secondary"
+            className="bg-primary/10 text-primary border-primary/20"
+          >
             <Globe className="w-3 h-3 mr-1" />
             Global Search
           </Badge>
         </div>
-        <p className="text-lg text-muted-foreground">Discover people and start new conversations.</p>
+        <p className="text-lg text-muted-foreground">
+          Discover people and start new conversations.
+        </p>
       </div>
 
       {/* Search Area */}
@@ -99,7 +103,7 @@ export default function NewChat() {
               placeholder="Search for anyone by name or email..."
               className="h-16 text-lg transition-all shadow-xl pl-14 bg-background border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/20"
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              onChange={event => setSearchQuery(event.target.value)}
               autoFocus
             />
           </div>
@@ -111,7 +115,9 @@ export default function NewChat() {
         {searchLoading ? (
           <div className="flex flex-col items-center justify-center gap-4 h-60">
             <Loader2 className="w-10 h-10 animate-spin text-primary/50" />
-            <p className="text-muted-foreground animate-pulse">Searching the directory...</p>
+            <p className="text-muted-foreground animate-pulse">
+              Searching the directory...
+            </p>
           </div>
         ) : searchResults && searchResults.length > 0 ? (
           <div className="grid max-w-5xl grid-cols-1 gap-4 mx-auto md:grid-cols-2 lg:grid-cols-3">
@@ -129,7 +135,9 @@ export default function NewChat() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 space-y-1">
-                    <h3 className="text-base font-semibold truncate text-foreground">{candidate.name}</h3>
+                    <h3 className="text-base font-semibold truncate text-foreground">
+                      {candidate.name}
+                    </h3>
                     <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
                       <Mail className="w-3 h-3 opacity-70" />
                       {candidate.email}
@@ -151,9 +159,12 @@ export default function NewChat() {
             <div className="flex items-center justify-center w-20 h-20 mb-6 border rounded-3xl bg-destructive/5 border-destructive/10">
               <UserPlus className="w-10 h-10 text-destructive/40" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-foreground">No users found</h3>
+            <h3 className="mb-2 text-xl font-bold text-foreground">
+              No users found
+            </h3>
             <p className="max-w-sm mx-auto text-base text-muted-foreground">
-              We couldn't find anyone matching "{searchQuery}". Try a different name or email.
+              We couldn't find anyone matching "{searchQuery}". Try a different
+              name or email.
             </p>
           </div>
         ) : (
@@ -164,18 +175,24 @@ export default function NewChat() {
                 <Sparkles className="w-12 h-12 text-primary" />
               </div>
             </div>
-            <h3 className="mb-3 text-2xl font-bold text-foreground">Global Directory</h3>
+            <h3 className="mb-3 text-2xl font-bold text-foreground">
+              Global Directory
+            </h3>
             <p className="max-w-md text-lg leading-relaxed text-center text-muted-foreground">
-              Search for anyone in the organization to start a secure, encrypted conversation instantly.
+              Search for anyone in the organization to start a secure, encrypted
+              conversation instantly.
             </p>
-            
+
             <div className="grid w-full max-w-2xl grid-cols-1 gap-4 mt-12 sm:grid-cols-3 opacity-70">
               {[
-                { icon: Search, label: "Search" },
-                { icon: ArrowRight, label: "Select" },
-                { icon: MessageSquarePlus, label: "Chat" }
+                { icon: Search, label: 'Search' },
+                { icon: ArrowRight, label: 'Select' },
+                { icon: MessageSquarePlus, label: 'Chat' },
               ].map((step, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 p-4 border rounded-2xl bg-white/5 border-white/5">
+                <div
+                  key={i}
+                  className="flex flex-col items-center gap-2 p-4 border rounded-2xl bg-white/5 border-white/5"
+                >
                   <step.icon className="w-5 h-5 text-primary" />
                   <span className="text-sm font-medium">{step.label}</span>
                 </div>

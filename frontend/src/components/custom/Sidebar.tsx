@@ -68,7 +68,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Glass Container */}
       <div className="flex flex-col h-full w-full rounded-none lg:rounded-3xl bg-background/80 backdrop-blur-2xl border-r lg:border border-white/10 shadow-2xl overflow-hidden">
-        
         {/* Brand Header */}
         <div className="p-6 pb-2 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -76,16 +75,28 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Zap className="h-5 w-5 text-white fill-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg tracking-tight leading-none">Antigravity</h1>
-              <p className="text-[10px] font-medium text-muted-foreground tracking-wider uppercase mt-0.5">Workspace</p>
+              <h1 className="font-bold text-lg tracking-tight leading-none">
+                Antigravity
+              </h1>
+              <p className="text-[10px] font-medium text-muted-foreground tracking-wider uppercase mt-0.5">
+                Workspace
+              </p>
             </div>
           </div>
           {isMobile ? (
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 rounded-full"
+            >
               <X className="h-4 w-4" />
             </Button>
           ) : (
-            <ThemeSwitch variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10" />
+            <ThemeSwitch
+              variant="ghost"
+              className="h-8 w-8 rounded-full hover:bg-primary/10"
+            />
           )}
         </div>
 
@@ -105,9 +116,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-sm font-bold truncate">{user.name}</p>
               <p className="text-xs text-muted-foreground truncate">Online</p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               onClick={handleLogout}
             >
@@ -120,8 +131,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="px-4 space-y-4">
           <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Search conversations..." 
+            <Input
+              placeholder="Search conversations..."
               className="h-10 pl-9 bg-secondary/50 border-transparent hover:bg-secondary/80 focus:bg-background focus:border-primary/20 rounded-xl transition-all placeholder:text-muted-foreground/70"
             />
           </div>
@@ -135,12 +146,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                   if (item.to === '/chat') setActiveChat(undefined);
                   if (isMobile) onClose();
                 }}
-                className={({ isActive }) => cn(
-                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                  isActive 
-                    ? "bg-background text-primary shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                )}
+                className={({ isActive }) =>
+                  cn(
+                    'flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                    isActive
+                      ? 'bg-background text-primary shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                  )
+                }
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -153,8 +166,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto px-2 py-2 mt-2 custom-scrollbar">
           <div className="px-4 mb-2">
             <NavLink to="/new-chat">
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 className="w-full justify-start gap-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 shadow-none border border-primary/20 h-10 font-semibold"
               >
                 <Plus className="h-4 w-4" />
@@ -163,7 +176,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             </NavLink>
           </div>
           <div className="flex items-center justify-between px-4 py-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">Recent Messages</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+              Recent Messages
+            </span>
           </div>
 
           <div className="space-y-1 px-2">
@@ -193,7 +208,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">No conversations yet. Start a new chat!</p>
+                <p className="text-sm text-muted-foreground">
+                  No conversations yet. Start a new chat!
+                </p>
               </div>
             )}
           </div>
@@ -221,49 +238,61 @@ function ConversationRow({
     : room.participants.find(participant => participant.id !== currentUserId);
   const title = room.is_group_chat
     ? room.name
-    : counterpart?.name ?? 'Direct message';
-  const avatar = room.is_group_chat ? '' : counterpart?.avatar ?? '';
+    : (counterpart?.name ?? 'Direct message');
+  const avatar = room.is_group_chat ? '' : (counterpart?.avatar ?? '');
 
   return (
     <button
       onClick={onSelect}
       className={cn(
-        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left group relative overflow-hidden",
-        active 
-          ? "bg-primary/10 shadow-sm border border-primary/10" 
-          : "hover:bg-secondary/40 border border-transparent"
+        'w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left group relative overflow-hidden',
+        active
+          ? 'bg-primary/10 shadow-sm border border-primary/10'
+          : 'hover:bg-secondary/40 border border-transparent'
       )}
     >
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
       )}
-      
-      <Avatar className={cn(
-        "h-11 w-11 border-2 transition-all duration-300",
-        active ? "border-primary ring-2 ring-primary/20" : "border-transparent group-hover:border-primary/30"
-      )}>
+
+      <Avatar
+        className={cn(
+          'h-11 w-11 border-2 transition-all duration-300',
+          active
+            ? 'border-primary ring-2 ring-primary/20'
+            : 'border-transparent group-hover:border-primary/30'
+        )}
+      >
         <AvatarImage src={avatar} alt={title} />
-        <AvatarFallback className={cn(
-          "text-xs font-bold",
-          active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-        )}>
+        <AvatarFallback
+          className={cn(
+            'text-xs font-bold',
+            active
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-muted-foreground'
+          )}
+        >
           {title?.charAt(0)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0 ml-1">
         <div className="flex items-center justify-between mb-0.5">
-          <span className={cn(
-            "text-sm font-semibold truncate transition-colors",
-            active ? "text-primary" : "text-foreground"
-          )}>
+          <span
+            className={cn(
+              'text-sm font-semibold truncate transition-colors',
+              active ? 'text-primary' : 'text-foreground'
+            )}
+          >
             {title}
           </span>
           {/* You might want to add a timestamp here if available in the room object */}
         </div>
-        <p className={cn(
-          "text-xs truncate transition-colors",
-          active ? "text-primary/70" : "text-muted-foreground opacity-80"
-        )}>
+        <p
+          className={cn(
+            'text-xs truncate transition-colors',
+            active ? 'text-primary/70' : 'text-muted-foreground opacity-80'
+          )}
+        >
           {room.is_group_chat
             ? `${room.participants.length} members`
             : 'Click to open chat'}

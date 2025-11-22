@@ -1,43 +1,51 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from "react";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
-import { Loader2, Mail, Lock, User, Info } from "lucide-react";
+import { useState } from 'react';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, Mail, Lock, User, Info } from 'lucide-react';
 
-import { useLoginMutation, useRegisterMutation, useGoogleLoginMutation } from "@/services/authApi";
-import { useAppDispatch } from "@/app/hooks";
-import { setCredentials } from "@/features/authSlice";
-import { setCookie } from "@/utils/cookie";
+import {
+  useLoginMutation,
+  useRegisterMutation,
+  useGoogleLoginMutation,
+} from '@/services/authApi';
+import { useAppDispatch } from '@/app/hooks';
+import { setCredentials } from '@/features/authSlice';
+import { setCookie } from '@/utils/cookie';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LoginRegistration() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [registerName, setRegisterName] = useState("");
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [registerPassword2, setRegisterPassword2] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [registerError, setRegisterError] = useState("");
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerPassword2, setRegisterPassword2] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
-  const [googleLogin, { isLoading: isGoogleLoginLoading }] = useGoogleLoginMutation();
+  const [googleLogin, { isLoading: isGoogleLoginLoading }] =
+    useGoogleLoginMutation();
 
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoginError("");
+    setLoginError('');
 
     try {
-      const userData = await login({ email: loginEmail, password: loginPassword }).unwrap();
+      const userData = await login({
+        email: loginEmail,
+        password: loginPassword,
+      }).unwrap();
       handleAuthSuccess(userData);
     } catch (error: any) {
       handleAuthError(error, setLoginError);
@@ -46,10 +54,10 @@ export default function LoginRegistration() {
 
   const handleRegisterSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setRegisterError("");
+    setRegisterError('');
 
     if (registerPassword !== registerPassword2) {
-      setRegisterError("Passwords do not match.");
+      setRegisterError('Passwords do not match.');
       return;
     }
 
@@ -69,12 +77,14 @@ export default function LoginRegistration() {
 
   const handleLoginSuccess = async (response: CredentialResponse) => {
     if (!response.credential) {
-      setLoginError("No credential received from Google.");
+      setLoginError('No credential received from Google.');
       return;
     }
 
     try {
-      const userData = await googleLogin({ token: response.credential }).unwrap();
+      const userData = await googleLogin({
+        token: response.credential,
+      }).unwrap();
       handleAuthSuccess(userData);
     } catch (error: any) {
       handleAuthError(error, setLoginError);
@@ -82,8 +92,8 @@ export default function LoginRegistration() {
   };
 
   const handleAuthSuccess = (userData: any) => {
-    setCookie("access_token", userData.token.access, { expires: 1 });
-    setCookie("refresh_token", userData.token.refresh, { expires: 7 });
+    setCookie('access_token', userData.token.access, { expires: 1 });
+    setCookie('refresh_token', userData.token.refresh, { expires: 7 });
     dispatch(
       setCredentials({
         accessToken: userData.token.access,
@@ -91,37 +101,50 @@ export default function LoginRegistration() {
         isAuthenticated: true,
       })
     );
-    navigate("/chat");
+    navigate('/chat');
   };
 
   const handleAuthError = (error: any, setError: (message: string) => void) => {
     if (error?.data?.errors) {
-      setError(error.data.errors.non_field_errors?.[0] || "Something went wrong. Please try again.");
-    } else if (typeof error?.data === "string") {
+      setError(
+        error.data.errors.non_field_errors?.[0] ||
+          'Something went wrong. Please try again.'
+      );
+    } else if (typeof error?.data === 'string') {
       setError(error.data);
     } else {
-      setError("Something went wrong. Please try again.");
+      setError('Something went wrong. Please try again.');
     }
   };
 
   const handleLoginFailure = () => {
-    setLoginError("Google login failed.");
+    setLoginError('Google login failed.');
   };
 
   return (
     <div className="space-y-6">
       <Tabs defaultValue="login" className="w-full space-y-6">
         <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/50 p-1">
-          <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+          <TabsTrigger
+            value="login"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
             Sign in
           </TabsTrigger>
-          <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+          <TabsTrigger
+            value="register"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
             Create account
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="login" className="space-y-4">
-          {loginError && <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">{loginError}</p>}
+          {loginError && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+              {loginError}
+            </p>
+          )}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <FormRow
               id="loginEmail"
@@ -133,19 +156,54 @@ export default function LoginRegistration() {
               placeholder="name@example.com"
               autoComplete="email"
             />
-            <FormRow id="loginPassword" label="Password" type="password" icon={Lock} value={loginPassword} onChange={setLoginPassword} placeholder="Enter your password" autoComplete="current-password" />
-            <Button type="submit" className="w-full gap-2 rounded-xl h-11" size="lg" disabled={isLoginLoading}>
+            <FormRow
+              id="loginPassword"
+              label="Password"
+              type="password"
+              icon={Lock}
+              value={loginPassword}
+              onChange={setLoginPassword}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
+            <Button
+              type="submit"
+              className="w-full gap-2 rounded-xl h-11"
+              size="lg"
+              disabled={isLoginLoading}
+            >
               {isLoginLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isLoginLoading ? "Signing in..." : "Sign In"}
+              {isLoginLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </TabsContent>
 
         <TabsContent value="register" className="space-y-4">
-          {registerError && <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">{registerError}</p>}
+          {registerError && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+              {registerError}
+            </p>
+          )}
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
-            <FormRow id="registerName" label="Full name" icon={User} value={registerName} onChange={setRegisterName} placeholder="John Doe" autoComplete="name" />
-            <FormRow id="registerEmail" label="Email" type="email" icon={Mail} value={registerEmail} onChange={setRegisterEmail} placeholder="name@example.com" autoComplete="email" />
+            <FormRow
+              id="registerName"
+              label="Full name"
+              icon={User}
+              value={registerName}
+              onChange={setRegisterName}
+              placeholder="John Doe"
+              autoComplete="name"
+            />
+            <FormRow
+              id="registerEmail"
+              label="Email"
+              type="email"
+              icon={Mail}
+              value={registerEmail}
+              onChange={setRegisterEmail}
+              placeholder="name@example.com"
+              autoComplete="email"
+            />
             <FormRow
               id="registerPassword"
               label="Password"
@@ -166,9 +224,16 @@ export default function LoginRegistration() {
               placeholder="Confirm your password"
               autoComplete="new-password"
             />
-            <Button type="submit" className="w-full gap-2 rounded-xl h-11" size="lg" disabled={isRegisterLoading}>
-              {isRegisterLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isRegisterLoading ? "Creating account..." : "Create Account"}
+            <Button
+              type="submit"
+              className="w-full gap-2 rounded-xl h-11"
+              size="lg"
+              disabled={isRegisterLoading}
+            >
+              {isRegisterLoading && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              {isRegisterLoading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
         </TabsContent>
@@ -185,14 +250,24 @@ export default function LoginRegistration() {
               </div>
             ) : (
               <div className="flex justify-center">
-                <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="outline" size="large" shape="rectangular" width="100%" />
+                <GoogleLogin
+                  onSuccess={handleLoginSuccess}
+                  onError={handleLoginFailure}
+                  useOneTap
+                  type="standard"
+                  theme="outline"
+                  size="large"
+                  shape="rectangular"
+                  width="100%"
+                />
               </div>
             )}
           </div>
           <div className="flex items-start gap-3 rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
             <Info className="mt-0.5 h-4 w-4 text-primary flex-shrink-0" />
             <p className="text-xs leading-relaxed">
-              This is a portfolio project. Please do not use sensitive passwords. Data is stored for demonstration purposes only.
+              This is a portfolio project. Please do not use sensitive
+              passwords. Data is stored for demonstration purposes only.
             </p>
           </div>
         </div>
@@ -212,7 +287,16 @@ interface FormRowProps {
   autoComplete?: string;
 }
 
-function FormRow({ id, label, type = "text", icon: Icon, value, onChange, placeholder, autoComplete }: FormRowProps) {
+function FormRow({
+  id,
+  label,
+  type = 'text',
+  icon: Icon,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+}: FormRowProps) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id} className="text-sm font-medium text-foreground/80">
@@ -225,7 +309,7 @@ function FormRow({ id, label, type = "text", icon: Icon, value, onChange, placeh
           type={type}
           value={value}
           placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={event => onChange(event.target.value)}
           autoComplete={autoComplete}
           className="h-11 rounded-xl border-border/50 bg-background/50 pl-10 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           required

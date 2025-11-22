@@ -7,29 +7,29 @@
     /* Premium Light Theme - Clean & Crisp */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
-    
+
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    
+
     /* Sophisticated Primary - Deep Violet */
     --primary: 262.1 83.3% 57.8%;
     --primary-foreground: 210 40% 98%;
-    
+
     /* Subtle Secondary */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
-    
+
     /* Muted for less emphasis */
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    
+
     /* Accent for interactions */
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
-    
+
     /* Semantic Colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -37,7 +37,7 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 262.1 83.3% 57.8%;
-    
+
     --radius: 0.75rem;
   }
 
@@ -45,32 +45,32 @@
     /* Premium Dark Theme - Deep & Rich (Not just black) */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    
+
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
-    
+
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    
+
     /* Vibrant Primary in Dark Mode */
     --primary: 263.4 70% 50.4%;
     --primary-foreground: 210 40% 98%;
-    
+
     /* Dark Secondary */
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    
+
     /* Dark Muted */
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    
+
     /* Dark Accent */
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
-    
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    
+
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 263.4 70% 50.4%;
@@ -83,7 +83,9 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 
@@ -92,7 +94,7 @@
   .glass {
     @apply bg-background/70 backdrop-blur-xl border border-border/20;
   }
-  
+
   .glass-card {
     @apply bg-card/80 backdrop-blur-lg border border-border/50 shadow-sm;
   }
@@ -111,4 +113,3 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
 }
-

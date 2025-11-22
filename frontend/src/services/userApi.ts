@@ -1,6 +1,6 @@
 // services/userApi.ts
 
-import { baseApi } from "./baseApi";
+import { baseApi } from './baseApi';
 
 export interface UserProfile {
   id: number;
@@ -10,13 +10,14 @@ export interface UserProfile {
 }
 
 export const userApi = baseApi.injectEndpoints({
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     getUserProfile: builder.query<UserProfile, void>({
-      query: () => "accounts/profile/",
+      query: () => 'accounts/profile/',
     }),
     searchUsers: builder.query<UserProfile[], { query: string }>({
-      query: ({ query }) => `accounts/users/?search=${encodeURIComponent(query)}`,
-      providesTags: ["Users"],
+      query: ({ query }) =>
+        `accounts/users/?search=${encodeURIComponent(query)}`,
+      providesTags: ['Users'],
     }),
   }),
 

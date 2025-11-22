@@ -84,18 +84,22 @@ export default function AppShell({ isMobile }: AppShellProps) {
         {/* Mobile Overlay */}
         <div
           className={cn(
-            "fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden transition-opacity duration-300",
-            isMobile && isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            'fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden transition-opacity duration-300',
+            isMobile && isSidebarOpen
+              ? 'opacity-100 pointer-events-auto'
+              : 'opacity-0 pointer-events-none'
           )}
           onClick={() => setIsSidebarOpen(false)}
         />
 
         {/* Main Content Area */}
-        <main className={cn(
-          "relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300",
-          "lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl",
-          "bg-background/60 backdrop-blur-xl"
-        )}>
+        <main
+          className={cn(
+            'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
+            'lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl',
+            'bg-background/60 backdrop-blur-xl'
+          )}
+        >
           {isMobile && (
             <div className="absolute top-4 left-4 z-50">
               <Button
@@ -108,7 +112,7 @@ export default function AppShell({ isMobile }: AppShellProps) {
               </Button>
             </div>
           )}
-          
+
           <div className="flex-1 h-full overflow-hidden">
             <Outlet
               context={{

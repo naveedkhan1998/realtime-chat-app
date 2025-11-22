@@ -1,4 +1,4 @@
-import { baseApi } from "./baseApi";
+import { baseApi } from './baseApi';
 
 export interface User {
   id: number;
@@ -67,98 +67,113 @@ export interface CreateChatRoomPayload {
 }
 
 export const chatApi = baseApi.injectEndpoints({
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     // Friend Requests
     getFriendRequests: builder.query<FriendRequest[], void>({
-      query: () => "chat/friend-requests/",
-      providesTags: ["FriendRequests"],
+      query: () => 'chat/friend-requests/',
+      providesTags: ['FriendRequests'],
     }),
     sendFriendRequest: builder.mutation<FriendRequest, { to_user_id: number }>({
-      query: (body) => ({
-        url: "chat/friend-requests/",
-        method: "POST",
+      query: body => ({
+        url: 'chat/friend-requests/',
+        method: 'POST',
         body,
       }),
-      invalidatesTags: ["FriendRequests"],
+      invalidatesTags: ['FriendRequests'],
     }),
     acceptFriendRequest: builder.mutation<{ status: string }, { id: number }>({
       query: ({ id }) => ({
         url: `chat/friend-requests/${id}/accept/`,
-        method: "POST",
+        method: 'POST',
       }),
-      invalidatesTags: ["FriendRequests", "Friendships"],
+      invalidatesTags: ['FriendRequests', 'Friendships'],
     }),
     declineFriendRequest: builder.mutation<{ status: string }, { id: number }>({
       query: ({ id }) => ({
         url: `chat/friend-requests/${id}/decline/`,
-        method: "POST",
+        method: 'POST',
       }),
-      invalidatesTags: ["FriendRequests"],
+      invalidatesTags: ['FriendRequests'],
     }),
 
     // Friendships
     getFriendships: builder.query<Friendship[], void>({
-      query: () => "chat/friendships/",
-      providesTags: ["Friendships"],
+      query: () => 'chat/friendships/',
+      providesTags: ['Friendships'],
     }),
 
     // Chat Rooms
     getChatRooms: builder.query<ChatRoom[], void>({
-      query: () => "chat/chat-rooms/",
-      providesTags: ["ChatRooms"],
+      query: () => 'chat/chat-rooms/',
+      providesTags: ['ChatRooms'],
     }),
     createChatRoom: builder.mutation<ChatRoom, CreateChatRoomPayload>({
-      query: (body) => ({
-        url: "chat/chat-rooms/",
-        method: "POST",
+      query: body => ({
+        url: 'chat/chat-rooms/',
+        method: 'POST',
         body,
       }),
-      invalidatesTags: ["ChatRooms"],
+      invalidatesTags: ['ChatRooms'],
     }),
 
     // Messages
-    getMessagesPage: builder.query<PaginatedResponse<Message>, { chat_room_id: number; cursor?: string; limit?: number }>({
+    getMessagesPage: builder.query<
+      PaginatedResponse<Message>,
+      { chat_room_id: number; cursor?: string; limit?: number }
+    >({
       query: ({ chat_room_id, cursor, limit }) => {
-        const params = new URLSearchParams({ chat_room: chat_room_id.toString() });
+        const params = new URLSearchParams({
+          chat_room: chat_room_id.toString(),
+        });
         if (cursor) {
-          params.set("cursor", cursor);
+          params.set('cursor', cursor);
         }
         if (limit) {
-          params.set("limit", limit.toString());
+          params.set('limit', limit.toString());
         }
         return {
           url: `chat/messages/?${params.toString()}`,
         };
       },
-      providesTags: (_result, _error, arg) => [{ type: "Messages", id: arg.chat_room_id }],
+      providesTags: (_result, _error, arg) => [
+        { type: 'Messages', id: arg.chat_room_id },
+      ],
     }),
     sendMessage: builder.mutation<Message, Partial<Message>>({
-      query: (body) => ({
-        url: "chat/messages/",
-        method: "POST",
+      query: body => ({
+        url: 'chat/messages/',
+        method: 'POST',
         body,
       }),
-      invalidatesTags: (_result, _error, arg) => [{ type: "Messages", id: arg.chat_room }],
+      invalidatesTags: (_result, _error, arg) => [
+        { type: 'Messages', id: arg.chat_room },
+      ],
     }),
 
     // Message Read Receipts
-    sendReadReceipt: builder.mutation<MessageReadReceipt, { message_id: number }>({
+    sendReadReceipt: builder.mutation<
+      MessageReadReceipt,
+      { message_id: number }
+    >({
       query: ({ message_id }) => ({
-        url: "chat/message-read-receipts/",
-        method: "POST",
+        url: 'chat/message-read-receipts/',
+        method: 'POST',
         body: { message: message_id },
       }),
-      invalidatesTags: ["Messages"],
+      invalidatesTags: ['Messages'],
     }),
 
     // Typing Status
-    updateTypingStatus: builder.mutation<TypingStatus, { chat_room: number; is_typing: boolean }>({
-      query: (body) => ({
-        url: "chat/typing-status/",
-        method: "POST",
+    updateTypingStatus: builder.mutation<
+      TypingStatus,
+      { chat_room: number; is_typing: boolean }
+    >({
+      query: body => ({
+        url: 'chat/typing-status/',
+        method: 'POST',
         body,
       }),
-      invalidatesTags: ["TypingStatus"],
+      invalidatesTags: ['TypingStatus'],
     }),
   }),
   overrideExisting: false,

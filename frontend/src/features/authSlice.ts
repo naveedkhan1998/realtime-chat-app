@@ -1,8 +1,8 @@
 // features/auth/authSlice.ts
 
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { removeCookie } from "@/utils/cookie";
-import { UserProfile } from "@/services/userApi";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { removeCookie } from '@/utils/cookie';
+import { UserProfile } from '@/services/userApi';
 
 export interface AuthState {
   accessToken: string | null;
@@ -19,10 +19,17 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: "auth",
+  name: 'auth',
   initialState,
   reducers: {
-    setCredentials: (state, action: PayloadAction<{ accessToken: string; refreshToken: string; isAuthenticated: boolean }>) => {
+    setCredentials: (
+      state,
+      action: PayloadAction<{
+        accessToken: string;
+        refreshToken: string;
+        isAuthenticated: boolean;
+      }>
+    ) => {
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = action.payload.isAuthenticated;
@@ -30,14 +37,14 @@ const authSlice = createSlice({
     setUser: (state, action: PayloadAction<UserProfile>) => {
       state.user = action.payload;
     },
-    logOut: (state) => {
+    logOut: state => {
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.user = null;
       // Also remove tokens from cookies
-      removeCookie("access_token");
-      removeCookie("refresh_token");
+      removeCookie('access_token');
+      removeCookie('refresh_token');
     },
   },
 });
