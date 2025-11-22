@@ -175,6 +175,11 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['TypingStatus'],
     }),
+
+    // ICE Servers
+    getIceServers: builder.query<RTCIceServer[], void>({
+      query: () => 'chat/ice-servers/',
+    }),
   }),
   overrideExisting: false,
 });
@@ -192,4 +197,5 @@ export const {
   useSendMessageMutation,
   useSendReadReceiptMutation,
   useUpdateTypingStatusMutation,
+  useGetIceServersQuery,
 } = chatApi;

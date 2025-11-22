@@ -7,6 +7,7 @@ from .views import (
     MessageViewSet,
     MessageReadReceiptViewSet,
     TypingStatusViewSet,
+    get_ice_servers,
 )
 
 router = DefaultRouter()
@@ -21,4 +22,5 @@ router.register(r"typing-status", TypingStatusViewSet, basename="typingstatus")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("ice-servers/", get_ice_servers, name="ice-servers"),
 ]

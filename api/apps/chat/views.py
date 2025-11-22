@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
@@ -8,6 +8,8 @@ from django.db import models
 from django.db.models import Count
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+import os
+from twilio.rest import Client
 
 from .models import (
     ChatRoom,
@@ -30,6 +32,46 @@ from .renderers import ChatRenderer
 from .pagination import MessageCursorPagination
 
 User = get_user_model()
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_ice_servers(request):
+    """
+    Returns a list of ICE servers (STUN/TURN) for WebRTC.
+    """
+    # Default public STUN server
+    ice_servers = [
+        {
+            "urls": "stun:stun.l.google.com:19302"
+        }
+    ]
+
+    # Check for Twilio configuration
+    twilio_account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+
+    if twilio_account_sid and twilio_auth_token:
+        try:
+            client = Client(twilio_account_sid, twilio_auth_token)
+            token = client.tokens.create()
+            return Response(token.ice_servers)
+        except Exception as e:
+            print(f"Error fetching Twilio ICE servers: {e}")
+            # Fallback to manual configuration if Twilio fails
+
+    # Check for TURN server configuration in environment variables
+    turn_url = os.environ.get("TURN_SERVER_URL")
+    turn_username = os.environ.get("TURN_SERVER_USERNAME")
+    turn_credential = os.environ.get("TURN_SERVER_CREDENTIAL")
+
+    if turn_url and turn_username and turn_credential:
+        ice_servers.append({
+            "urls": turn_url,
+            "username": turn_username,
+            "credential": turn_credential
+        })
+
+    return Response(ice_servers)
 
 ### Friend Request Views ###
 
