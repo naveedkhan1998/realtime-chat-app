@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useHealthCheckQuery } from '@/services/baseApi';
 import { setError } from '@/features/errorSlice';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Server } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -82,92 +81,111 @@ export default function HealthCheck({ children }: HealthCheckProps) {
 
   if (isLoading || (isError && !backendUp)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="relative flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden bg-background">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px] dark:bg-grid-black/[0.02]" />
+        <div className="absolute h-full w-full bg-background [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="relative z-10 w-full max-w-md"
         >
-          <Alert className="mb-4 bg-card border-primary/20">
-            <AlertCircle className="w-4 h-4 text-primary" />
-            <AlertTitle className="font-semibold text-primary">
-              Starting up backend server
-            </AlertTitle>
-            <AlertDescription>
-              {retryCount >= maxRetries ? (
-                'Unable to connect to the server. Please refresh the page or try again later.'
-              ) : (
+          <div className="p-8 shadow-2xl glass-card rounded-2xl border-primary/10">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-8 space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                <div className="relative p-4 rounded-full bg-primary/10 ring-1 ring-primary/20">
+                  <Server className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                  System Initialization
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Establishing secure connection to server
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Section */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-medium tracking-wider uppercase text-muted-foreground">
+                  <span>Status</span>
+                  <span>
+                    {Math.min(Math.round((retryCount / maxRetries) * 100), 100)}
+                    %
+                  </span>
+                </div>
+                <Progress
+                  value={Math.min((retryCount / maxRetries) * 100, 100)}
+                  className="h-1.5 bg-secondary"
+                />
+              </div>
+
+              {/* Rotating Messages */}
+              <div className="flex items-center justify-center h-12">
                 <AnimatePresence mode="wait">
-                  <motion.div
+                  <motion.p
                     key={currentMessage}
-                    initial={{ y: 10, opacity: 0 }}
+                    initial={{ y: 5, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -10, opacity: 0 }}
+                    exit={{ y: -5, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-sm text-muted-foreground"
+                    className="text-sm font-medium text-center text-primary/80"
                   >
                     {currentMessage}
-                  </motion.div>
+                  </motion.p>
                 </AnimatePresence>
-              )}
-            </AlertDescription>
-          </Alert>
-
-          <div className="p-6 bg-card rounded-lg shadow-lg">
-            <div className="mb-4">
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-primary dark:text-primary-foreground">
-                  Loading progress
-                </span>
-                <span className="text-sm font-medium text-primary dark:text-primary-foreground">
-                  {Math.min(Math.round((retryCount / maxRetries) * 100), 100)}%
-                </span>
-              </div>
-              <Progress
-                value={Math.min((retryCount / maxRetries) * 100, 100)}
-                className="h-2"
-              />
-            </div>
-
-            <div className="flex items-center justify-center mb-4">
-              <div className="relative">
-                <svg
-                  className="w-10 h-10 animate-spin text-primary"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
               </div>
             </div>
 
-            <AnimatePresence mode="wait">
+            {/* Error State (if retrying) */}
+            {retryCount >= maxRetries && (
               <motion.div
-                key={currentFact}
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -10, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-sm text-center text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-3 p-3 mt-6 border rounded-lg bg-destructive/10 border-destructive/20"
               >
-                <span className="font-semibold">Fun Fact:</span> {currentFact}
+                <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
+                <p className="text-sm font-medium text-destructive">
+                  Connection timeout. Please refresh the page.
+                </p>
               </motion.div>
-            </AnimatePresence>
+            )}
+
+            {/* Divider */}
+            <div className="h-px my-6 bg-border/50" />
+
+            {/* Fun Fact */}
+            <div className="p-4 border bg-secondary/50 rounded-xl border-border/50">
+              <div className="flex items-center gap-2 mb-2 text-xs font-semibold tracking-wider uppercase text-primary">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-primary" />
+                Did you know?
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={currentFact}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-sm leading-relaxed text-muted-foreground"
+                >
+                  {currentFact}
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </div>
+
+          {/* Footer */}
+          <p className="mt-6 text-xs text-center text-muted-foreground/50">
+            Secured by End-to-End Encryption
+          </p>
         </motion.div>
       </div>
     );
