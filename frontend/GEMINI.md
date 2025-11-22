@@ -4,17 +4,19 @@ This document outlines the plan for a complete UI/UX redesign of the frontend, f
 
 ## Core Principles
 
--   **Two-Column Layout:** Persistent left sidebar for navigation and lists, main content area for active views.
--   **Responsiveness:** Adaptable design for mobile, tablet, and desktop.
--   **Clarity & Simplicity:** Clean interface, easy to understand interactions.
--   **Accessibility:** Leverage Radix UI for accessible components.
+- **Two-Column Layout:** Persistent left sidebar for navigation and lists, main content area for active views.
+- **Responsiveness:** Adaptable design for mobile, tablet, and desktop.
+- **Clarity & Simplicity:** Clean interface, easy to understand interactions.
+- **Accessibility:** Leverage Radix UI for accessible components.
 
 ## File Modifications & New Components
 
 ### 1. `frontend/GEMINI.md` (This file)
+
     -   Document the redesign plan.
 
 ### 2. `src/App.tsx`
+
     -   **Purpose:** Establish the main two-column layout.
     -   **Changes:**
         -   Wrap existing `Routes` within a new layout structure.
@@ -22,6 +24,7 @@ This document outlines the plan for a complete UI/UX redesign of the frontend, f
         -   Ensure the main content area dynamically renders based on routing.
 
 ### 3. `src/components/custom/Sidebar.tsx` (New Component)
+
     -   **Purpose:** Left-hand navigation and list display.
     -   **Structure:**
         -   User profile section (avatar, name, status).
@@ -31,6 +34,7 @@ This document outlines the plan for a complete UI/UX redesign of the frontend, f
     -   **Dependencies:** Will likely consume data from Redux slices (e.g., `authSlice`, `chatSlice`).
 
 ### 4. `src/components/custom/ChatWindow.tsx` (New Component - to be used within `chat-page.tsx`)
+
     -   **Purpose:** Encapsulate the chat message display and input.
     -   **Structure:**
         -   Chat Header (current chat partner/group info).
@@ -39,6 +43,7 @@ This document outlines the plan for a complete UI/UX redesign of the frontend, f
     -   **Dependencies:** Will interact with `chatSlice` for sending/receiving messages.
 
 ### 5. `src/components/custom/MessageBubble.tsx` (New Component - to be used within `ChatWindow.tsx`)
+
     -   **Purpose:** Display individual chat messages.
     -   **Structure:**
         -   Sender's avatar (if applicable).
@@ -48,23 +53,27 @@ This document outlines the plan for a complete UI/UX redesign of the frontend, f
     -   **Styling:** Differentiate between sent and received messages.
 
 ### 6. `src/pages/chat-page.tsx`
+
     -   **Purpose:** Integrate the new `ChatWindow` component into the page.
     -   **Changes:**
         -   Simplify the page to primarily render the `ChatWindow` component, passing necessary props.
         -   Remove direct message rendering logic, delegating to `ChatWindow`.
 
 ### 7. `src/pages/friends-page.tsx`
+
     -   **Purpose:** Adapt to the new two-column layout.
     -   **Changes:**
         -   Ensure it renders correctly within the main content area.
         -   No major structural changes to its core functionality, but styling will be updated to match the new design system.
 
 ### 8. `src/pages/home-page.tsx` and `src/pages/login-page.tsx`
+
     -   **Purpose:** Ensure these pages also fit the new design language.
     -   **Changes:**
         -   Mainly styling adjustments to align with the new visual theme.
 
 ### 9. `src/index.css` / Tailwind Configuration
+
     -   **Purpose:** Update global styles and Tailwind configuration if needed.
     -   **Changes:**
         -   Review and potentially adjust base styles.

@@ -1,14 +1,14 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   showNavbar: true,
 };
 
 const uiSlice = createSlice({
-  name: "ui",
+  name: 'ui',
   initialState,
   reducers: {
-    toggleNavbar: (state) => {
+    toggleNavbar: state => {
       state.showNavbar = !state.showNavbar;
     },
     setNavbarVisibility: (state, action) => {

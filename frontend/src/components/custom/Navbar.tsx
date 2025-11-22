@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { useTheme } from "@/hooks/useTheme";
-import { logOut } from "@/features/authSlice";
-import { Menu, Moon, Sun, Home, User, LogOut, Group } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { baseApi } from "@/services/baseApi";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { useTheme } from '@/hooks/useTheme';
+import { logOut } from '@/features/authSlice';
+import { Menu, Moon, Sun, Home, User, LogOut, Group } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { baseApi } from '@/services/baseApi';
 
 const Navbar: React.FC = () => {
-  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const user = useAppSelector((state) => state.auth.user);
-  const showNavbar = useAppSelector((state) => state.ui.showNavbar);
+  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+  const user = useAppSelector(state => state.auth.user);
+  const showNavbar = useAppSelector(state => state.ui.showNavbar);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -22,8 +27,8 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleLogout = () => {
@@ -38,7 +43,7 @@ const Navbar: React.FC = () => {
         variant="ghost"
         className="flex items-center justify-start gap-2"
         onClick={() => {
-          navigate("/");
+          navigate('/');
           setIsMenuOpen(false); // Close menu after navigation
         }}
       >
@@ -50,7 +55,7 @@ const Navbar: React.FC = () => {
             variant="ghost"
             className="flex items-center justify-start gap-2"
             onClick={() => {
-              navigate("/chat");
+              navigate('/chat');
               setIsMenuOpen(false); // Close menu after navigation
             }}
           >
@@ -60,7 +65,7 @@ const Navbar: React.FC = () => {
             variant="ghost"
             className="flex items-center justify-start gap-2"
             onClick={() => {
-              navigate("/friends");
+              navigate('/friends');
               setIsMenuOpen(false); // Close menu after navigation
             }}
           >
@@ -72,7 +77,7 @@ const Navbar: React.FC = () => {
           variant="ghost"
           className="flex items-center justify-start gap-2"
           onClick={() => {
-            navigate("/login");
+            navigate('/login');
             setIsMenuOpen(false); // Close menu after navigation
           }}
         >
@@ -85,10 +90,14 @@ const Navbar: React.FC = () => {
   if (!showNavbar && isMobile) return null;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b dark:bg-gray-900 dark:border-gray-800">
+    <nav className="sticky top-0 z-50 w-full bg-background border-b border-border">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto">
         {/* Logo */}
-        <Button variant="ghost" className="text-2xl font-bold text-primary" onClick={() => navigate("/")}>
+        <Button
+          variant="ghost"
+          className="text-2xl font-bold text-primary"
+          onClick={() => navigate('/')}
+        >
           MNK Chat
         </Button>
 
@@ -101,7 +110,11 @@ const Navbar: React.FC = () => {
         <div className="flex items-center space-x-4">
           {/* Theme Toggle */}
           <Button variant="outline" size="icon" onClick={toggleTheme}>
-            {theme === "light" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === 'light' ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
           </Button>
 
           {/* User Menu for Desktop */}
@@ -117,7 +130,7 @@ const Navbar: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="w-5 h-5 mr-2" />
                   Profile
                 </DropdownMenuItem>
@@ -147,7 +160,9 @@ const Navbar: React.FC = () => {
                     </Avatar>
                     <div>
                       <div className="text-lg font-medium">{user?.name}</div>
-                      <div className="text-sm text-muted-foreground">{user?.email}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {user?.email}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -162,13 +177,17 @@ const Navbar: React.FC = () => {
                       variant="ghost"
                       className="flex items-center justify-start gap-2"
                       onClick={() => {
-                        navigate("/profile");
+                        navigate('/profile');
                         setIsMenuOpen(false);
                       }}
                     >
                       <User className="w-5 h-5" /> Profile
                     </Button>
-                    <Button variant="ghost" className="flex items-center justify-start gap-2" onClick={handleLogout}>
+                    <Button
+                      variant="ghost"
+                      className="flex items-center justify-start gap-2"
+                      onClick={handleLogout}
+                    >
                       <LogOut className="w-5 h-5" /> Logout
                     </Button>
                   </>

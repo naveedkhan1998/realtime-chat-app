@@ -3,6 +3,7 @@ import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from '@/components/custom/Sidebar';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -63,8 +64,14 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="flex flex-col w-full min-h-screen mx-auto lg:flex-row">
+    <div className="relative min-h-screen w-full overflow-hidden bg-background selection:bg-primary/20">
+      {/* Global Background Elements - Refined for Premium Feel */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none" />
+      <div className="absolute -top-[20%] -right-[10%] w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
+      <div className="absolute -bottom-[20%] -left-[10%] w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow delay-1000" />
+
+      <div className="relative z-10 flex h-screen w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
+        {/* Sidebar Container */}
         <Sidebar
           activeChat={activeChat}
           setActiveChat={handleSetActiveChat}
@@ -73,27 +80,40 @@ export default function AppShell({ isMobile }: AppShellProps) {
           onClose={() => setIsSidebarOpen(false)}
           metadata={metadata}
         />
-        {isMobile && isSidebarOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-background/80 backdrop-blur-md lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-        <main className="relative flex flex-col flex-1 min-h-screen">
+
+        {/* Mobile Overlay */}
+        <div
+          className={cn(
+            'fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden transition-opacity duration-300',
+            isMobile && isSidebarOpen
+              ? 'opacity-100 pointer-events-auto'
+              : 'opacity-0 pointer-events-none'
+          )}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+
+        {/* Main Content Area */}
+        <main
+          className={cn(
+            'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
+            'lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl',
+            'bg-background/60 backdrop-blur-xl'
+          )}
+        >
           {isMobile && (
-            <div className="fixed top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-50">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="glass-card shadow-lg hover:shadow-glow transition-all duration-300"
+                className="h-10 w-10 rounded-full bg-background/50 backdrop-blur-md border border-white/10 shadow-sm hover:bg-primary/10"
                 onClick={() => setIsSidebarOpen(true)}
-                aria-label="Open navigation"
               >
                 <Menu className="w-5 h-5" />
               </Button>
             </div>
           )}
-          <div className="flex-1 overflow-y-auto">
+
+          <div className="flex-1 h-full overflow-hidden">
             <Outlet
               context={{
                 activeChat,

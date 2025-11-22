@@ -10,21 +10,23 @@ const THEME_STORAGE_KEY = 'app-theme';
  * Custom hook for managing theme with system preference detection and localStorage persistence
  */
 export function useTheme() {
-  const theme = useAppSelector((state) => state.theme.theme);
+  const theme = useAppSelector(state => state.theme.theme);
   const dispatch = useAppDispatch();
 
   // Get system preference
   const getSystemTheme = (): 'light' | 'dark' => {
     if (typeof window === 'undefined') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   };
 
   // Initialize theme on mount
   useEffect(() => {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    
+
     let effectiveTheme: 'light' | 'dark';
-    
+
     if (storedTheme === 'system' || !storedTheme) {
       // Use system preference
       effectiveTheme = getSystemTheme();
@@ -41,10 +43,10 @@ export function useTheme() {
   // Listen for system theme changes when using system preference
   useEffect(() => {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    
+
     if (storedTheme === 'system' || !storedTheme) {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      
+
       const handleChange = (e: MediaQueryListEvent) => {
         const newTheme = e.matches ? 'dark' : 'light';
         dispatch(setThemeRedux(newTheme));
@@ -53,7 +55,7 @@ export function useTheme() {
 
       // Modern browsers
       mediaQuery.addEventListener('change', handleChange);
-      
+
       return () => {
         mediaQuery.removeEventListener('change', handleChange);
       };

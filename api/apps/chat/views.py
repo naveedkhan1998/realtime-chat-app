@@ -116,7 +116,9 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             User.objects.filter(id__in=[request.user.id, *participant_ids]).distinct()
         )
         if len(users) != len(set([request.user.id, *participant_ids])):
-            raise ValidationError({"participant_ids": "One or more participants were not found."})
+            raise ValidationError(
+                {"participant_ids": "One or more participants were not found."}
+            )
 
         if not is_group_chat:
             other_user_id = participant_ids[0]
@@ -132,10 +134,16 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 return Response(existing_data, status=status.HTTP_200_OK)
 
         chat_room = ChatRoom.objects.create(**serializer.validated_data)
-        ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=request.user)
-        other_participants = User.objects.filter(id__in=participant_ids).exclude(id=request.user.id)
+        ChatRoomParticipant.objects.get_or_create(
+            chat_room=chat_room, user=request.user
+        )
+        other_participants = User.objects.filter(id__in=participant_ids).exclude(
+            id=request.user.id
+        )
         for participant in other_participants:
-            ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=participant)
+            ChatRoomParticipant.objects.get_or_create(
+                chat_room=chat_room, user=participant
+            )
 
         chat_room.refresh_from_db()
         output = self.get_serializer(chat_room)
@@ -153,7 +161,9 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             raise ValidationError({"user_id": "User not found."})
         if chat_room.participants.filter(id=user.id).exists():
-            return Response({"status": "participant already present"}, status=status.HTTP_200_OK)
+            return Response(
+                {"status": "participant already present"}, status=status.HTTP_200_OK
+            )
         ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=user)
         return Response({"status": "participant added"})
 
@@ -200,7 +210,11 @@ class MessageViewSet(viewsets.ModelViewSet):
         self._broadcast_message_event(
             updated_message.chat_room_id,
             "message_updated",
-            {"message": MessageSerializer(updated_message, context=self.get_serializer_context()).data},
+            {
+                "message": MessageSerializer(
+                    updated_message, context=self.get_serializer_context()
+                ).data
+            },
         )
 
     def perform_destroy(self, instance):
@@ -215,7 +229,9 @@ class MessageViewSet(viewsets.ModelViewSet):
             {"message_id": message_id},
         )
 
-    def _broadcast_message_event(self, chat_room_id: int, event_type: str, payload: dict):
+    def _broadcast_message_event(
+        self, chat_room_id: int, event_type: str, payload: dict
+    ):
         channel_layer = get_channel_layer()
         if not channel_layer:
             return

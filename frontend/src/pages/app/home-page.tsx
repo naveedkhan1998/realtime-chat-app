@@ -1,266 +1,345 @@
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
-import { MessageCircle, ShieldCheck, Users, Clock, Server, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
-
-const featureList = [
-  {
-    icon: MessageCircle,
-    title: "Direct and group chats",
-    description: "Start one-on-one conversations or create groups to try the realtime flow with your friends list.",
-  },
-  {
-    icon: Clock,
-    title: "Realtime powered by Channels",
-    description: "Django Channels, Redis, and WebSockets keep messages moving without manual refreshes.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Honest portfolio project",
-    description: "Built to learn how React, Django REST Framework, and Channels fit together in a single stack.",
-  },
-];
-
-const workflowHighlights = [
-  {
-    title: "Create an account",
-    bullet: "Register with email and set up your profile to join the demo environment.",
-  },
-  {
-    title: "Add a few friends",
-    bullet: "Search for other users, send requests, and build a list before you chat.",
-  },
-  {
-    title: "See messages in realtime",
-    bullet: "Open direct or group threads and watch updates land instantly over WebSockets.",
-  },
-];
-
-const infrastructureCallouts = [
-  {
-    icon: Server,
-    label: "Backend: Django REST Framework plus Channels served over ASGI.",
-  },
-  {
-    icon: MessageCircle,
-    label: "Realtime transport: Redis channel layer and WebSockets for live messaging.",
-  },
-  {
-    icon: Users,
-    label: "Data layer: PostgreSQL stores accounts, friendships, and chat history.",
-  },
-];
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  MessageCircle,
+  Zap,
+  Shield,
+  Code2,
+  Database,
+  Server,
+  ArrowRight,
+  Smartphone,
+  Globe,
+  Cpu,
+} from 'lucide-react';
 
 export default function HomePage() {
   return (
-    <div className="space-y-24 pb-20">
+    <div className="space-y-32">
       <HeroSection />
-      <FeaturesSection />
+      <FeaturesGrid />
       <WorkflowSection />
-      <InfrastructureSection />
-      <CallToAction />
+      <TechStackSection />
+      <CTASection />
     </div>
   );
 }
 
 function HeroSection() {
   return (
-    <section className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-8">
-        <Badge className="w-fit bg-primary/10 text-primary hover:bg-primary/15">
-          <Sparkles className="mr-2 h-4 w-4" />
-          Portfolio project spotlight
-        </Badge>
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-          Realtime chat demo built while learning Django Channels.
-        </h1>
-        <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-          This project showcases how I combined React, TypeScript, Django REST Framework, Channels, Redis, and PostgreSQL to deliver live conversations. It is a personal learning build and the work in progress you see in my portfolio.
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button asChild size="lg">
-            <Link to="/login">Open the app</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <a href="#features" className="flex items-center gap-2">
-              See what’s inside
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </Button>
-        </div>
-        <ul className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-          <FeatureFlag label="React + TypeScript frontend" />
-          <FeatureFlag label="Django Channels + Redis realtime layer" />
-          <FeatureFlag label="Personal project for learning" />
-        </ul>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="relative"
-      >
-        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-white shadow-lg shadow-primary/15 dark:border-primary/25 dark:bg-slate-950">
-          <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-primary/5 via-transparent to-accent/10" />
-          <aside className="relative grid gap-4 p-6">
-            <header className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Product support</p>
-                <h2 className="text-lg font-semibold text-foreground">Morning sync • #status</h2>
+    <section className="relative pt-10 lg:pt-20">
+      <div className="container px-4 mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-4xl mx-auto space-y-8"
+        >
+          <Badge
+            variant="outline"
+            className="rounded-full border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-primary backdrop-blur-sm"
+          >
+            <span className="inline-block w-2 h-2 mr-2 rounded-full bg-primary animate-pulse" />
+            Now with Real-time Huddles
+          </Badge>
+
+          <h1 className="text-5xl font-bold tracking-tight text-foreground sm:text-7xl lg:text-8xl">
+            Chat at the speed of <br />
+            <span className="text-transparent bg-gradient-to-r from-primary via-violet-500 to-indigo-500 bg-clip-text">
+              thought.
+            </span>
+          </h1>
+
+          <p className="max-w-2xl mx-auto text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            Experience seamless real-time communication. Built to demonstrate
+            the power of Django Channels and React working in perfect harmony.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 px-8 text-base transition-all rounded-full shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-primary/40"
+            >
+              <Link to="/login">
+                Start Chatting
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-12 px-8 text-base rounded-full backdrop-blur-sm hover:bg-primary/5"
+            >
+              <a
+                href="https://github.com/naveedkhan1998/realtime-chat-app"
+                target="_blank"
+                rel="noreferrer"
+              >
+                View Source
+              </a>
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Hero Image / Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 40, rotateX: 20 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="relative max-w-6xl mx-auto mt-20 perspective-1000"
+        >
+          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-border/40 bg-background/50 shadow-primary/10 backdrop-blur-xl ring-1 ring-white/10">
+            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-border/40 bg-muted/20">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80" />
               </div>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Live</span>
-            </header>
-            <div className="space-y-3 rounded-2xl border border-primary/10 bg-white/80 p-4 text-sm shadow-sm shadow-primary/10 backdrop-blur dark:bg-slate-900/80">
-              <PreviewMessage author="Hailey" time="08:05" text="Rolled out the new incident triage labels. Docs updated 🔧" />
-              <PreviewMessage author="Zhang" time="08:07" text="Handled the support backlog from EU shift—queue is clear." highlight />
-              <PreviewMessage author="Iris" time="08:09" text="Staging deploy succeeded. Production handoff at 10:30." />
+              <div className="w-2/3 h-6 mx-auto rounded-md bg-muted/40" />
             </div>
-            <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 text-sm text-primary shadow-inner shadow-primary/10">
-              <p className="font-semibold">Focus window</p>
-              <p className="text-primary/80">Mute noise, pin the threads that matter, and let quiet mode handle the rest.</p>
+
+            {/* Mock Interface Content */}
+            <div className="grid h-[400px] grid-cols-[280px_1fr] divide-x divide-border/40 sm:h-[600px]">
+              <div className="hidden p-4 bg-muted/10 sm:block">
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-primary/5"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20" />
+                      <div className="space-y-1.5">
+                        <div className="w-24 h-3 rounded bg-muted-foreground/20" />
+                        <div className="w-16 h-2 rounded bg-muted-foreground/10" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col bg-background/40">
+                <div className="flex-1 p-6 space-y-6">
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/20" />
+                    <div className="space-y-2">
+                      <div className="px-4 py-2 text-sm rounded-tl-none rounded-2xl bg-muted/30">
+                        Hey! Have you checked out the new huddle feature? 🎙️
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        10:42 AM
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-row-reverse gap-4">
+                    <div className="w-10 h-10 rounded-full bg-accent/20" />
+                    <div className="space-y-2">
+                      <div className="px-4 py-2 text-sm rounded-tr-none shadow-md rounded-2xl bg-primary text-primary-foreground shadow-primary/20">
+                        Yeah! The audio quality is surprisingly good. And the
+                        shared text pad is a game changer for code reviews.
+                      </div>
+                      <span className="block text-xs text-right text-muted-foreground">
+                        10:44 AM
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border-t border-border/40">
+                  <div className="w-full h-12 border rounded-full bg-muted/20 border-border/20" />
+                </div>
+              </div>
             </div>
-          </aside>
-        </div>
-      </motion.div>
+          </div>
+
+          {/* Decorative Elements behind preview */}
+          <div className="absolute -inset-4 -z-10 bg-gradient-to-r from-primary/20 to-accent/20 blur-3xl opacity-30 rounded-[3rem]" />
+        </motion.div>
+      </div>
     </section>
   );
 }
 
-function FeaturesSection() {
+function FeaturesGrid() {
   return (
-    <section id="features" className="space-y-10">
-      <div className="space-y-4 text-center">
-        <Badge className="mx-auto w-fit bg-secondary text-secondary-foreground">What the demo shows</Badge>
-        <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Focused on learning realtime foundations</h2>
-        <p className="mx-auto max-w-2xl text-base text-muted-foreground">
-          Everything here was built to understand how realtime messaging, authentication, and UI state management fit together across the stack.
+    <section id="features" className="container px-4 mx-auto">
+      <div className="mb-16 text-center">
+        <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          Everything you need
+        </h2>
+        <p className="max-w-2xl mx-auto text-muted-foreground">
+          A complete suite of communication tools packed into one seamless
+          interface.
         </p>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {featureList.map((feature) => (
-          <Card key={feature.title} className="h-full border border-border bg-white/90 shadow-sm shadow-primary/5 backdrop-blur dark:border-primary/25 dark:bg-slate-950/80">
-            <CardContent className="space-y-3 p-6">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <feature.icon className="h-5 w-5" />
-              </span>
-              <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+        {/* Large Feature - Realtime */}
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+          <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
+            <Zap className="w-48 h-48" />
+          </div>
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-2xl bg-primary/10 text-primary">
+              <Zap className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="mb-2 text-2xl font-bold">Instant Delivery</h3>
+              <p className="max-w-md text-muted-foreground">
+                Powered by WebSockets and Redis, messages are delivered
+                instantly. No loading spinners, no waiting.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Feature - Security */}
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+          <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
+            <Shield className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-center w-12 h-12 mb-4 text-green-500 rounded-2xl bg-green-500/10">
+              <Shield className="w-6 h-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold">Secure Auth</h3>
+            <p className="text-sm text-muted-foreground">
+              JWT based authentication with secure cookie handling.
+            </p>
+          </div>
+        </div>
+
+        {/* Feature - Collaboration */}
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+          <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
+            <Code2 className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-center w-12 h-12 mb-4 text-blue-500 rounded-2xl bg-blue-500/10">
+              <Code2 className="w-6 h-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold">Live Code</h3>
+            <p className="text-sm text-muted-foreground">
+              Collaborative text pad for sharing code snippets in real-time.
+            </p>
+          </div>
+        </div>
+
+        {/* Large Feature - Huddles */}
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+          <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
+            <MessageCircle className="w-48 h-48" />
+          </div>
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-2xl bg-violet-500/10 text-violet-500">
+              <MessageCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="mb-2 text-2xl font-bold">Group Huddles</h3>
+              <p className="max-w-md text-muted-foreground">
+                Jump into voice channels or group chats instantly. Perfect for
+                quick syncs or hanging out.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
 function WorkflowSection() {
+  const steps = [
+    { title: 'Sign Up', desc: 'Create your account in seconds.' },
+    { title: 'Find Friends', desc: 'Search and add people to your network.' },
+    { title: 'Start Chatting', desc: 'Instant messaging & collaboration.' },
+  ];
+
   return (
-    <section className="grid gap-10 rounded-3xl border border-primary/15 bg-white/80 p-8 shadow-lg shadow-primary/10 backdrop-blur-lg lg:grid-cols-[0.8fr_1.2fr] dark:border-primary/25 dark:bg-slate-950/80">
-      <div className="space-y-4">
-        <Badge className="w-fit bg-primary text-white hover:bg-primary/90">How to explore</Badge>
-        <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">Test the stack in three steps</h2>
-        <p className="text-base text-muted-foreground">Follow the flow to see the Channels-powered experience from authentication to realtime updates.</p>
-      </div>
-      <div className="space-y-4">
-        {workflowHighlights.map((item, index) => (
-          <Card key={item.title} className="border border-primary/15 bg-white/90 shadow-sm shadow-primary/5 dark:border-primary/25 dark:bg-slate-950/70">
-            <CardContent className="flex items-start gap-4 p-6">
-              <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
-              <div>
-                <p className="text-base font-semibold text-foreground">{item.title}</p>
-                <p className="text-sm text-muted-foreground">{item.bullet}</p>
+    <section id="workflow" className="container px-4 py-20 mx-auto">
+      <div className="relative rounded-[2.5rem] bg-gradient-to-b from-primary/5 to-transparent border border-primary/10 p-12 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
+
+        <div className="relative z-10 mb-16 text-center">
+          <h2 className="mb-4 text-3xl font-bold">How it works</h2>
+          <p className="text-muted-foreground">Simple, fast, and effective.</p>
+        </div>
+
+        <div className="relative z-10 grid gap-8 md:grid-cols-3">
+          {steps.map((step, i) => (
+            <div key={i} className="flex flex-col items-center text-center">
+              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-primary/20 text-primary shadow-primary/10">
+                {i + 1}
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function InfrastructureSection() {
-  return (
-    <section id="stack" className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
-      <div className="space-y-4">
-        <Badge className="w-fit bg-primary/10 text-primary">Under the hood</Badge>
-        <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">The stack that powers this demo</h2>
-        <p className="text-base text-muted-foreground">
-          I use familiar open source tools so the focus stays on understanding realtime patterns rather than maintaining production-scale infrastructure.
-        </p>
-      </div>
-      <div className="grid gap-4">
-        {infrastructureCallouts.map((item) => (
-          <div key={item.label} className="flex items-start gap-3 rounded-2xl border border-primary/15 bg-white/90 p-4 text-sm text-foreground shadow-sm shadow-primary/5 dark:border-primary/25 dark:bg-slate-950/70">
-            <item.icon className="mt-0.5 h-4 w-4 text-primary" />
-            <p>{item.label}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function CallToAction() {
-  return (
-    <section className="rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/10 via-white to-accent/10 p-10 text-center shadow-lg shadow-primary/15 dark:border-primary/25 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-      <div className="mx-auto max-w-2xl space-y-4">
-        <Badge className="mx-auto w-fit bg-white/70 text-primary">Personal demo</Badge>
-        <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">Explore the project and see the stack in action</h2>
-        <p className="text-base text-muted-foreground">Sign in to click through the flows, and scroll for a quick look at the tools and services involved. Feedback is always welcome.</p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button asChild size="lg">
-            <Link to="/login">Sign in to the demo</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <a href="#stack" className="flex items-center gap-2">
-              View the stack
-            </a>
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-          <ReliabilityPoint label="Learning project: features may change often" />
-          <ReliabilityPoint label="Redis + Channels keep chats in sync" />
-          <ReliabilityPoint label="PostgreSQL stores demo data locally" />
+              <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
+              <p className="text-muted-foreground">{step.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function PreviewMessage({ author, time, text, highlight }: { author: string; time: string; text: string; highlight?: boolean }) {
+function TechStackSection() {
+  const techs = [
+    { icon: Globe, label: 'React' },
+    { icon: Smartphone, label: 'Tailwind' },
+    { icon: Server, label: 'Django' },
+    { icon: Database, label: 'PostgreSQL' },
+    { icon: Zap, label: 'Redis' },
+    { icon: Cpu, label: 'Channels' },
+  ];
+
   return (
-    <div
-      className={`rounded-2xl border px-4 py-3 shadow-sm transition-colors ${
-        highlight ? "border-primary/40 bg-primary/10 text-primary" : "border-primary/10 bg-white/70 text-foreground dark:bg-slate-900/50"
-      }`}
-    >
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-        <span>{author}</span>
-        <span>{time}</span>
+    <section id="stack" className="py-16 border-y border-border/40 bg-muted/20">
+      <div className="container px-4 mx-auto">
+        <div className="mb-12 text-center">
+          <h2 className="text-2xl font-bold">Powered by modern tech</h2>
+        </div>
+        <div className="flex flex-wrap justify-center gap-8 transition-all md:gap-16 opacity-70 grayscale hover:grayscale-0 hover:opacity-100">
+          {techs.map(tech => (
+            <div
+              key={tech.label}
+              className="flex flex-col items-center gap-3 group"
+            >
+              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-background border-border/50 group-hover:scale-110 group-hover:border-primary/30">
+                <tech.icon className="w-8 h-8" />
+              </div>
+              <span className="text-sm font-medium">{tech.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <p className="mt-2 text-sm font-medium leading-relaxed">{text}</p>
-    </div>
+    </section>
   );
 }
 
-function FeatureFlag({ label }: { label: string }) {
+function CTASection() {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground">
-      <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-      {label}
-    </span>
-  );
-}
+    <section className="container px-4 pb-20 mx-auto">
+      <div className="rounded-[3rem] bg-primary text-primary-foreground px-8 py-20 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+        <div className="absolute w-64 h-64 rounded-full -top-24 -left-24 bg-white/10 blur-3xl" />
+        <div className="absolute w-64 h-64 rounded-full -bottom-24 -right-24 bg-white/10 blur-3xl" />
 
-function ReliabilityPoint({ label }: { label: string }) {
-  return (
-    <span className="flex items-center gap-2">
-      <CheckCircle2 className="h-4 w-4 text-primary" />
-      {label}
-    </span>
+        <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+          <h2 className="text-4xl font-bold sm:text-5xl">Ready to dive in?</h2>
+          <p className="text-lg text-primary-foreground/80">
+            Join the demo environment and experience the realtime capabilities
+            firsthand.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            variant="secondary"
+            className="px-10 text-lg transition-transform rounded-full shadow-xl h-14 hover:scale-105"
+          >
+            <Link to="/login">Get Started Now</Link>
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }

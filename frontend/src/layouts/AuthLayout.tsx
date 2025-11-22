@@ -1,29 +1,32 @@
-import { Outlet, Link } from "react-router-dom";
-import { MessageSquare } from "lucide-react";
+import { Outlet, Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AuthLayout() {
   return (
-    <div className="relative flex min-h-screen flex-col bg-gradient-to-br from-primary/15 via-background to-accent/15">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-10 top-20 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-        <div className="absolute bottom-10 right-0 h-80 w-80 rounded-full bg-accent/25 blur-[140px]" />
-      </div>
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8">
-        <Link to="/" className="flex items-center gap-3 text-lg font-semibold text-primary">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
-            <MessageSquare className="h-5 w-5" />
-          </span>
-          MNK Chat
-        </Link>
-        <Link to="/" className="text-sm font-medium text-muted-foreground transition hover:text-primary">
-          Back to site
-        </Link>
-      </header>
-      <main className="mx-auto flex w-full flex-1 items-center justify-center px-4 pb-12 pt-4">
-        <div className="relative w-full max-w-5xl rounded-3xl border border-white/30 bg-white/70 p-6 shadow-2xl shadow-primary/20 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/80">
-          <Outlet />
+    <div className="relative flex items-center justify-center w-full min-h-screen p-4 overflow-hidden bg-background">
+      {/* Background Decor */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 w-full h-full -translate-x-1/2 opacity-50 left-1/2 max-w-7xl">
+          <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[100px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-accent/5 blur-[100px]" />
         </div>
-      </main>
+      </div>
+
+      <div className="w-full max-w-6xl">
+        <header className="absolute z-20 top-6 left-6 md:top-10 md:left-10">
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-4 py-2 transition-colors border rounded-full text-muted-foreground hover:text-foreground bg-background/50 border-border/50 backdrop-blur-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back to Home</span>
+          </Link>
+        </header>
+
+        <main className="w-full">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

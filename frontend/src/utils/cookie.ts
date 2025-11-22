@@ -1,4 +1,4 @@
-import Cookies from "js-cookie";
+import Cookies from 'js-cookie';
 
 /**
  * Set a cookie with environment-based 'secure' attribute
@@ -6,9 +6,16 @@ import Cookies from "js-cookie";
  * @param value - Value to be stored
  * @param options - Additional cookie options (expires, sameSite, etc.)
  */
-export const setCookie = (name: string, value: string, options?: Cookies.CookieAttributes) => {
+export const setCookie = (
+  name: string,
+  value: string,
+  options?: Cookies.CookieAttributes
+) => {
   // Determine if running on localhost
-  const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1');
 
   // Set the 'secure' option based on the environment
   const secureOption = options?.secure ?? !isLocalhost;

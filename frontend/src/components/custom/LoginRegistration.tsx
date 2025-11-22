@@ -1,44 +1,51 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from "react";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
-import { Loader2, Mail, Lock, User, Sparkles, ShieldCheck, ArrowRight } from "lucide-react";
+import { useState } from 'react';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, Mail, Lock, User, Info } from 'lucide-react';
 
-import { useLoginMutation, useRegisterMutation, useGoogleLoginMutation } from "@/services/authApi";
-import { useAppDispatch } from "@/app/hooks";
-import { setCredentials } from "@/features/authSlice";
-import { setCookie } from "@/utils/cookie";
+import {
+  useLoginMutation,
+  useRegisterMutation,
+  useGoogleLoginMutation,
+} from '@/services/authApi';
+import { useAppDispatch } from '@/app/hooks';
+import { setCredentials } from '@/features/authSlice';
+import { setCookie } from '@/utils/cookie';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LoginRegistration() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [registerName, setRegisterName] = useState("");
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [registerPassword2, setRegisterPassword2] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [registerError, setRegisterError] = useState("");
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerPassword2, setRegisterPassword2] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
-  const [googleLogin, { isLoading: isGoogleLoginLoading }] = useGoogleLoginMutation();
+  const [googleLogin, { isLoading: isGoogleLoginLoading }] =
+    useGoogleLoginMutation();
 
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoginError("");
+    setLoginError('');
 
     try {
-      const userData = await login({ email: loginEmail, password: loginPassword }).unwrap();
+      const userData = await login({
+        email: loginEmail,
+        password: loginPassword,
+      }).unwrap();
       handleAuthSuccess(userData);
     } catch (error: any) {
       handleAuthError(error, setLoginError);
@@ -47,10 +54,10 @@ export default function LoginRegistration() {
 
   const handleRegisterSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setRegisterError("");
+    setRegisterError('');
 
     if (registerPassword !== registerPassword2) {
-      setRegisterError("Passwords do not match.");
+      setRegisterError('Passwords do not match.');
       return;
     }
 
@@ -70,12 +77,14 @@ export default function LoginRegistration() {
 
   const handleLoginSuccess = async (response: CredentialResponse) => {
     if (!response.credential) {
-      setLoginError("No credential received from Google.");
+      setLoginError('No credential received from Google.');
       return;
     }
 
     try {
-      const userData = await googleLogin({ token: response.credential }).unwrap();
+      const userData = await googleLogin({
+        token: response.credential,
+      }).unwrap();
       handleAuthSuccess(userData);
     } catch (error: any) {
       handleAuthError(error, setLoginError);
@@ -83,8 +92,8 @@ export default function LoginRegistration() {
   };
 
   const handleAuthSuccess = (userData: any) => {
-    setCookie("access_token", userData.token.access, { expires: 1 });
-    setCookie("refresh_token", userData.token.refresh, { expires: 7 });
+    setCookie('access_token', userData.token.access, { expires: 1 });
+    setCookie('refresh_token', userData.token.refresh, { expires: 7 });
     dispatch(
       setCredentials({
         accessToken: userData.token.access,
@@ -92,128 +101,178 @@ export default function LoginRegistration() {
         isAuthenticated: true,
       })
     );
-    navigate("/chat");
+    navigate('/chat');
   };
 
   const handleAuthError = (error: any, setError: (message: string) => void) => {
     if (error?.data?.errors) {
-      setError(error.data.errors.non_field_errors?.[0] || "Something went wrong. Please try again.");
-    } else if (typeof error?.data === "string") {
+      setError(
+        error.data.errors.non_field_errors?.[0] ||
+          'Something went wrong. Please try again.'
+      );
+    } else if (typeof error?.data === 'string') {
       setError(error.data);
     } else {
-      setError("Something went wrong. Please try again.");
+      setError('Something went wrong. Please try again.');
     }
   };
 
   const handleLoginFailure = () => {
-    setLoginError("Google login failed.");
+    setLoginError('Google login failed.');
   };
 
   return (
-    <Card className="relative w-full overflow-hidden border border-primary/20 bg-white/80 shadow-2xl shadow-primary/20 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 opacity-80" />
-      <CardHeader className="space-y-4 pb-8">
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-primary">
-          <Sparkles className="h-3.5 w-3.5" />
-          Access
-        </div>
-        <CardTitle className="text-3xl font-semibold text-foreground">Jump back into the flow</CardTitle>
-        <CardDescription className="text-base text-muted-foreground">
-          Sign in or create an account to sync conversations, files, and people instantly across every device.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8">
-        <Tabs defaultValue="login" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-2 rounded-full bg-white/60 p-1 backdrop-blur">
-            <TabsTrigger value="login" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">
-              Sign in
-            </TabsTrigger>
-            <TabsTrigger value="register" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-white">
-              Create account
-            </TabsTrigger>
-          </TabsList>
+    <div className="space-y-6">
+      <Tabs defaultValue="login" className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/50 p-1">
+          <TabsTrigger
+            value="login"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            Sign in
+          </TabsTrigger>
+          <TabsTrigger
+            value="register"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            Create account
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="login" className="space-y-6">
-            {loginError && <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">{loginError}</p>}
-            <form onSubmit={handleLoginSubmit} className="space-y-5">
-              <FormRow
-                id="loginEmail"
-                label="Work email"
-                type="email"
-                icon={Mail}
-                value={loginEmail}
-                onChange={setLoginEmail}
-                placeholder="you@company.com"
-                autoComplete="email"
-              />
-              <FormRow id="loginPassword" label="Password" type="password" icon={Lock} value={loginPassword} onChange={setLoginPassword} placeholder="Enter your password" autoComplete="current-password" />
-              <Button type="submit" className="w-full gap-2 shadow-lg shadow-primary/20" size="lg" disabled={isLoginLoading}>
-                {isLoginLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isLoginLoading ? "Signing in..." : "Access workspace"}
-              </Button>
-            </form>
-          </TabsContent>
+        <TabsContent value="login" className="space-y-4">
+          {loginError && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+              {loginError}
+            </p>
+          )}
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <FormRow
+              id="loginEmail"
+              label="Email"
+              type="email"
+              icon={Mail}
+              value={loginEmail}
+              onChange={setLoginEmail}
+              placeholder="name@example.com"
+              autoComplete="email"
+            />
+            <FormRow
+              id="loginPassword"
+              label="Password"
+              type="password"
+              icon={Lock}
+              value={loginPassword}
+              onChange={setLoginPassword}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
+            <Button
+              type="submit"
+              className="w-full gap-2 rounded-xl h-11"
+              size="lg"
+              disabled={isLoginLoading}
+            >
+              {isLoginLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLoginLoading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+        </TabsContent>
 
-          <TabsContent value="register" className="space-y-6">
-            {registerError && <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">{registerError}</p>}
-            <form onSubmit={handleRegisterSubmit} className="space-y-5">
-              <FormRow id="registerName" label="Full name" icon={User} value={registerName} onChange={setRegisterName} placeholder="Alex Morgan" autoComplete="name" />
-              <FormRow id="registerEmail" label="Work email" type="email" icon={Mail} value={registerEmail} onChange={setRegisterEmail} placeholder="you@company.com" autoComplete="email" />
-              <FormRow
-                id="registerPassword"
-                label="Password"
-                type="password"
-                icon={Lock}
-                value={registerPassword}
-                onChange={setRegisterPassword}
-                placeholder="Create a strong password"
-                autoComplete="new-password"
-              />
-              <FormRow
-                id="registerPassword2"
-                label="Confirm password"
-                type="password"
-                icon={Lock}
-                value={registerPassword2}
-                onChange={setRegisterPassword2}
-                placeholder="Repeat your password"
-                autoComplete="new-password"
-              />
-              <Button type="submit" className="w-full gap-2 shadow-lg shadow-primary/20" size="lg" disabled={isRegisterLoading}>
-                {isRegisterLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isRegisterLoading ? "Creating workspace..." : "Create workspace"}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
-
-        <div className="space-y-5">
-          <Divider label="Or continue with" />
-          <div className="flex flex-col gap-4">
-            <div className="w-full rounded-2xl border border-white/40 bg-white/70 p-3 text-center shadow-inner shadow-primary/10 backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
-              {isGoogleLoginLoading ? (
-                <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Preparing secure login...
-                </div>
-              ) : (
-                <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} useOneTap type="standard" theme="outline" size="large" shape="rectangular" />
+        <TabsContent value="register" className="space-y-4">
+          {registerError && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+              {registerError}
+            </p>
+          )}
+          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+            <FormRow
+              id="registerName"
+              label="Full name"
+              icon={User}
+              value={registerName}
+              onChange={setRegisterName}
+              placeholder="John Doe"
+              autoComplete="name"
+            />
+            <FormRow
+              id="registerEmail"
+              label="Email"
+              type="email"
+              icon={Mail}
+              value={registerEmail}
+              onChange={setRegisterEmail}
+              placeholder="name@example.com"
+              autoComplete="email"
+            />
+            <FormRow
+              id="registerPassword"
+              label="Password"
+              type="password"
+              icon={Lock}
+              value={registerPassword}
+              onChange={setRegisterPassword}
+              placeholder="Create a password"
+              autoComplete="new-password"
+            />
+            <FormRow
+              id="registerPassword2"
+              label="Confirm password"
+              type="password"
+              icon={Lock}
+              value={registerPassword2}
+              onChange={setRegisterPassword2}
+              placeholder="Confirm your password"
+              autoComplete="new-password"
+            />
+            <Button
+              type="submit"
+              className="w-full gap-2 rounded-xl h-11"
+              size="lg"
+              disabled={isRegisterLoading}
+            >
+              {isRegisterLoading && (
+                <Loader2 className="h-4 w-4 animate-spin" />
               )}
-            </div>
-            <div className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary shadow-inner shadow-primary/20">
-              <ShieldCheck className="mt-1 h-4 w-4" />
-              <p>
-                Every plan includes SSO, SCIM provisioning, and audit-ready logging. Need help?{" "}
-                <a href="mailto:support@mnkchat.com" className="inline-flex items-center gap-1 font-medium underline underline-offset-4">
-                  Contact our team
-                  <ArrowRight className="h-3 w-3" />
-                </a>
-              </p>
-            </div>
+              {isRegisterLoading ? 'Creating account...' : 'Create Account'}
+            </Button>
+          </form>
+        </TabsContent>
+      </Tabs>
+
+      <div className="space-y-5">
+        <Divider label="Or continue with" />
+        <div className="flex flex-col gap-4">
+          <div className="w-full rounded-xl border border-border/40 bg-background/50 p-2 text-center">
+            {isGoogleLoginLoading ? (
+              <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Connecting...
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleLoginSuccess}
+                  onError={handleLoginFailure}
+                  useOneTap
+                  type="standard"
+                  theme="outline"
+                  size="large"
+                  shape="rectangular"
+                  width="100%"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex items-start gap-3 rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+            <Info className="mt-0.5 h-4 w-4 text-primary flex-shrink-0" />
+            <p className="text-xs leading-relaxed">
+              This is a portfolio project. Please do not use sensitive
+              passwords. Data is stored for demonstration purposes only.
+            </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -228,22 +287,31 @@ interface FormRowProps {
   autoComplete?: string;
 }
 
-function FormRow({ id, label, type = "text", icon: Icon, value, onChange, placeholder, autoComplete }: FormRowProps) {
+function FormRow({
+  id,
+  label,
+  type = 'text',
+  icon: Icon,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+}: FormRowProps) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-sm font-medium text-foreground">
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-sm font-medium text-foreground/80">
         {label}
       </Label>
       <div className="relative">
-        <Icon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Icon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
         <Input
           id={id}
           type={type}
           value={value}
           placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={event => onChange(event.target.value)}
           autoComplete={autoComplete}
-          className="h-12 rounded-2xl border border-primary/20 bg-white/80 pl-11 text-sm shadow-sm shadow-primary/10 backdrop-blur transition focus:border-primary focus:ring-2 focus:ring-primary/30 dark:bg-slate-950/70"
+          className="h-11 rounded-xl border-border/50 bg-background/50 pl-10 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           required
         />
       </div>
@@ -253,10 +321,10 @@ function FormRow({ id, label, type = "text", icon: Icon, value, onChange, placeh
 
 function Divider({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+    <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground/60">
+      <span className="h-px flex-1 bg-border/60" />
       {label}
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <span className="h-px flex-1 bg-border/60" />
     </div>
   );
 }

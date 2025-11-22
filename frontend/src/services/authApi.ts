@@ -1,6 +1,6 @@
 // services/authApi.ts
 
-import { baseApi } from "./baseApi";
+import { baseApi } from './baseApi';
 
 interface LoginRequest {
   email: string;
@@ -28,28 +28,28 @@ interface GoogleLoginRequest {
 }
 
 export const authApi = baseApi.injectEndpoints({
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     login: builder.mutation<TokenResponse, LoginRequest>({
-      query: (credentials) => ({
-        providesTags: ["Users", "ChatRooms"],
-        url: "accounts/login/",
-        method: "POST",
+      query: credentials => ({
+        providesTags: ['Users', 'ChatRooms'],
+        url: 'accounts/login/',
+        method: 'POST',
         body: credentials,
       }),
     }),
     register: builder.mutation<TokenResponse, RegisterRequest>({
-      query: (userData) => ({
-        providesTags: ["Users", "ChatRooms"],
-        url: "accounts/register/",
-        method: "POST",
+      query: userData => ({
+        providesTags: ['Users', 'ChatRooms'],
+        url: 'accounts/register/',
+        method: 'POST',
         body: userData,
       }),
     }),
     googleLogin: builder.mutation<TokenResponse, GoogleLoginRequest>({
-      query: (data) => ({
-        providesTags: ["Users", "ChatRooms"],
-        url: "accounts/social/google/",
-        method: "POST",
+      query: data => ({
+        providesTags: ['Users', 'ChatRooms'],
+        url: 'accounts/social/google/',
+        method: 'POST',
         body: data,
       }),
     }),
@@ -57,4 +57,5 @@ export const authApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useLoginMutation, useRegisterMutation, useGoogleLoginMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation, useGoogleLoginMutation } =
+  authApi;

@@ -12,7 +12,7 @@ from .models import ChatRoom, Message
 from .serializers import MessageSerializer
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import AbstractUser
+    pass
 
 User = get_user_model()
 
@@ -51,7 +51,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Register presence and send initial state
         presence_payload = await self.mark_presence()
-        await self.send(json.dumps({"type": "presence_state", "users": presence_payload}))
+        await self.send(
+            json.dumps({"type": "presence_state", "users": presence_payload})
+        )
         await self.channel_layer.group_send(
             self.chat_room_group_name,
             {
@@ -67,16 +69,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         cursors_state = await self.get_cursor_state()
         if cursors_state:
-            await self.send(json.dumps({"type": "cursor_state", "cursors": cursors_state}))
+            await self.send(
+                json.dumps({"type": "cursor_state", "cursors": cursors_state})
+            )
 
         huddle_participants = await self.get_huddle_participants()
         if huddle_participants:
             await self.send(
-                json.dumps({"type": "huddle_participants", "participants": huddle_participants})
+                json.dumps(
+                    {"type": "huddle_participants", "participants": huddle_participants}
+                )
             )
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.chat_room_group_name, self.channel_name)
+        await self.channel_layer.group_discard(
+            self.chat_room_group_name, self.channel_name
+        )
         await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
         removed = await self.remove_presence()
@@ -119,7 +127,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.chat_room_group_name, {"type": "chat_message", "payload": message_data}
         )
 
-    async def handle_edit_message(self, message_id: Optional[int], content: Optional[str]):
+    async def handle_edit_message(
+        self, message_id: Optional[int], content: Optional[str]
+    ):
         if not isinstance(message_id, int) or not content or not content.strip():
             return
         updated = await self.update_message(message_id, content.strip())
@@ -160,7 +170,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.set_note_state(content)
         await self.channel_layer.group_send(
             self.chat_room_group_name,
-            {"type": "collab_update", "content": content, "user": await self._serialize_user(self.user)},
+            {
+                "type": "collab_update",
+                "content": content,
+                "user": await self._serialize_user(self.user),
+            },
         )
 
     async def handle_cursor_update(self, cursor: Optional[Dict[str, Any]]):
@@ -186,7 +200,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Ensure we always send a list, not None
         await self.channel_layer.group_send(
             self.chat_room_group_name,
-            {"type": "huddle_participants", "participants": participants if participants is not None else []},
+            {
+                "type": "huddle_participants",
+                "participants": participants if participants is not None else [],
+            },
         )
 
     async def leave_huddle(self):
@@ -212,31 +229,81 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        await self.send(json.dumps({"type": "chat_message", "message": event["payload"]}))
+        await self.send(
+            json.dumps({"type": "chat_message", "message": event["payload"]})
+        )
 
     async def message_updated(self, event):
-        await self.send(json.dumps({"type": "message_updated", "message": event["message"]}))
+        await self.send(
+            json.dumps({"type": "message_updated", "message": event["message"]})
+        )
 
     async def message_deleted(self, event):
-        await self.send(json.dumps({"type": "message_deleted", "message_id": event["message_id"]}))
+        await self.send(
+            json.dumps({"type": "message_deleted", "message_id": event["message_id"]})
+        )
 
     async def typing_status(self, event):
-        await self.send(json.dumps({"type": "typing_status", "user_id": event["user_id"], "is_typing": event["is_typing"]}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "typing_status",
+                    "user_id": event["user_id"],
+                    "is_typing": event["is_typing"],
+                }
+            )
+        )
 
     async def presence_update(self, event):
-        await self.send(json.dumps({"type": "presence_update", "action": event["action"], "user": event["user"]}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "presence_update",
+                    "action": event["action"],
+                    "user": event["user"],
+                }
+            )
+        )
 
     async def collab_update(self, event):
-        await self.send(json.dumps({"type": "collab_update", "content": event["content"], "user": event["user"]}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "collab_update",
+                    "content": event["content"],
+                    "user": event["user"],
+                }
+            )
+        )
 
     async def cursor_update(self, event):
-        await self.send(json.dumps({"type": "cursor_update", "cursor": event["cursor"], "user": event["user"]}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "cursor_update",
+                    "cursor": event["cursor"],
+                    "user": event["user"],
+                }
+            )
+        )
 
     async def huddle_participants(self, event):
-        await self.send(json.dumps({"type": "huddle_participants", "participants": event["participants"]}))
+        await self.send(
+            json.dumps(
+                {"type": "huddle_participants", "participants": event["participants"]}
+            )
+        )
 
     async def huddle_signal(self, event):
-        await self.send(json.dumps({"type": "huddle_signal", "from": event["from"], "payload": event["payload"]}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "huddle_signal",
+                    "from": event["from"],
+                    "payload": event["payload"],
+                }
+            )
+        )
 
     @database_sync_to_async
     def get_chat_room(self):
@@ -247,7 +314,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def is_participant(self):
-        return ChatRoom.objects.filter(id=self.chat_room_id, participants__id=self.user.id).exists()
+        return ChatRoom.objects.filter(
+            id=self.chat_room_id, participants__id=self.user.id
+        ).exists()
 
     @database_sync_to_async
     def _serialize_user(self, user) -> Dict[str, Any]:
@@ -322,7 +391,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         values = conn.hgetall(key)
         if not values:
             return {}
-        return {int(uid.decode()): json.loads(val.decode()) for uid, val in values.items()}
+        return {
+            int(uid.decode()): json.loads(val.decode()) for uid, val in values.items()
+        }
 
     @database_sync_to_async
     def set_cursor_state(self, cursor: Dict[str, Any]):
