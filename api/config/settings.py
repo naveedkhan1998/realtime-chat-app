@@ -178,7 +178,7 @@ try:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         os.path.join(BASE_DIR, "gcpCredentials.json")
     )
-except Exception as e:
+except Exception:
     GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
         "/etc/secrets/gcpCredentials.json"
     )
