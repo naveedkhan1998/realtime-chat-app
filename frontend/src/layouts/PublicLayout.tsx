@@ -1,9 +1,10 @@
 import { Outlet, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Menu, X, Github } from 'lucide-react';
+import { Menu, X, Github } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThemeSwitch from '@/components/custom/ThemeSwitch';
 
 const navItems = [
   { label: 'Features', href: '#features' },
@@ -24,7 +25,7 @@ export default function PublicLayout() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-background selection:bg-primary/20 selection:text-primary">
+    <div className="relative w-full min-h-screen overflow-x-hidden bg-background selection:bg-primary/20 selection:text-primary">
       <DecorativeBackground />
 
       <header
@@ -33,7 +34,7 @@ export default function PublicLayout() {
           isScrolled ? 'py-4' : 'py-6'
         )}
       >
-        <div className="container mx-auto px-4">
+        <div className="container px-4 mx-auto">
           <div
             className={cn(
               'mx-auto flex items-center justify-between rounded-full border transition-all duration-300',
@@ -43,28 +44,32 @@ export default function PublicLayout() {
             )}
           >
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-primary/30">
-                <MessageSquare className="h-5 w-5" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative flex items-center justify-center w-10 h-10 overflow-hidden transition-transform duration-300 shadow-lg rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/20 group-hover:scale-105 group-hover:shadow-primary/30">
+                <img
+                  src="/apple-touch-icon.png"
+                  alt="Logo"
+                  className="object-cover w-full h-full"
+                />
+                <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent group-hover:opacity-100" />
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
                 MNK<span className="text-primary">Chat</span>
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="items-center hidden gap-1 md:flex">
               {navItems.map(item => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary"
+                  className="px-4 py-2 text-sm font-medium transition-colors rounded-full text-muted-foreground hover:bg-primary/5 hover:text-primary"
                 >
                   {item.label}
                 </a>
               ))}
             </nav>
 
-            <div className="hidden md:flex items-center gap-3">
+            <div className="items-center hidden gap-3 md:flex">
               <Button
                 asChild
                 variant="ghost"
@@ -76,35 +81,40 @@ export default function PublicLayout() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <Github className="mr-2 h-4 w-4" />
+                  <Github className="w-4 h-4 mr-2" />
                   GitHub
                 </a>
               </Button>
-              <div className="h-6 w-px bg-border/50" />
+              <div className="w-px h-6 bg-border/50" />
               <Button
                 asChild
                 variant="ghost"
                 size="sm"
-                className="rounded-full font-medium"
+                className="font-medium rounded-full"
               >
                 <Link to="/login">Sign in</Link>
               </Button>
               <Button
                 asChild
                 size="sm"
-                className="rounded-full px-5 shadow-md shadow-primary/20"
+                className="px-5 rounded-full shadow-md shadow-primary/20"
               >
                 <Link to="/login">Get Started</Link>
               </Button>
+              <ThemeSwitch
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+              />
             </div>
 
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden rounded-full"
+              className="rounded-full md:hidden"
               onClick={() => setIsMenuOpen(true)}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="w-6 h-6" />
             </Button>
           </div>
         </div>
@@ -144,7 +154,7 @@ function MobileMenu({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 z-50 w-full max-w-xs border-l border-border bg-card p-6 shadow-2xl md:hidden"
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-xs p-6 border-l shadow-2xl border-border bg-card md:hidden"
           >
             <div className="flex items-center justify-between mb-8">
               <span className="text-lg font-bold">Menu</span>
@@ -154,7 +164,7 @@ function MobileMenu({
                 onClick={onClose}
                 className="rounded-full"
               >
-                <X className="h-5 w-5" />
+                <X className="w-5 h-5" />
               </Button>
             </div>
             <nav className="flex flex-col gap-4">
@@ -163,25 +173,31 @@ function MobileMenu({
                   key={item.label}
                   href={item.href}
                   onClick={onClose}
-                  className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
+                  className="text-lg font-medium transition-colors text-muted-foreground hover:text-primary"
                 >
                   {item.label}
                 </a>
               ))}
-              <hr className="border-border my-2" />
+              <hr className="my-2 border-border" />
               <Button
                 asChild
                 variant="outline"
-                className="w-full justify-start rounded-xl"
+                className="justify-start w-full rounded-xl"
               >
                 <Link to="/login">Sign in</Link>
               </Button>
               <Button
                 asChild
-                className="w-full justify-start rounded-xl shadow-lg shadow-primary/20"
+                className="justify-start w-full shadow-lg rounded-xl shadow-primary/20"
               >
                 <Link to="/login">Get Started</Link>
               </Button>
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Theme
+                </span>
+                <ThemeSwitch variant="outline" size="sm" showLabel={false} />
+              </div>
             </nav>
           </motion.div>
         </>
@@ -192,7 +208,7 @@ function MobileMenu({
 
 function DecorativeBackground() {
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
       <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[100px] animate-pulse" />
       <div className="absolute top-[20%] right-[-5%] h-[400px] w-[400px] rounded-full bg-accent/10 blur-[120px]" />
       <div className="absolute bottom-[-10%] left-[20%] h-[600px] w-[600px] rounded-full bg-primary/5 blur-[100px]" />
@@ -204,15 +220,19 @@ function DecorativeBackground() {
 function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background/50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="container px-4 py-12 mx-auto">
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-              <MessageSquare className="h-4 w-4" />
+            <div className="flex items-center justify-center w-8 h-8 overflow-hidden rounded-lg bg-primary/10 text-primary">
+              <img
+                src="/apple-touch-icon.png"
+                alt="Logo"
+                className="object-cover w-full h-full"
+              />
             </div>
-            <span className="font-semibold text-sm">MNK Chat</span>
+            <span className="text-sm font-semibold">MNK Chat</span>
           </div>
-          <p className="text-sm text-muted-foreground text-center md:text-right">
+          <p className="text-sm text-center text-muted-foreground md:text-right">
             © {new Date().getFullYear()} Naveed Khan. Built for learning.
           </p>
         </div>

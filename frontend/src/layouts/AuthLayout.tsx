@@ -1,5 +1,6 @@
 import { Outlet, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import ThemeSwitch from '@/components/custom/ThemeSwitch';
 
 export default function AuthLayout() {
   return (
@@ -13,7 +14,7 @@ export default function AuthLayout() {
       </div>
 
       <div className="w-full max-w-6xl">
-        <header className="absolute z-20 top-6 left-6 md:top-10 md:left-10">
+        <header className="absolute z-20 flex items-center gap-4 top-6 left-6 md:top-10 md:left-10">
           <Link
             to="/"
             className="flex items-center gap-2 px-4 py-2 transition-colors border rounded-full text-muted-foreground hover:text-foreground bg-background/50 border-border/50 backdrop-blur-sm"
@@ -21,6 +22,10 @@ export default function AuthLayout() {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back to Home</span>
           </Link>
+          <ThemeSwitch
+            variant="outline"
+            className="rounded-full bg-background/50 border-border/50 backdrop-blur-sm"
+          />
         </header>
 
         <main className="w-full">

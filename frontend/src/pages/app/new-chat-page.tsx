@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 import { useAppSelector } from '@/app/hooks';
 import { useSearchUsersQuery } from '@/services/userApi';
@@ -23,7 +24,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-export default function NewChat() {
+export default function NewChatPage() {
   const user = useAppSelector(state => state.auth.user);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -71,6 +72,10 @@ export default function NewChat() {
 
   return (
     <div className="relative flex flex-col h-full gap-6 p-6 overflow-hidden">
+      <Helmet>
+        <title>New Chat | MNK Chat</title>
+        <meta name="description" content="Start a new conversation" />
+      </Helmet>
       {/* Decorative Background */}
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 

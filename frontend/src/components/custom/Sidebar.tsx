@@ -9,7 +9,6 @@ import {
   Search,
   X,
   Sparkles,
-  Zap,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -27,6 +26,8 @@ interface SidebarProps {
   isSidebarOpen: boolean;
   onClose: () => void;
   metadata: { title: string; description: string };
+  className?: string;
+  showCloseButton?: boolean;
 }
 
 const navItems = [
@@ -40,6 +41,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobile,
   isSidebarOpen,
   onClose,
+  className,
+  showCloseButton = true,
 }) => {
   const user = useAppSelector(state => state.auth.user);
   const dispatch = useAppDispatch();
@@ -63,7 +66,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           ? isSidebarOpen
             ? 'translate-x-0'
             : '-translate-x-full'
-          : 'translate-x-0'
+          : 'translate-x-0',
+        className
       )}
     >
       {/* Glass Container */}
@@ -71,8 +75,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center shadow-lg h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
-              <Zap className="w-5 h-5 text-white fill-white" />
+            <div className="flex items-center justify-center overflow-hidden shadow-lg h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
+              <img
+                src="/apple-touch-icon.png"
+                alt="Logo"
+                className="object-cover w-full h-full"
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold leading-none tracking-tight">
@@ -83,15 +91,26 @@ const Sidebar: React.FC<SidebarProps> = ({
               </p>
             </div>
           </div>
-          {isMobile ? (
-            <Button
+          {isMobile && showCloseButton ? (
+            <div className="flex items-center gap-2">
+              <ThemeSwitch
+                variant="ghost"
+                className="w-8 h-8 rounded-full hover:bg-primary/10"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="w-8 h-8 rounded-full"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : !isMobile ? (
+            <ThemeSwitch
               variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="w-8 h-8 rounded-full"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+              className="w-8 h-8 rounded-full hover:bg-primary/10"
+            />
           ) : (
             <ThemeSwitch
               variant="ghost"
@@ -165,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Chat List */}
         <div className="flex-1 px-2 py-2 mt-2 overflow-y-auto custom-scrollbar">
           <div className="px-4 mb-2">
-            <NavLink to="/new-chat">
+            <NavLink to="/new-chat" onClick={() => isMobile && onClose()}>
               <Button
                 variant="default"
                 className="justify-start w-full h-10 gap-2 font-semibold border shadow-none rounded-xl bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"

@@ -20,6 +20,7 @@ import {
 import ChatWindow from '@/components/custom/ChatWindow';
 import { AppShellContext } from '@/layouts/AppShell';
 import { MessageSquareMore, Sparkles } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export default function ChatPage() {
   const { activeChat, setActiveChat, isMobile } =
@@ -31,6 +32,11 @@ export default function ChatPage() {
   const { data: chatRooms } = useGetChatRoomsQuery(undefined, {
     pollingInterval: 10000,
   });
+
+  const activeRoom = chatRooms?.find(room => room.id === activeChat);
+  const pageTitle = activeRoom
+    ? `${activeRoom.name || 'Chat'} | MNK Chat`
+    : 'Chat | MNK Chat';
 
   useEffect(() => {
     if (activeChat && accessToken) {
@@ -146,6 +152,9 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col flex-1 h-full w-full">
+      <Helmet>
+        <title>{pageTitle}</title>
+      </Helmet>
       {activeChat ? (
         <ChatWindow
           user={user}
