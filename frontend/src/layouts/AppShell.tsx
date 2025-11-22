@@ -64,13 +64,13 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background selection:bg-primary/20">
+    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background selection:bg-primary/20">
       {/* Global Background Elements - Refined for Premium Feel */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none" />
       <div className="absolute -top-[20%] -right-[10%] w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
       <div className="absolute -bottom-[20%] -left-[10%] w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow delay-1000" />
 
-      <div className="relative z-10 flex h-screen w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
+      <div className="relative z-10 flex h-[100dvh] w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
         {/* Sidebar Container */}
         <Sidebar
           activeChat={activeChat}
@@ -101,11 +101,11 @@ export default function AppShell({ isMobile }: AppShellProps) {
           )}
         >
           {isMobile && (
-            <div className="absolute top-4 left-4 z-50">
+            <div className="absolute z-50 top-4 left-4">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-full bg-background/50 backdrop-blur-md border border-white/10 shadow-sm hover:bg-primary/10"
+                className="w-10 h-10 border rounded-full shadow-sm bg-background/50 backdrop-blur-md border-white/10 hover:bg-primary/10"
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
