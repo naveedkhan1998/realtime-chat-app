@@ -9,7 +9,6 @@ import {
   Search,
   X,
   Sparkles,
-  Zap,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -76,11 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center shadow-lg h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20 overflow-hidden">
+            <div className="flex items-center justify-center overflow-hidden shadow-lg h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
               <img
                 src="/apple-touch-icon.png"
                 alt="Logo"
-                className="w-full h-full object-cover"
+                className="object-cover w-full h-full"
               />
             </div>
             <div>
