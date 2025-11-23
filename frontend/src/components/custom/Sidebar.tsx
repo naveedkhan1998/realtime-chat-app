@@ -16,8 +16,9 @@ import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
 import { useGetChatRoomsQuery, ChatRoom } from '@/services/chatApi';
+import { baseApi } from '@/services/baseApi';
 import ThemeSwitch from './ThemeSwitch';
-import { cn } from '@/lib/utils';
+import { cn, getAvatarUrl } from '@/lib/utils';
 
 interface SidebarProps {
   activeChat: number | undefined;
@@ -45,6 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   showCloseButton = true,
 }) => {
   const user = useAppSelector(state => state.auth.user);
+  const globalOnlineUsers = useAppSelector(
+    state => state.chat.globalOnlineUsers
+  );
   const dispatch = useAppDispatch();
   const {
     data: chatRooms,
@@ -56,6 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleLogout = () => {
     dispatch(logOut());
+    dispatch(baseApi.util.resetApiState());
   };
 
   return (
@@ -124,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-3 p-3 border rounded-2xl bg-secondary/30 border-white/5">
             <div className="relative">
               <Avatar className="w-10 h-10 border-2 shadow-sm border-background">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
                 <AvatarFallback className="font-bold bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
                   {user.name.charAt(0)}
                 </AvatarFallback>
@@ -216,6 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   room={room}
                   active={activeChat === room.id}
                   currentUserId={user.id}
+                  onlineUsers={globalOnlineUsers}
                   onSelect={() => {
                     setActiveChat(room.id);
                     if (isMobile) onClose();
@@ -245,11 +251,13 @@ function ConversationRow({
   room,
   active,
   currentUserId,
+  onlineUsers,
   onSelect,
 }: {
   room: ChatRoom;
   active: boolean;
   currentUserId: number;
+  onlineUsers: number[];
   onSelect: () => void;
 }) {
   const counterpart = room.is_group_chat
@@ -259,6 +267,8 @@ function ConversationRow({
     ? room.name
     : (counterpart?.name ?? 'Direct message');
   const avatar = room.is_group_chat ? '' : (counterpart?.avatar ?? '');
+
+  const isOnline = counterpart ? onlineUsers.includes(counterpart.id) : false;
 
   return (
     <button
@@ -274,26 +284,31 @@ function ConversationRow({
         <div className="absolute left-0 w-1 h-8 -translate-y-1/2 rounded-r-full top-1/2 bg-primary" />
       )}
 
-      <Avatar
-        className={cn(
-          'h-11 w-11 border-2 transition-all duration-300',
-          active
-            ? 'border-primary ring-2 ring-primary/20'
-            : 'border-transparent group-hover:border-primary/30'
-        )}
-      >
-        <AvatarImage src={avatar} alt={title} />
-        <AvatarFallback
+      <div className="relative">
+        <Avatar
           className={cn(
-            'text-xs font-bold',
+            'h-11 w-11 border-2 transition-all duration-300',
             active
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-secondary text-muted-foreground'
+              ? 'border-primary ring-2 ring-primary/20'
+              : 'border-transparent group-hover:border-primary/30'
           )}
         >
-          {title?.charAt(0)}
-        </AvatarFallback>
-      </Avatar>
+          <AvatarImage src={getAvatarUrl(avatar)} alt={title} />
+          <AvatarFallback
+            className={cn(
+              'text-xs font-bold',
+              active
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-muted-foreground'
+            )}
+          >
+            {title?.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+        {isOnline && (
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 rounded-full border-background ring-1 ring-green-500/20" />
+        )}
+      </div>
       <div className="flex-1 min-w-0 ml-1">
         <div className="flex items-center justify-between mb-0.5">
           <span

@@ -20,6 +20,7 @@ interface ChatState {
   huddleParticipants: {
     [chatRoomId: number]: Array<{ id: number; name: string }>;
   };
+  globalOnlineUsers: number[];
 }
 
 const initialState: ChatState = {
@@ -30,12 +31,26 @@ const initialState: ChatState = {
   collaborativeNotes: {},
   cursors: {},
   huddleParticipants: {},
+  globalOnlineUsers: [],
 };
 
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
+    setGlobalOnlineUsers(state, action: PayloadAction<number[]>) {
+      state.globalOnlineUsers = action.payload;
+    },
+    addGlobalOnlineUser(state, action: PayloadAction<number>) {
+      if (!state.globalOnlineUsers.includes(action.payload)) {
+        state.globalOnlineUsers.push(action.payload);
+      }
+    },
+    removeGlobalOnlineUser(state, action: PayloadAction<number>) {
+      state.globalOnlineUsers = state.globalOnlineUsers.filter(
+        id => id !== action.payload
+      );
+    },
     setMessages(
       state,
       action: PayloadAction<{ chatRoomId: number; messages: Message[] }>
@@ -226,5 +241,8 @@ export const {
   setCursorState,
   updateCursor,
   setHuddleParticipants,
+  setGlobalOnlineUsers,
+  addGlobalOnlineUser,
+  removeGlobalOnlineUser,
 } = chatSlice.actions;
 export default chatSlice.reducer;

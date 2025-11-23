@@ -44,6 +44,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4004)
             return
 
+        # Pre-calculate user data for frequent updates
+        self.user_data = await self._serialize_user(self.user)
+
         await self.channel_layer.group_add(self.chat_room_group_name, self.channel_name)
         await self.channel_layer.group_add(self.user_group, self.channel_name)
 
@@ -59,7 +62,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {
                 "type": "presence_update",
                 "action": "join",
-                "user": await self._serialize_user(self.user),
+                "user": self.user_data,
             },
         )
 
@@ -173,7 +176,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             {
                 "type": "collab_update",
                 "content": content,
-                "user": await self._serialize_user(self.user),
+                "user": self.user_data,
             },
         )
 
@@ -184,7 +187,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         payload = {
             "type": "cursor_update",
             "cursor": cursor,
-            "user": await self._serialize_user(self.user),
+            "user": self.user_data,
         }
         await self.channel_layer.group_send(self.chat_room_group_name, payload)
 
@@ -223,7 +226,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             f"user_{target_id}",
             {
                 "type": "huddle_signal",
-                "from": await self._serialize_user(self.user),
+                "from": self.user_data,
                 "payload": payload,
             },
         )
@@ -328,7 +331,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }
 
     @database_sync_to_async
-    def mark_presence(self) -> List[Dict[str, Any]]:
+    def mark_presence(self) -> Dict[str, Any]:
         conn = get_redis_connection("default")
         key = f"chat:presence:{self.chat_room_id}"
         avatar = getattr(self.user, "avatar", None)
@@ -342,7 +345,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         pipeline.hset(key, self.user.id, json.dumps(payload))
         pipeline.expire(key, PRESENCE_TTL)
         pipeline.execute()
-        return [json.loads(value) for value in conn.hvals(key)]
+        
+        # Optimization: If too many users, return only count and a sample
+        all_users = conn.hvals(key)
+        total_count = len(all_users)
+        
+        if total_count > 50:
+             # Return top 50 to avoid huge payloads
+             users = [json.loads(value) for value in all_users[:50]]
+             return {"count": total_count, "users": users, "truncated": True}
+        
+        return {"count": total_count, "users": [json.loads(value) for value in all_users], "truncated": False}
 
     @database_sync_to_async
     def remove_presence(self) -> Optional[Dict[str, Any]]:
@@ -352,6 +365,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if removed is not None:
             conn.hdel(key, self.user.id)
         return json.loads(removed) if removed else None
+
 
     @database_sync_to_async
     def clear_typing_state(self):
@@ -472,3 +486,99 @@ class ChatConsumer(AsyncWebsocketConsumer):
         pipeline.execute()
         values = conn.hvals(key)
         return [json.loads(value.decode()) for value in values]
+
+
+class GlobalConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
+        self.user_group = f"user_{self.user.id}"
+        self.global_group = "global_presence"
+        
+        await self.channel_layer.group_add(self.user_group, self.channel_name)
+        await self.channel_layer.group_add(self.global_group, self.channel_name)
+        
+        await self.accept()
+        
+        # Mark as globally online and get current list
+        online_users = await self.set_global_presence(True)
+        
+        # Send initial list to self
+        await self.send(json.dumps({
+            "type": "global.online_users",
+            "online_users": online_users
+        }))
+        
+        # Broadcast join to others
+        await self.channel_layer.group_send(
+            self.global_group,
+            {
+                "type": "global.user_online",
+                "user_id": self.user.id
+            }
+        )
+
+    async def disconnect(self, close_code):
+        if not hasattr(self, "user") or not self.user.is_authenticated:
+            return
+
+        if hasattr(self, "user_group"):
+            await self.channel_layer.group_discard(self.user_group, self.channel_name)
+        
+        if hasattr(self, "global_group"):
+            await self.channel_layer.group_discard(self.global_group, self.channel_name)
+        
+        await self.set_global_presence(False)
+        
+        # Broadcast leave
+        if hasattr(self, "global_group"):
+            await self.channel_layer.group_send(
+                self.global_group,
+                {
+                    "type": "global.user_offline",
+                    "user_id": self.user.id
+                }
+            )
+
+    async def receive(self, text_data):
+        pass
+
+    async def huddle_signal(self, event):
+        await self.send(json.dumps({
+            "type": "huddle_signal",
+            "from": event["from"],
+            "payload": event["payload"]
+        }))
+        
+    async def global_user_online(self, event):
+        if event["user_id"] == self.user.id:
+            return
+        await self.send(json.dumps({
+            "type": "global.user_online",
+            "user_id": event["user_id"]
+        }))
+
+    async def global_user_offline(self, event):
+        if event["user_id"] == self.user.id:
+            return
+        await self.send(json.dumps({
+            "type": "global.user_offline",
+            "user_id": event["user_id"]
+        }))
+
+    @database_sync_to_async
+    def set_global_presence(self, is_online: bool):
+        conn = get_redis_connection("default")
+        key = "global:online_users"
+        if is_online:
+            conn.sadd(key, self.user.id)
+        else:
+            conn.srem(key, self.user.id)
+        
+        # Return list of online users (IDs)
+        # Convert bytes to int
+        return [int(uid) for uid in conn.smembers(key)]
+

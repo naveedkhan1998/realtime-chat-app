@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
+import { memo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, User } from '@/services/chatApi';
-import { cn } from '@/lib/utils';
+import { cn, getAvatarUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, CheckCheck } from 'lucide-react';
 
@@ -18,7 +19,7 @@ interface MessageBubbleProps {
   senderName?: string;
 }
 
-export default function MessageBubble({
+function MessageBubble({
   message,
   isSent,
   isOwnMessage = false,
@@ -59,7 +60,7 @@ export default function MessageBubble({
             isSent ? 'border-primary/20' : 'border-white/10'
           )}
         >
-          <AvatarImage src={displayAvatar} alt={displayName} />
+          <AvatarImage src={getAvatarUrl(displayAvatar)} alt={displayName} />
           <AvatarFallback className="text-[10px] font-bold bg-gradient-to-br from-muted to-muted/50 text-muted-foreground">
             {displayName.charAt(0)}
           </AvatarFallback>
@@ -68,7 +69,7 @@ export default function MessageBubble({
 
       <div
         className={cn(
-          'flex max-w-[80%] flex-col gap-1 sm:max-w-[70%]',
+          'flex max-w-[80%] flex-col gap-1 sm:max-w-[70%] min-w-0',
           isSent ? 'items-end' : 'items-start'
         )}
       >
@@ -79,10 +80,10 @@ export default function MessageBubble({
           </span>
         )}
 
-        <div className="relative group/bubble">
+        <div className="relative group/bubble max-w-full">
           <div
             className={cn(
-              'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200',
+              'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
               isSent
                 ? 'bg-gradient-to-br from-primary to-violet-600 text-white rounded-2xl rounded-tr-sm'
                 : 'bg-white/10 backdrop-blur-md border border-white/5 text-foreground rounded-2xl rounded-tl-sm hover:bg-white/15',
@@ -158,3 +159,5 @@ export default function MessageBubble({
     </div>
   );
 }
+
+export default memo(MessageBubble);

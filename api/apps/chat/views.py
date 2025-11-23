@@ -22,6 +22,7 @@ from .models import (
 )
 from .serializers import (
     ChatRoomSerializer,
+    SimpleChatRoomSerializer,
     MessageSerializer,
     MessageReadReceiptSerializer,
     TypingStatusSerializer,
@@ -136,9 +137,13 @@ class FriendshipViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ChatRoomViewSet(viewsets.ModelViewSet):
-    serializer_class = ChatRoomSerializer
     permission_classes = [IsAuthenticated]
     renderer_classes = [ChatRenderer]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SimpleChatRoomSerializer
+        return ChatRoomSerializer
 
     def get_queryset(self):
         return (
