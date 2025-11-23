@@ -1,10 +1,4 @@
-import {
-  ArrowLeft,
-  MoreVertical,
-  Phone,
-  Video,
-  Activity,
-} from 'lucide-react';
+import { ArrowLeft, MoreVertical, Phone, Video, Activity } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -131,7 +125,12 @@ export default function ChatHeader({
                   </h4>
                   <div className="space-y-2">
                     {details.candidatePairs
-                      ?.slice()
+                      ?.filter(
+                        (pair: any) =>
+                          pair.state === 'succeeded' ||
+                          pair.state === 'failed' ||
+                          pair.selected
+                      )
                       .sort((a: any, b: any) => {
                         // 1. Active/Selected always first
                         if (a.selected && !b.selected) return -1;
@@ -155,48 +154,51 @@ export default function ChatHeader({
                         return 0;
                       })
                       .map((pair: any) => (
-                      <div
-                        key={pair.id}
-                        className={cn(
-                          'p-2 text-xs rounded border',
-                          pair.selected
-                            ? 'bg-primary/10 border-primary/20'
-                            : 'bg-background border-border'
-                        )}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span
-                            className={cn(
-                              'font-medium',
-                              pair.state === 'succeeded'
-                                ? 'text-green-500'
-                                : pair.state === 'failed'
-                                ? 'text-red-500'
-                                : 'text-yellow-500'
-                            )}
-                          >
-                            {pair.state.toUpperCase()}
-                          </span>
-                          {pair.selected && (
-                            <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                              Active
-                            </span>
+                        <div
+                          key={pair.id}
+                          className={cn(
+                            'p-2 text-xs rounded border',
+                            pair.selected
+                              ? 'bg-primary/10 border-primary/20'
+                              : 'bg-background border-border'
                           )}
-                        </div>
-                        <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center text-[10px] text-muted-foreground">
-                          <div className="truncate" title={pair.local?.address}>
-                            L: {pair.local?.type} ({pair.local?.protocol})
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span
+                              className={cn(
+                                'font-medium',
+                                pair.state === 'succeeded'
+                                  ? 'text-green-500'
+                                  : pair.state === 'failed'
+                                    ? 'text-red-500'
+                                    : 'text-yellow-500'
+                              )}
+                            >
+                              {pair.state.toUpperCase()}
+                            </span>
+                            {pair.selected && (
+                              <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                                Active
+                              </span>
+                            )}
                           </div>
-                          <div>↔</div>
-                          <div
-                            className="text-right truncate"
-                            title={pair.remote?.address}
-                          >
-                            R: {pair.remote?.type} ({pair.remote?.protocol})
+                          <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center text-[10px] text-muted-foreground">
+                            <div
+                              className="truncate"
+                              title={pair.local?.address}
+                            >
+                              L: {pair.local?.type} ({pair.local?.protocol})
+                            </div>
+                            <div>↔</div>
+                            <div
+                              className="text-right truncate"
+                              title={pair.remote?.address}
+                            >
+                              R: {pair.remote?.type} ({pair.remote?.protocol})
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>
