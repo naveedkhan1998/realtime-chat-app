@@ -124,7 +124,7 @@ export default function LoginRegistration() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="login" className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-white/5 border border-white/10 p-1 backdrop-blur-md">
+        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/50 border border-border p-1 backdrop-blur-md">
           <TabsTrigger
             value="login"
             className="rounded-lg data-[state=active]:bg-primary/60 data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all duration-300"
@@ -242,7 +242,7 @@ export default function LoginRegistration() {
       <div className="space-y-5">
         <Divider label="Or continue with" />
         <div className="flex flex-col gap-4">
-          <div className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-center backdrop-blur-sm hover:bg-white/10 transition-colors">
+          <div className="w-full rounded-xl border border-border bg-muted/50 p-2 text-center backdrop-blur-sm hover:bg-accent/50 transition-colors">
             {isGoogleLoginLoading ? (
               <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -311,7 +311,7 @@ function FormRow({
           placeholder={placeholder}
           onChange={event => onChange(event.target.value)}
           autoComplete={autoComplete}
-          className="h-11 rounded-xl border-white/10 bg-white/5 pl-10 text-sm shadow-sm transition-all focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50"
+          className="h-11 rounded-xl border-border bg-muted/50 pl-10 text-sm shadow-sm transition-all focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50"
           required
         />
       </div>

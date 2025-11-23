@@ -151,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
     >
       {/* Glass Container */}
-      <div className="flex flex-col w-full h-full overflow-hidden border-r rounded-none shadow-2xl lg:rounded-3xl bg-background/80 backdrop-blur-2xl lg:border border-border/40">
+      <div className="flex flex-col w-full h-full overflow-hidden border-r rounded-none shadow-2xl lg:rounded-3xl bg-background/80 backdrop-blur-2xl lg:border border-border">
         {/* Brand Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">
@@ -201,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* User Profile Card */}
         <div className="px-4 py-4">
-          <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border/40">
+          <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border">
             <div className="relative">
               <Avatar className="w-10 h-10 border-2 shadow-sm border-background">
                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />

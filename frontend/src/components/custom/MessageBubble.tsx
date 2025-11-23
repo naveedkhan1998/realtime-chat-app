@@ -42,7 +42,7 @@ function MessageBubble({
   return (
     <div
       className={cn(
-        'group relative flex w-full gap-2 px-2 transition-all duration-200 hover:bg-white/[0.02]',
+        'group relative flex w-full gap-2 px-2 transition-all duration-200 hover:bg-muted/30',
         isSent ? 'flex-row-reverse' : 'flex-row',
         isConsecutive ? 'mt-0.5' : 'mt-4'
       )}
@@ -86,7 +86,7 @@ function MessageBubble({
               'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
               isSent
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-muted/50 backdrop-blur-md border border-border/50 text-foreground hover:bg-muted/80',
+                : 'bg-muted/50 backdrop-blur-md border border-border text-foreground hover:bg-muted/80',
               isEditing && 'ring-2 ring-offset-2 ring-primary',
               // Border Radius Logic
               'rounded-2xl',
@@ -140,7 +140,7 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border/40 shadow-sm"
+                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border shadow-sm"
                     onClick={() => onEdit(message)}
                   >
                     <Pencil className="h-3 w-3" />
@@ -150,7 +150,7 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border/40 shadow-sm"
+                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border shadow-sm"
                     onClick={() => onDelete(message)}
                   >
                     <Trash2 className="h-3 w-3" />

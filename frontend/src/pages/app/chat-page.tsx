@@ -173,10 +173,10 @@ export default function ChatPage() {
           <div className="relative z-10 max-w-md space-y-6">
             <div className="relative w-24 h-24 mx-auto">
               <div className="absolute inset-0 bg-primary/60 rounded-3xl rotate-6 blur-sm" />
-              <div className="relative flex items-center justify-center w-full h-full border shadow-2xl bg-white/5 backdrop-blur-xl border-white/10 rounded-3xl">
+              <div className="relative flex items-center justify-center w-full h-full border shadow-2xl bg-card/50 backdrop-blur-xl border-border rounded-3xl">
                 <MessageSquareMore className="w-10 h-10 text-primary" />
               </div>
-              <div className="absolute -top-2 -right-2 bg-background/50 backdrop-blur-md rounded-full p-1.5 shadow-lg border border-white/10">
+              <div className="absolute -top-2 -right-2 bg-background/50 backdrop-blur-md rounded-full p-1.5 shadow-lg border border-border">
                 <Sparkles className="w-4 h-4 text-yellow-500 fill-yellow-500" />
               </div>
             </div>

@@ -81,7 +81,7 @@ function HeroSection() {
               asChild
               variant="outline"
               size="lg"
-              className="h-12 px-8 text-base rounded-full backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
+              className="h-12 px-8 text-base rounded-full backdrop-blur-sm bg-background/50 border-border hover:bg-accent/50"
             >
               <a
                 href="https://github.com/naveedkhan1998/realtime-chat-app"
@@ -102,34 +102,34 @@ function HeroSection() {
           className="relative max-w-6xl mx-auto mt-20 perspective-1000"
         >
           {/* Glass Container with Enhanced Border */}
-          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-white/20 bg-background/30 shadow-primary/20 backdrop-blur-2xl ring-1 ring-white/10 group">
+          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-border bg-background/60 shadow-primary/20 backdrop-blur-2xl ring-1 ring-border/50 group">
             {/* Gradient Border Effect */}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/10 via-transparent to-white/5 pointer-events-none" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
             
             {/* Window Controls */}
-            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-white/10 bg-white/5 backdrop-blur-md z-20">
+            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-border/50 bg-muted/30 backdrop-blur-md z-20">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-sm" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500/80 shadow-sm" />
                 <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-sm" />
               </div>
-              <div className="w-2/3 h-6 mx-auto rounded-md bg-white/5 border border-white/5" />
+              <div className="w-2/3 h-6 mx-auto rounded-md bg-muted/50 border border-border/20" />
             </div>
 
             {/* Mock Interface Content */}
-            <div className="grid h-[400px] grid-cols-1 sm:grid-cols-[280px_1fr] divide-y sm:divide-y-0 sm:divide-x divide-white/10 sm:h-[600px] relative z-10">
+            <div className="grid h-[400px] grid-cols-1 sm:grid-cols-[280px_1fr] divide-y sm:divide-y-0 sm:divide-x divide-border/50 sm:h-[600px] relative z-10">
               {/* Sidebar - Hidden on mobile, visible on sm+ */}
-              <div className="hidden p-4 bg-white/5 sm:block backdrop-blur-sm">
+              <div className="hidden p-4 bg-muted/30 sm:block backdrop-blur-sm">
                 <div className="space-y-4 mt-12">
                   {[1, 2, 3, 4].map(i => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-default"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-white/10" />
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border/50" />
                       <div className="space-y-1.5">
-                        <div className="w-24 h-3 rounded bg-white/10" />
-                        <div className="w-16 h-2 rounded bg-white/5" />
+                        <div className="w-24 h-3 rounded bg-muted-foreground/20" />
+                        <div className="w-16 h-2 rounded bg-muted-foreground/10" />
                       </div>
                     </div>
                   ))}
@@ -140,9 +140,9 @@ function HeroSection() {
               <div className="flex flex-col bg-transparent h-full">
                 <div className="flex-1 p-6 space-y-6 mt-12 overflow-hidden">
                   <div className="flex gap-4 animate-in slide-in-from-left-4 duration-700 fade-in">
-                    <div className="w-10 h-10 rounded-full bg-primary/60 border border-white/10 shrink-0" />
+                    <div className="w-10 h-10 rounded-full bg-primary/60 border border-border/50 shrink-0" />
                     <div className="space-y-2 max-w-[85%]">
-                      <div className="px-4 py-3 text-sm rounded-tl-none rounded-2xl bg-white/10 border border-white/5 backdrop-blur-sm">
+                      <div className="px-4 py-3 text-sm rounded-tl-none rounded-2xl bg-muted/50 border border-border/50 backdrop-blur-sm">
                         Hey! Have you checked out the new huddle feature? 🎙️
                       </div>
                       <span className="text-xs text-muted-foreground">
@@ -151,7 +151,7 @@ function HeroSection() {
                     </div>
                   </div>
                   <div className="flex flex-row-reverse gap-4 animate-in slide-in-from-right-4 duration-700 delay-300 fade-in fill-mode-backwards">
-                    <div className="w-10 h-10 rounded-full bg-accent/20 border border-white/10 shrink-0" />
+                    <div className="w-10 h-10 rounded-full bg-accent/20 border border-border/50 shrink-0" />
                     <div className="space-y-2 max-w-[85%]">
                       <div className="px-4 py-3 text-sm rounded-tr-none shadow-lg rounded-2xl bg-primary text-primary-foreground shadow-primary/20 border border-primary/20">
                         Yeah! The audio quality is surprisingly good. And the
@@ -163,9 +163,9 @@ function HeroSection() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
-                  <div className="w-full h-12 border rounded-full bg-white/5 border-white/10 flex items-center px-4">
-                    <div className="w-24 h-2 rounded bg-white/10" />
+                <div className="p-4 border-t border-border/50 bg-muted/30 backdrop-blur-sm">
+                  <div className="w-full h-12 border rounded-full bg-muted/50 border-border/50 flex items-center px-4">
+                    <div className="w-24 h-2 rounded bg-muted-foreground/20" />
                   </div>
                 </div>
               </div>
@@ -195,7 +195,7 @@ function FeaturesGrid() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
         {/* Large Feature - Realtime */}
-        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
             <Zap className="w-48 h-48" />
           </div>
@@ -214,7 +214,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Feature - Security */}
-        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
             <Shield className="w-32 h-32" />
           </div>
@@ -230,7 +230,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Feature - Collaboration */}
-        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
             <Code2 className="w-32 h-32" />
           </div>
@@ -246,7 +246,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Large Feature - Huddles */}
-        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
             <MessageCircle className="w-48 h-48" />
           </div>
@@ -276,7 +276,7 @@ function WorkflowSection() {
 
   return (
     <section id="workflow" className="container px-4 py-20 mx-auto">
-      <div className="relative rounded-[2.5rem] bg-white/5 border border-white/10 p-12 overflow-hidden backdrop-blur-md">
+      <div className="relative rounded-[2.5rem] bg-card/50 border border-border p-12 overflow-hidden backdrop-blur-md">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
 
         <div className="relative z-10 mb-16 text-center">
@@ -287,7 +287,7 @@ function WorkflowSection() {
         <div className="relative z-10 grid gap-8 md:grid-cols-3">
           {steps.map((step, i) => (
             <div key={i} className="flex flex-col items-center text-center">
-              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-white/10 border-white/20 text-primary shadow-primary/10 backdrop-blur-sm">
+              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-border text-primary shadow-primary/10 backdrop-blur-sm">
                 {i + 1}
               </div>
               <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
@@ -312,7 +312,7 @@ function TechStackSection() {
   ];
 
   return (
-    <section id="stack" className="py-16 border-y border-white/10 bg-white/5 backdrop-blur-sm">
+    <section id="stack" className="py-16 border-y border-border bg-muted/30 backdrop-blur-sm">
       <div className="container px-4 mx-auto">
         <div className="mb-12 text-center">
           <h2 className="text-2xl font-bold">Powered by modern tech</h2>
@@ -323,7 +323,7 @@ function TechStackSection() {
               key={tech.label}
               className="flex flex-col items-center gap-3 group"
             >
-              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-white/5 border-white/10 group-hover:scale-110 group-hover:bg-white/10">
+              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
                 <tech.icon className="w-8 h-8" />
               </div>
               <span className="text-sm font-medium">{tech.label}</span>

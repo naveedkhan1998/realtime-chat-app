@@ -15,7 +15,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex flex-col justify-between h-full rounded-[2.5rem] bg-primary/5 border border-white/10 p-12 relative overflow-hidden backdrop-blur-3xl"
+        className="hidden lg:flex flex-col justify-between h-full rounded-[2.5rem] bg-card/30 border border-border p-12 relative overflow-hidden backdrop-blur-3xl"
       >
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20 mix-blend-overlay" />
         <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-96 h-96 bg-primary/20 blur-[100px]" />
@@ -66,7 +66,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="relative z-10 pt-8 mt-12 border-t border-white/10">
+        <div className="relative z-10 pt-8 mt-12 border-t border-border">
           <p className="text-sm text-muted-foreground">
             "Feel free to create an account and test the real-time capabilities.
             This is a personal learning project."
@@ -88,7 +88,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="p-6 border shadow-2xl bg-background/40 backdrop-blur-xl border-white/10 shadow-primary/5 rounded-3xl md:p-8">
+        <div className="p-6 border shadow-2xl bg-card/80 backdrop-blur-xl border-border shadow-primary/5 rounded-3xl md:p-8">
           <LoginRegistration />
         </div>
 
@@ -116,7 +116,7 @@ function FeatureRow({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}
-      className="flex items-start gap-4 p-4 transition-colors border rounded-2xl bg-white/5 border-white/10 backdrop-blur-md hover:bg-white/10"
+      className="flex items-start gap-4 p-4 transition-colors border rounded-2xl bg-card/50 border-border backdrop-blur-md hover:bg-accent/50"
     >
       <div className="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
         <Icon className="w-5 h-5" />
