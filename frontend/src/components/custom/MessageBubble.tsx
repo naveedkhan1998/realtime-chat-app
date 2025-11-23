@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, User } from '@/services/chatApi';
 import { cn, getAvatarUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, CheckCheck } from 'lucide-react';
+import { Pencil, Trash2, CheckCheck, Clock } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -38,13 +38,15 @@ function MessageBubble({
   const updatedTime = new Date(message.updated_at);
   const formattedTime = format(timestamp, 'HH:mm');
   const edited = updatedTime.getTime() !== timestamp.getTime();
+  const isPending = message.id < 0;
 
   return (
     <div
       className={cn(
         'group relative flex w-full gap-2 px-2 transition-all duration-200 hover:bg-muted/30',
         isSent ? 'flex-row-reverse' : 'flex-row',
-        isConsecutive ? 'mt-0.5' : 'mt-4'
+        isConsecutive ? 'mt-0.5' : 'mt-4',
+        isPending && 'opacity-70'
       )}
     >
       {/* Avatar Area */}
@@ -121,7 +123,11 @@ function MessageBubble({
               )}
               {isSent && (
                 <span className="ml-0.5">
-                  <CheckCheck className="w-3 h-3 opacity-80" />
+                  {isPending ? (
+                    <Clock className="w-3 h-3 opacity-80 animate-pulse" />
+                  ) : (
+                    <CheckCheck className="w-3 h-3 opacity-80" />
+                  )}
                 </span>
               )}
             </div>
@@ -134,7 +140,7 @@ function MessageBubble({
               isSent ? '-left-16' : '-right-16'
             )}
           >
-            {isOwnMessage && (onEdit || onDelete) && (
+            {isOwnMessage && !isPending && (onEdit || onDelete) && (
               <>
                 {onEdit && (
                   <Button
