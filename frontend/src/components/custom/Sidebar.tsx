@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   MessageSquareMore,
@@ -15,8 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
-import { useGetChatRoomsQuery, ChatRoom } from '@/services/chatApi';
+import { useGetChatRoomsQuery, ChatRoom, chatApi } from '@/services/chatApi';
 import { baseApi } from '@/services/baseApi';
+import { GlobalWebSocketService } from '@/utils/websocket';
 import ThemeSwitch from './ThemeSwitch';
 import { cn, getAvatarUrl } from '@/lib/utils';
 
@@ -54,7 +55,27 @@ const Sidebar: React.FC<SidebarProps> = ({
     data: chatRooms,
     isLoading: chatRoomsLoading,
     error: chatRoomsError,
-  } = useGetChatRoomsQuery(undefined, { pollingInterval: 10000 });
+  } = useGetChatRoomsQuery();
+
+  useEffect(() => {
+    const ws = GlobalWebSocketService.getInstance();
+    const handleChatRoomCreated = (event: any) => {
+      dispatch(
+        chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
+          // Check if room already exists to avoid duplicates
+          if (!draft.find(room => room.id === event.room.id)) {
+            draft.unshift(event.room);
+          }
+        })
+      );
+    };
+
+    ws.on('chat_room_created', handleChatRoomCreated);
+
+    return () => {
+      ws.off('chat_room_created', handleChatRoomCreated);
+    };
+  }, [dispatch]);
 
   if (!user) return null;
 
