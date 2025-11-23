@@ -36,8 +36,12 @@ export default function NewChatPage() {
   );
   const [createChatRoom, { isLoading: creatingChatRoom }] =
     useCreateChatRoomMutation();
+  const [pendingChatUserId, setPendingChatUserId] = useState<number | null>(
+    null
+  );
 
   const handleCreateChat = async (participantId: number) => {
+    setPendingChatUserId(participantId);
     try {
       const selectedUser = searchResults?.find(
         candidate => candidate.id === participantId
@@ -67,6 +71,8 @@ export default function NewChatPage() {
         description: 'Something went sideways. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setPendingChatUserId(null);
     }
   };
 
@@ -149,12 +155,22 @@ export default function NewChatPage() {
                     </p>
                   </div>
                   <Button
-                    size="icon"
-                    className="transition-all translate-x-2 rounded-full shadow-none opacity-0 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md group-hover:opacity-100 group-hover:translate-x-0"
+                    size="sm"
+                    className="transition-all rounded-full shadow-none bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
                     onClick={() => handleCreateChat(candidate.id)}
                     disabled={creatingChatRoom}
                   >
-                    <MessageSquarePlus className="w-5 h-5" />
+                    {pendingChatUserId === candidate.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquarePlus className="w-4 h-4 mr-2" />
+                        Start Chat
+                      </>
+                    )}
                   </Button>
                 </div>
               ))}
