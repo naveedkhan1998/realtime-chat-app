@@ -7,8 +7,7 @@
 
 A modern, full-featured real-time chat application built to demonstrate the power of **Django Channels** and **React** working in perfect harmony. Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications.
 
-> **🔴 Live Demo:** [https://chat.mnaveedk.com/](https://chat.mnaveedk.com/)
-> *(Running on free-tier resources, please allow a minute for cold starts)*
+> **🔴 Live Demo:** [https://chat.mnaveedk.com/](https://chat.mnaveedk.com/) > _(Running on free-tier resources, please allow a minute for cold starts)_
 
 ## 🚀 Features
 
@@ -62,7 +61,7 @@ Copy-Item .envs/.env.example .envs/.env
 cp .envs/.env.example .envs/.env
 ```
 
-*Open `.envs/.env` and update any secrets if necessary (defaults work for local dev).*
+_Open `.envs/.env` and update any secrets if necessary (defaults work for local dev)._
 
 **Frontend Secrets:**
 Navigate to the frontend directory and configure the local environment.
@@ -77,7 +76,7 @@ cp .env.example .env.local
 cd ..
 ```
 
-*Open `frontend/.env.local` and add your configuration (e.g., Google OAuth Client ID).*
+_Open `frontend/.env.local` and add your configuration (e.g., Google OAuth Client ID)._
 
 ### 3. Install Dependencies
 
@@ -97,7 +96,7 @@ npm run dev
 
 - **Frontend**: [http://localhost:5173](http://localhost:5173)
 - **Backend Admin**: [http://localhost:8000/admin](http://localhost:8000/admin)
-- **API Root**: [http://localhost:8000/api/v1/](http://localhost:8000/api/v1/)
+- **API Root**: [http://localhost:8000/api/](http://localhost:8000/api/)
 
 ## 🐳 Docker Commands
 
@@ -121,4 +120,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Naveed Khan
 
 - GitHub: [@naveedkhan1998](https://github.com/naveedkhan1998)
-
