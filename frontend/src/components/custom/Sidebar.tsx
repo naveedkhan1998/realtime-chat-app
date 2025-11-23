@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   MessageSquareMore,
-  UsersRound,
   Plus,
   Loader2,
   LogOut,
@@ -277,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Chat List */}
         <div className="flex-1 px-2 py-2 mt-2 overflow-y-auto custom-scrollbar">
           <div className="flex items-center justify-between px-4 py-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {searchQuery ? 'Search Results' : 'Recent Messages'}
             </span>
           </div>

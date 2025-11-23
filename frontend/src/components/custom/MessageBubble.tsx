@@ -109,8 +109,8 @@ function MessageBubble({
               className={cn(
                 'flex items-center gap-1 mt-1 select-none',
                 isSent
-                  ? 'justify-end text-primary-foreground/70'
-                  : 'justify-start text-muted-foreground/60'
+                  ? 'justify-end text-primary-foreground/80'
+                  : 'justify-start text-muted-foreground/80'
               )}
             >
               <span className="text-[9px] font-medium">{formattedTime}</span>

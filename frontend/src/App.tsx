@@ -17,7 +17,6 @@ import { ThemeProvider } from './components/providers/ThemeProvider';
 import LoginPage from './pages/auth/login-page';
 import { useAppSelector } from './app/hooks';
 import HomePage from './pages/app/home-page';
-import FriendsPage from './pages/app/friends-page';
 import ChatPage from './pages/app/chat-page';
 import NewChatPage from './pages/app/new-chat-page';
 import AppShell from './layouts/AppShell';

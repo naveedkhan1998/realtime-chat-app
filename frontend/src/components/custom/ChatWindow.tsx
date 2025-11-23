@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import ChatHeader from './chat-page/ChatHeader';
 import ChatInput from './chat-page/ChatInput';
 import MessageList from './chat-page/MessageList';
+import { DeleteMessageDialog } from './chat-page/DeleteMessageDialog';
 
 interface ChatWindowProps {
   user: UserProfile;
@@ -81,6 +82,7 @@ export default function ChatWindow({
   const [connectionDetails, setConnectionDetails] = useState<
     Record<number, any>
   >({});
+  const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
 
   const scrollToBottom = useCallback(() => {
     // Handled by Virtuoso or passed down if needed
@@ -172,20 +174,19 @@ export default function ChatWindow({
     [setValue]
   );
 
-  const handleDeleteMessage = useCallback(
-    (message: Message) => {
-      const confirmed = window.confirm(
-        'Delete this message? This action cannot be undone.'
-      );
-      if (!confirmed) return;
-      const ws = WebSocketService.getInstance();
-      ws.sendDeleteMessage(message.id);
-      if (editingMessage?.id === message.id) {
-        cancelEditing();
-      }
-    },
-    [cancelEditing, editingMessage]
-  );
+  const handleDeleteMessage = useCallback((message: Message) => {
+    setMessageToDelete(message);
+  }, []);
+
+  const confirmDeleteMessage = useCallback(() => {
+    if (!messageToDelete) return;
+    const ws = WebSocketService.getInstance();
+    ws.sendDeleteMessage(messageToDelete.id);
+    if (editingMessage?.id === messageToDelete.id) {
+      cancelEditing();
+    }
+    setMessageToDelete(null);
+  }, [messageToDelete, editingMessage, cancelEditing]);
 
   const refreshRemoteStreams = useCallback(() => {
     setRemoteStreams(
@@ -621,6 +622,13 @@ export default function ChatWindow({
           watch={watch}
           editingMessage={editingMessage}
           typingUsers={typingUsers as any}
+        />
+
+        <DeleteMessageDialog
+          isOpen={!!messageToDelete}
+          onClose={() => setMessageToDelete(null)}
+          onConfirm={confirmDeleteMessage}
+          isMobile={isMobile}
         />
       </div>
     </>

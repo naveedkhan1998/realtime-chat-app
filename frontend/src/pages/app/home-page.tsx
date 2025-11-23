@@ -13,6 +13,7 @@ import {
   Smartphone,
   Globe,
   Cpu,
+  Radio,
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
@@ -100,26 +101,32 @@ function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="relative max-w-6xl mx-auto mt-20 perspective-1000"
         >
-          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-white/10 bg-background/40 shadow-primary/10 backdrop-blur-xl ring-1 ring-white/10">
-            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
+          {/* Glass Container with Enhanced Border */}
+          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-white/20 bg-background/30 shadow-primary/20 backdrop-blur-2xl ring-1 ring-white/10 group">
+            {/* Gradient Border Effect */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/10 via-transparent to-white/5 pointer-events-none" />
+            
+            {/* Window Controls */}
+            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-white/10 bg-white/5 backdrop-blur-md z-20">
               <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80 shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-sm" />
               </div>
-              <div className="w-2/3 h-6 mx-auto rounded-md bg-white/5" />
+              <div className="w-2/3 h-6 mx-auto rounded-md bg-white/5 border border-white/5" />
             </div>
 
             {/* Mock Interface Content */}
-            <div className="grid h-[400px] grid-cols-[280px_1fr] divide-x divide-white/10 sm:h-[600px]">
-              <div className="hidden p-4 bg-white/5 sm:block">
-                <div className="space-y-4">
+            <div className="grid h-[400px] grid-cols-1 sm:grid-cols-[280px_1fr] divide-y sm:divide-y-0 sm:divide-x divide-white/10 sm:h-[600px] relative z-10">
+              {/* Sidebar - Hidden on mobile, visible on sm+ */}
+              <div className="hidden p-4 bg-white/5 sm:block backdrop-blur-sm">
+                <div className="space-y-4 mt-12">
                   {[1, 2, 3, 4].map(i => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-default"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20" />
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-white/10" />
                       <div className="space-y-1.5">
                         <div className="w-24 h-3 rounded bg-white/10" />
                         <div className="w-16 h-2 rounded bg-white/5" />
@@ -128,12 +135,14 @@ function HeroSection() {
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col bg-transparent">
-                <div className="flex-1 p-6 space-y-6">
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/60" />
-                    <div className="space-y-2">
-                      <div className="px-4 py-2 text-sm rounded-tl-none rounded-2xl bg-white/10">
+              
+              {/* Chat Area */}
+              <div className="flex flex-col bg-transparent h-full">
+                <div className="flex-1 p-6 space-y-6 mt-12 overflow-hidden">
+                  <div className="flex gap-4 animate-in slide-in-from-left-4 duration-700 fade-in">
+                    <div className="w-10 h-10 rounded-full bg-primary/60 border border-white/10 shrink-0" />
+                    <div className="space-y-2 max-w-[85%]">
+                      <div className="px-4 py-3 text-sm rounded-tl-none rounded-2xl bg-white/10 border border-white/5 backdrop-blur-sm">
                         Hey! Have you checked out the new huddle feature? 🎙️
                       </div>
                       <span className="text-xs text-muted-foreground">
@@ -141,10 +150,10 @@ function HeroSection() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-row-reverse gap-4">
-                    <div className="w-10 h-10 rounded-full bg-accent/20" />
-                    <div className="space-y-2">
-                      <div className="px-4 py-2 text-sm rounded-tr-none shadow-md rounded-2xl bg-primary text-primary-foreground shadow-primary/20">
+                  <div className="flex flex-row-reverse gap-4 animate-in slide-in-from-right-4 duration-700 delay-300 fade-in fill-mode-backwards">
+                    <div className="w-10 h-10 rounded-full bg-accent/20 border border-white/10 shrink-0" />
+                    <div className="space-y-2 max-w-[85%]">
+                      <div className="px-4 py-3 text-sm rounded-tr-none shadow-lg rounded-2xl bg-primary text-primary-foreground shadow-primary/20 border border-primary/20">
                         Yeah! The audio quality is surprisingly good. And the
                         shared text pad is a game changer for code reviews.
                       </div>
@@ -154,15 +163,17 @@ function HeroSection() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-white/10">
-                  <div className="w-full h-12 border rounded-full bg-white/5 border-white/10" />
+                <div className="p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
+                  <div className="w-full h-12 border rounded-full bg-white/5 border-white/10 flex items-center px-4">
+                    <div className="w-24 h-2 rounded bg-white/10" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Decorative Elements behind preview */}
-          <div className="absolute -inset-4 -z-10 bg-gradient-to-r from-primary/20 to-accent/20 blur-3xl opacity-30 rounded-[3rem]" />
+          <div className="absolute -inset-4 -z-10 bg-gradient-to-r from-primary/30 to-accent/30 blur-3xl opacity-40 rounded-[3rem] animate-pulse-slow" />
         </motion.div>
       </div>
     </section>
@@ -244,10 +255,9 @@ function FeaturesGrid() {
               <MessageCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="mb-2 text-2xl font-bold">Group Huddles</h3>
+              <h3 className="mb-2 text-2xl font-bold">Real-time Voice Huddles</h3>
               <p className="max-w-md text-muted-foreground">
-                Jump into voice channels or group chats instantly. Perfect for
-                quick syncs or hanging out.
+                Powered by WebRTC for crystal clear, low-latency audio. We leverage a hybrid network of Google and Twilio STUN/TURN servers to guarantee reliable connections through any firewall.
               </p>
             </div>
           </div>
@@ -298,6 +308,7 @@ function TechStackSection() {
     { icon: Database, label: 'PostgreSQL' },
     { icon: Zap, label: 'Redis' },
     { icon: Cpu, label: 'Channels' },
+    { icon: Radio, label: 'WebRTC' },
   ];
 
   return (

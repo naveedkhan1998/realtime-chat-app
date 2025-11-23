@@ -152,7 +152,7 @@ export default function MessageList({
           >
             <Button
               size="icon"
-              className="w-10 h-10 rounded-full shadow-lg bg-background/80 backdrop-blur-md border border-white/10 text-primary hover:bg-background"
+              className="w-10 h-10 rounded-full shadow-lg bg-background/80 backdrop-blur-md border border-border text-primary hover:bg-background"
               onClick={() => {
                 virtuosoRef.current?.scrollTo({
                   top: 999999,
