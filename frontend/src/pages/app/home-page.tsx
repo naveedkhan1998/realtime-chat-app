@@ -21,11 +21,19 @@ export default function HomePage() {
   return (
     <div className="space-y-32">
       <Helmet>
-        <title>Home | MNK Chat</title>
+        <title>MNK Chat - Realtime Messaging & Voice Huddles</title>
         <meta
           name="description"
-          content="Welcome to MNK Chat - Realtime Communication App"
+          content="Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications. Built with React, Django Channels, and WebRTC."
         />
+        {/* Open Graph tags are inherited from index.html for the home page, 
+            but we can re-declare them to ensure client-side navigation consistency */}
+        <meta property="og:title" content="MNK Chat - Realtime Messaging & Voice Huddles" />
+        <meta
+          property="og:description"
+          content="Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications. Built with React, Django Channels, and WebRTC."
+        />
+        <meta property="og:url" content="https://chat.mnaveedk.com/" />
       </Helmet>
       <HeroSection />
       <FeaturesGrid />
