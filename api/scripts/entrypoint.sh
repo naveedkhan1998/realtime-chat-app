@@ -1,19 +1,28 @@
 #!/bin/bash
 
-# Run migrations
-echo "Applying database migrations..."
-# python3 manage.py makemigrations
-# python3 manage.py migrate
+set -e
 
-# python3 manage.py initadmin
+echo "Entrypoint script starting..."
 
-# Collect static files (if needed)
-# echo "Collecting static files..."
-#python3 manage.py collectstatic --noinput
+# Check if we are in production or development
+# If DJANGO_DEBUG is missing, default to False (Production behavior)
+DEBUG=${DJANGO_DEBUG:-False}
 
-# Start the server with Uvicorn ASGI workers
-echo "Starting Django ASGI server..."
-# uvicorn
-# exec gunicorn config.asgi:application --bind 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker
-# daphne
-python3 manage.py runserver 0.0.0.0:8000
+if [ "$DEBUG" = "True" ] || [ "$DEBUG" = "true" ] || [ "$DEBUG" = "1" ]; then
+    # Development settings
+    echo "Running in development mode..."
+    echo "Applying migrations..."
+    python3 manage.py migrate
+    
+    echo "Starting Django development server..."
+    python3 manage.py runserver 0.0.0.0:8000
+else
+    # Production settings
+    echo "Running in production mode..."
+    
+    # Migrations and static files are handled externally/locally as per user request
+    # to speed up cold starts and avoid conflicts with Supabase/GCS.
+    
+    echo "Starting Django ASGI server (Daphne)..."
+    exec daphne -b 0.0.0.0 -p 8000 config.asgi:application
+fi
