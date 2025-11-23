@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /chat
+Disallow: /new-chat
+Disallow: /api/
+
+Sitemap: https://chat.mnaveedk.com/sitemap.xml

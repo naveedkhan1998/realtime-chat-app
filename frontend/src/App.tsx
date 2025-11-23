@@ -45,10 +45,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
-      <Helmet>
-        <title>MNK | CHAT APP</title>
-        <meta name="description" content="Realtime Chat Application" />
-      </Helmet>
+      <Helmet defaultTitle="MNK Chat" titleTemplate="%s | MNK Chat" />
       <HealthCheck>
         <AuthInitializer />
         <GoogleOAuthProvider clientId={clientId}>
