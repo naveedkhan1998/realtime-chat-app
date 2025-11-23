@@ -59,7 +59,8 @@ export default function ChatPage() {
         );
       };
       const handlePresenceState = (event: any) => {
-        dispatch(setPresence({ chatRoomId: activeChat, users: event.users }));
+        const usersList = Array.isArray(event.users) ? event.users : event.users.users;
+        dispatch(setPresence({ chatRoomId: activeChat, users: usersList }));
       };
       const handlePresenceUpdate = (event: any) => {
         dispatch(
@@ -151,7 +152,7 @@ export default function ChatPage() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col flex-1 h-full w-full">
+    <div className="flex flex-col flex-1 w-full h-full">
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
@@ -164,14 +165,14 @@ export default function ChatPage() {
           chatRooms={chatRooms}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center h-full p-8 text-center relative overflow-hidden">
+        <div className="relative flex flex-col items-center justify-center h-full p-8 overflow-hidden text-center">
           {/* Decorative background elements */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="relative z-10 max-w-md space-y-6">
-            <div className="relative mx-auto w-24 h-24">
+            <div className="relative w-24 h-24 mx-auto">
               <div className="absolute inset-0 bg-primary/20 rounded-3xl rotate-6 blur-sm" />
-              <div className="relative bg-background/50 backdrop-blur-xl border border-white/10 rounded-3xl w-full h-full flex items-center justify-center shadow-2xl">
+              <div className="relative flex items-center justify-center w-full h-full border shadow-2xl bg-background/50 backdrop-blur-xl border-white/10 rounded-3xl">
                 <MessageSquareMore className="w-10 h-10 text-primary" />
               </div>
               <div className="absolute -top-2 -right-2 bg-background rounded-full p-1.5 shadow-lg border border-white/10">
@@ -183,7 +184,7 @@ export default function ChatPage() {
               <h2 className="text-3xl font-bold tracking-tight text-foreground">
                 Welcome back, <span className="text-primary">{user.name}</span>
               </h2>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-lg text-muted-foreground">
                 Select a conversation from the sidebar to start chatting or
                 create a new one.
               </p>

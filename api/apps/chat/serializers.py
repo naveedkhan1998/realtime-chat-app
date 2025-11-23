@@ -78,6 +78,39 @@ class ChatRoomParticipantSerializer(serializers.ModelSerializer):
         fields = ["user", "joined_at", "last_read_message"]
 
 
+class SimpleChatRoomSerializer(serializers.ModelSerializer):
+    """
+    Lightweight serializer for list views to prevent N+1 queries.
+    """
+    participants = serializers.SerializerMethodField()
+    is_group_chat = serializers.BooleanField(default=False)
+    name = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = ChatRoom
+        fields = [
+            "id",
+            "name",
+            "is_group_chat",
+            "participants",
+            "created_at",
+        ]
+
+    def get_participants(self, obj):
+        # Return only a subset of participants (e.g., top 3) or just the count
+        # For the sidebar, we usually need the other user's avatar/name (for 1-on-1)
+        # or a few avatars (for groups).
+        request = self.context.get("request")
+        if not request:
+            return []
+        
+        # Optimize: Prefetch related is handled in view, but we limit serialization here
+        participants = obj.participants.all()
+        # If it's a direct chat, we need the other user.
+        # If it's a group chat, maybe just the first 3.
+        return UserSerializer(participants[:4], many=True).data
+
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
     participant_ids = serializers.ListField(

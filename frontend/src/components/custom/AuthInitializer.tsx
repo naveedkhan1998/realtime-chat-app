@@ -3,8 +3,19 @@ import { useEffect } from 'react';
 import { useGetUserProfileQuery } from '@/services/userApi';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut, setCredentials, setUser } from '@/features/authSlice';
+import {
+  setGlobalOnlineUsers,
+  addGlobalOnlineUser,
+  removeGlobalOnlineUser,
+} from '@/features/chatSlice';
 import { getCookie } from '@/utils/cookie';
 import { baseApi } from '@/services/baseApi';
+import {
+  GlobalWebSocketService,
+  GlobalOnlineUsersEvent,
+  GlobalUserOnlineEvent,
+  GlobalUserOfflineEvent,
+} from '@/utils/websocket';
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
@@ -40,6 +51,36 @@ export default function AuthInitializer() {
       dispatch(baseApi.util.resetApiState());
     }
   }, [userData, error, dispatch]);
+
+  useEffect(() => {
+    if (accessToken && user) {
+      const ws = GlobalWebSocketService.getInstance();
+      ws.connect(accessToken);
+
+      const handleOnlineUsers = (data: GlobalOnlineUsersEvent) => {
+        dispatch(setGlobalOnlineUsers(data.online_users));
+      };
+
+      const handleUserOnline = (data: GlobalUserOnlineEvent) => {
+        dispatch(addGlobalOnlineUser(data.user_id));
+      };
+
+      const handleUserOffline = (data: GlobalUserOfflineEvent) => {
+        dispatch(removeGlobalOnlineUser(data.user_id));
+      };
+
+      ws.on('global.online_users', handleOnlineUsers);
+      ws.on('global.user_online', handleUserOnline);
+      ws.on('global.user_offline', handleUserOffline);
+
+      return () => {
+        ws.off('global.online_users', handleOnlineUsers);
+        ws.off('global.user_online', handleUserOnline);
+        ws.off('global.user_offline', handleUserOffline);
+        ws.disconnect();
+      };
+    }
+  }, [accessToken, user, dispatch]);
 
   return null;
 }

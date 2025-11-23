@@ -35,12 +35,16 @@ export interface MessageDeletedEvent {
 
 export interface PresenceStateEvent {
   type: 'presence_state';
-  users: Array<{
-    id: number;
-    name: string;
-    avatar?: string | null;
-    last_seen?: string;
-  }>;
+  users: {
+    count: number;
+    truncated: boolean;
+    users: Array<{
+      id: number;
+      name: string;
+      avatar?: string | null;
+      last_seen?: string;
+    }>;
+  };
 }
 
 export interface PresenceUpdateEvent {
@@ -91,6 +95,21 @@ export interface HuddleSignalEvent {
   };
 }
 
+export interface GlobalOnlineUsersEvent {
+  type: 'global.online_users';
+  online_users: number[];
+}
+
+export interface GlobalUserOnlineEvent {
+  type: 'global.user_online';
+  user_id: number;
+}
+
+export interface GlobalUserOfflineEvent {
+  type: 'global.user_offline';
+  user_id: number;
+}
+
 export type WebSocketEvent =
   | ChatMessageEvent
   | TypingStatusEvent
@@ -104,7 +123,10 @@ export type WebSocketEvent =
   | CursorStateEvent
   | CursorUpdateEvent
   | HuddleParticipantsEvent
-  | HuddleSignalEvent;
+  | HuddleSignalEvent
+  | GlobalOnlineUsersEvent
+  | GlobalUserOnlineEvent
+  | GlobalUserOfflineEvent;
 
 export class WebSocketService {
   private static instance: WebSocketService;
@@ -285,6 +307,86 @@ export class WebSocketService {
     const eventType = data.type;
     console.log('📨 WebSocket received:', eventType, data);
 
+    if (this.callbacks[eventType]) {
+      this.callbacks[eventType].forEach(callback => callback(data));
+    }
+  }
+}
+
+export class GlobalWebSocketService {
+  private static instance: GlobalWebSocketService;
+  private socket: WebSocket | null = null;
+  private callbacks: { [key: string]: Array<(data: any) => void> } = {};
+
+  private constructor() {}
+
+  static getInstance() {
+    if (!GlobalWebSocketService.instance) {
+      GlobalWebSocketService.instance = new GlobalWebSocketService();
+    }
+    return GlobalWebSocketService.instance;
+  }
+
+  connect(token: string) {
+    if (this.socket) {
+      return;
+    }
+
+    const baseUrl = import.meta.env.VITE_BASE_API_URL;
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socketUrl = `${protocol}://${baseUrl}/ws/global/?token=${token}`;
+
+    this.socket = new WebSocket(socketUrl);
+
+    this.socket.onopen = () => {
+      console.log('Global WebSocket connected');
+    };
+
+    this.socket.onmessage = event => {
+      const data: WebSocketEvent = JSON.parse(event.data);
+      this.handleSocketMessage(data);
+    };
+
+    this.socket.onclose = () => {
+      console.log('Global WebSocket disconnected');
+      this.socket = null;
+    };
+
+    this.socket.onerror = error => {
+      console.error('Global WebSocket error:', error);
+    };
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
+  }
+
+  on<T extends WebSocketEvent>(
+    eventType: T['type'],
+    callback: (data: any) => void
+  ): void {
+    if (!this.callbacks[eventType]) {
+      this.callbacks[eventType] = [];
+    }
+    this.callbacks[eventType].push(callback);
+  }
+
+  off<T extends WebSocketEvent>(
+    eventType: T['type'],
+    callback: (data: any) => void
+  ): void {
+    if (this.callbacks[eventType]) {
+      this.callbacks[eventType] = this.callbacks[eventType].filter(
+        cb => cb !== callback
+      );
+    }
+  }
+
+  private handleSocketMessage(data: WebSocketEvent) {
+    const eventType = data.type;
     if (this.callbacks[eventType]) {
       this.callbacks[eventType].forEach(callback => callback(data));
     }
