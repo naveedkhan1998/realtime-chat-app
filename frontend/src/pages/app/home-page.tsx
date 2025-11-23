@@ -6,7 +6,6 @@ import {
   MessageCircle,
   Zap,
   Shield,
-  Code2,
   Database,
   Server,
   ArrowRight,
@@ -14,6 +13,7 @@ import {
   Globe,
   Cpu,
   Radio,
+  Bell,
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
@@ -229,18 +229,18 @@ function FeaturesGrid() {
           </div>
         </div>
 
-        {/* Feature - Collaboration */}
+        {/* Feature - Smart Notifications */}
         <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
-            <Code2 className="w-32 h-32" />
+            <Bell className="w-32 h-32" />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center justify-center w-12 h-12 mb-4 text-blue-500 rounded-2xl bg-blue-500/10">
-              <Code2 className="w-6 h-6" />
+            <div className="flex items-center justify-center w-12 h-12 mb-4 text-yellow-500 rounded-2xl bg-yellow-500/10">
+              <Bell className="w-6 h-6" />
             </div>
-            <h3 className="mb-2 text-xl font-bold">Live Code</h3>
+            <h3 className="mb-2 text-xl font-bold">Smart Notifications</h3>
             <p className="text-sm text-muted-foreground">
-              Collaborative text pad for sharing code snippets in real-time.
+              Offline-first alerts that sync instantly when you return. Never miss a beat with our intelligent coalescing engine.
             </p>
           </div>
         </div>
