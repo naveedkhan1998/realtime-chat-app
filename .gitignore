@@ -1,4 +1,3 @@
-.envs
 postgres
 static
 media
@@ -7,3 +6,5 @@ media
 .nx/cache
 .nx/workspace-data
 node_modules
+.env
+.env.prod

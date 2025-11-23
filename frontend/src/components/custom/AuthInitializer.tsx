@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { useGetUserProfileQuery } from '@/services/userApi';
+import { useHealthCheckQuery } from '@/services/baseApi';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut, setCredentials, setUser } from '@/features/authSlice';
 import {
@@ -38,8 +39,12 @@ export default function AuthInitializer() {
     }
   }, [accessToken, user, dispatch]);
 
+  const { isError: isHealthError, isLoading: isHealthLoading } =
+    useHealthCheckQuery();
+  const isBackendReady = !isHealthLoading && !isHealthError;
+
   const { data: userData, error } = useGetUserProfileQuery(undefined, {
-    skip: !accessToken || !!user,
+    skip: !accessToken || !!user || !isBackendReady,
   });
 
   useEffect(() => {
