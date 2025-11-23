@@ -34,16 +34,20 @@ from .pagination import MessageCursorPagination
 
 User = get_user_model()
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_ice_servers(request):
     """
     Returns a list of ICE servers (STUN/TURN) for WebRTC.
     """
-    # Default public STUN server
+    # Default public STUN servers
     ice_servers = [
         {
-            "urls": "stun:stun.l.google.com:19302"
+            "urls": [
+                "stun:stun.l.google.com:19302",
+                "stun:stun1.l.google.com:19302",
+            ]
         }
     ]
 
@@ -55,24 +59,28 @@ def get_ice_servers(request):
         try:
             client = Client(twilio_account_sid, twilio_auth_token)
             token = client.tokens.create()
-            return Response(token.ice_servers)
+            # Append Twilio servers to the default list
+            ice_servers.extend(token.ice_servers)
         except Exception as e:
             print(f"Error fetching Twilio ICE servers: {e}")
             # Fallback to manual configuration if Twilio fails
 
-    # Check for TURN server configuration in environment variables
-    turn_url = os.environ.get("TURN_SERVER_URL")
-    turn_username = os.environ.get("TURN_SERVER_USERNAME")
-    turn_credential = os.environ.get("TURN_SERVER_CREDENTIAL")
+    # # Check for TURN server configuration in environment variables
+    # turn_url = os.environ.get("TURN_SERVER_URL")
+    # turn_username = os.environ.get("TURN_SERVER_USERNAME")
+    # turn_credential = os.environ.get("TURN_SERVER_CREDENTIAL")
 
-    if turn_url and turn_username and turn_credential:
-        ice_servers.append({
-            "urls": turn_url,
-            "username": turn_username,
-            "credential": turn_credential
-        })
+    # if turn_url and turn_username and turn_credential:
+    #     ice_servers.append(
+    #         {
+    #             "urls": [turn_url],
+    #             "username": turn_username,
+    #             "credential": turn_credential,
+    #         }
+    #     )
 
     return Response(ice_servers)
+
 
 ### Friend Request Views ###
 
@@ -141,7 +149,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
     renderer_classes = [ChatRenderer]
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == "list":
             return SimpleChatRoomSerializer
         return ChatRoomSerializer
 
