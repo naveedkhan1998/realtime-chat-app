@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import Sidebar from '@/components/custom/Sidebar';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { BackgroundBlobs } from '@/components/ui/background-blobs';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -66,11 +65,8 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background selection:bg-primary/20">
-      {/* Global Background Elements - Refined for Premium Feel */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none" />
-      <div className="absolute -top-[20%] -right-[10%] w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute -bottom-[20%] -left-[10%] w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none animate-pulse-slow delay-1000" />
+    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background/80 selection:bg-primary/60">
+      <BackgroundBlobs />
 
       <div className="relative z-10 flex h-[100dvh] w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
         {/* Sidebar Container */}
@@ -103,23 +99,10 @@ export default function AppShell({ isMobile }: AppShellProps) {
           className={cn(
             'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
             'lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl',
-            'bg-background/60 backdrop-blur-xl',
+            'bg-background/40 backdrop-blur-xl',
             isMobileChatList ? 'hidden' : 'flex'
           )}
         >
-          {isMobile && !activeChat && !isMobileChatList && (
-            <div className="absolute z-50 top-4 left-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-10 h-10 border rounded-full shadow-sm bg-background/50 backdrop-blur-md border-white/10 hover:bg-primary/10"
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            </div>
-          )}
-
           <div className="flex-1 h-full overflow-hidden">
             <Outlet
               context={{

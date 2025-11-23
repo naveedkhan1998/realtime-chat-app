@@ -57,11 +57,11 @@ function MessageBubble({
         <Avatar
           className={cn(
             'h-8 w-8 border-2 shadow-sm transition-transform hover:scale-105',
-            isSent ? 'border-primary/20' : 'border-white/10'
+            isSent ? 'border-primary/20' : 'border-border'
           )}
         >
           <AvatarImage src={getAvatarUrl(displayAvatar)} alt={displayName} />
-          <AvatarFallback className="text-[10px] font-bold bg-gradient-to-br from-muted to-muted/50 text-muted-foreground">
+          <AvatarFallback className="text-[10px] font-bold bg-muted text-muted-foreground">
             {displayName.charAt(0)}
           </AvatarFallback>
         </Avatar>
@@ -85,8 +85,8 @@ function MessageBubble({
             className={cn(
               'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
               isSent
-                ? 'bg-gradient-to-br from-primary to-violet-600 text-white rounded-2xl rounded-tr-sm'
-                : 'bg-white/10 backdrop-blur-md border border-white/5 text-foreground rounded-2xl rounded-tl-sm hover:bg-white/15',
+                ? 'bg-primary text-primary-foreground rounded-2xl rounded-tr-sm'
+                : 'bg-muted/50 backdrop-blur-md border border-border/50 text-foreground rounded-2xl rounded-tl-sm hover:bg-muted/80',
               isEditing && 'ring-2 ring-offset-2 ring-primary',
               isConsecutive && (isSent ? 'rounded-tr-2xl' : 'rounded-tl-2xl')
             )}
@@ -94,7 +94,7 @@ function MessageBubble({
             <p
               className={cn(
                 'whitespace-pre-wrap leading-relaxed break-words',
-                isSent ? 'text-white/95' : 'text-foreground/90'
+                isSent ? 'text-primary-foreground/95' : 'text-foreground/90'
               )}
             >
               {message.content}
@@ -104,7 +104,7 @@ function MessageBubble({
               className={cn(
                 'flex items-center gap-1 mt-1 select-none',
                 isSent
-                  ? 'justify-end text-white/70'
+                  ? 'justify-end text-primary-foreground/70'
                   : 'justify-start text-muted-foreground/60'
               )}
             >
@@ -135,7 +135,7 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-white/5 shadow-sm"
+                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border/40 shadow-sm"
                     onClick={() => onEdit(message)}
                   >
                     <Pencil className="h-3 w-3" />
@@ -145,7 +145,7 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-white/5 shadow-sm"
+                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border/40 shadow-sm"
                     onClick={() => onDelete(message)}
                   >
                     <Trash2 className="h-3 w-3" />

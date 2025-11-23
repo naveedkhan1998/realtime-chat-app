@@ -145,7 +145,7 @@ export class WebSocketService {
 
   connect(chatRoomId: number, token: string) {
     if (this.socket && this.currentChatRoomId === chatRoomId) {
-      console.log('Already connected to this chat room');
+      if (import.meta.env.DEV) console.log('Already connected to this chat room');
       return;
     }
 
@@ -160,7 +160,7 @@ export class WebSocketService {
     this.currentChatRoomId = chatRoomId;
 
     this.socket.onopen = () => {
-      console.log('WebSocket connected');
+      if (import.meta.env.DEV) console.log('WebSocket connected');
     };
 
     this.socket.onmessage = event => {
@@ -169,7 +169,7 @@ export class WebSocketService {
     };
 
     this.socket.onclose = () => {
-      console.log('WebSocket disconnected');
+      if (import.meta.env.DEV) console.log('WebSocket disconnected');
       this.socket = null;
       this.currentChatRoomId = null;
     };
@@ -185,7 +185,7 @@ export class WebSocketService {
       this.socket.close();
       this.socket = null;
       this.currentChatRoomId = null;
-      console.log('WebSocket disconnected manually');
+      if (import.meta.env.DEV) console.log('WebSocket disconnected manually');
     }
   }
 
@@ -254,17 +254,17 @@ export class WebSocketService {
   }
 
   sendHuddleJoin() {
-    console.log('🎙️ Sending huddle_join event');
+    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_join event');
     this.send({ type: 'huddle_join' });
   }
 
   sendHuddleLeave() {
-    console.log('🎙️ Sending huddle_leave event');
+    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_leave event');
     this.send({ type: 'huddle_leave' });
   }
 
   requestHuddleState() {
-    console.log('🎙️ Requesting huddle state (lazy load)');
+    if (import.meta.env.DEV) console.log('🎙️ Requesting huddle state (lazy load)');
     this.send({ type: 'request_huddle_state' });
   }
 
@@ -305,7 +305,7 @@ export class WebSocketService {
 
   private handleSocketMessage(data: WebSocketEvent) {
     const eventType = data.type;
-    console.log('📨 WebSocket received:', eventType, data);
+    if (import.meta.env.DEV) console.log('📨 WebSocket received:', eventType, data);
 
     if (this.callbacks[eventType]) {
       this.callbacks[eventType].forEach(callback => callback(data));
@@ -339,7 +339,7 @@ export class GlobalWebSocketService {
     this.socket = new WebSocket(socketUrl);
 
     this.socket.onopen = () => {
-      console.log('Global WebSocket connected');
+      if (import.meta.env.DEV) console.log('Global WebSocket connected');
     };
 
     this.socket.onmessage = event => {
@@ -348,7 +348,7 @@ export class GlobalWebSocketService {
     };
 
     this.socket.onclose = () => {
-      console.log('Global WebSocket disconnected');
+      if (import.meta.env.DEV) console.log('Global WebSocket disconnected');
       this.socket = null;
     };
 

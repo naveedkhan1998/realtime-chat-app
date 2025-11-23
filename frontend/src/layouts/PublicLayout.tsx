@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeSwitch from '@/components/custom/ThemeSwitch';
+import { BackgroundBlobs } from '@/components/ui/background-blobs';
 
 const navItems = [
   { label: 'Features', href: '#features' },
@@ -25,8 +26,8 @@ export default function PublicLayout() {
   }, []);
 
   return (
-    <div className="relative w-full min-h-screen overflow-x-hidden bg-background selection:bg-primary/20 selection:text-primary">
-      <DecorativeBackground />
+    <div className="relative w-full min-h-screen overflow-x-hidden bg-background/80 selection:bg-primary/60 selection:text-primary">
+      <BackgroundBlobs />
 
       <header
         className={cn(
@@ -203,17 +204,6 @@ function MobileMenu({
         </>
       )}
     </AnimatePresence>
-  );
-}
-
-function DecorativeBackground() {
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-      <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[100px] animate-pulse" />
-      <div className="absolute top-[20%] right-[-5%] h-[400px] w-[400px] rounded-full bg-accent/10 blur-[120px]" />
-      <div className="absolute bottom-[-10%] left-[20%] h-[600px] w-[600px] rounded-full bg-primary/5 blur-[100px]" />
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-    </div>
   );
 }
 

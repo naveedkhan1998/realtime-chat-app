@@ -27,7 +27,7 @@ export default function ChatInput({
         {/* Typing Indicator */}
         <div className="absolute left-0 flex items-center h-6 gap-2 -top-8">
           {typingUsers.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur-md border border-white/5 text-[10px] font-medium text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur-md border border-border/40 text-[10px] font-medium text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2">
               <div className="flex gap-0.5">
                 <span
                   className="w-1 h-1 rounded-full bg-primary animate-bounce"
@@ -51,7 +51,7 @@ export default function ChatInput({
 
         <form
           onSubmit={onSubmit}
-          className="relative flex items-end gap-2 p-2 rounded-[28px] border border-white/10 bg-background/80 backdrop-blur-2xl shadow-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/20"
+          className="relative flex items-end gap-2 p-2 rounded-[28px] border border-border/40 bg-background/80 backdrop-blur-2xl shadow-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/20"
         >
           <Button
             type="button"

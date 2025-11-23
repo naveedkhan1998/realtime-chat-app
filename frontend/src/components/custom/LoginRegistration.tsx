@@ -124,16 +124,16 @@ export default function LoginRegistration() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="login" className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-muted/50 p-1">
+        <TabsList className="grid w-full grid-cols-2 rounded-xl bg-white/5 border border-white/10 p-1 backdrop-blur-md">
           <TabsTrigger
             value="login"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            className="rounded-lg data-[state=active]:bg-primary/60 data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all duration-300"
           >
             Sign in
           </TabsTrigger>
           <TabsTrigger
             value="register"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            className="rounded-lg data-[state=active]:bg-primary/60 data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all duration-300"
           >
             Create account
           </TabsTrigger>
@@ -141,7 +141,7 @@ export default function LoginRegistration() {
 
         <TabsContent value="login" className="space-y-4">
           {loginError && (
-            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive backdrop-blur-sm">
               {loginError}
             </p>
           )}
@@ -168,7 +168,7 @@ export default function LoginRegistration() {
             />
             <Button
               type="submit"
-              className="w-full gap-2 rounded-xl h-11"
+              className="w-full gap-2 rounded-xl h-11 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
               size="lg"
               disabled={isLoginLoading}
             >
@@ -180,7 +180,7 @@ export default function LoginRegistration() {
 
         <TabsContent value="register" className="space-y-4">
           {registerError && (
-            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive backdrop-blur-sm">
               {registerError}
             </p>
           )}
@@ -226,7 +226,7 @@ export default function LoginRegistration() {
             />
             <Button
               type="submit"
-              className="w-full gap-2 rounded-xl h-11"
+              className="w-full gap-2 rounded-xl h-11 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
               size="lg"
               disabled={isRegisterLoading}
             >
@@ -242,7 +242,7 @@ export default function LoginRegistration() {
       <div className="space-y-5">
         <Divider label="Or continue with" />
         <div className="flex flex-col gap-4">
-          <div className="w-full rounded-xl border border-border/40 bg-background/50 p-2 text-center">
+          <div className="w-full rounded-xl border border-white/10 bg-white/5 p-2 text-center backdrop-blur-sm hover:bg-white/10 transition-colors">
             {isGoogleLoginLoading ? (
               <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -263,7 +263,7 @@ export default function LoginRegistration() {
               </div>
             )}
           </div>
-          <div className="flex items-start gap-3 rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+          <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-muted-foreground backdrop-blur-sm">
             <Info className="mt-0.5 h-4 w-4 text-primary flex-shrink-0" />
             <p className="text-xs leading-relaxed">
               This is a portfolio project. Please do not use sensitive
@@ -302,8 +302,8 @@ function FormRow({
       <Label htmlFor={id} className="text-sm font-medium text-foreground/80">
         {label}
       </Label>
-      <div className="relative">
-        <Icon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+      <div className="relative group">
+        <Icon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 group-focus-within:text-primary transition-colors" />
         <Input
           id={id}
           type={type}
@@ -311,7 +311,7 @@ function FormRow({
           placeholder={placeholder}
           onChange={event => onChange(event.target.value)}
           autoComplete={autoComplete}
-          className="h-11 rounded-xl border-border/50 bg-background/50 pl-10 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="h-11 rounded-xl border-white/10 bg-white/5 pl-10 text-sm shadow-sm transition-all focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50"
           required
         />
       </div>

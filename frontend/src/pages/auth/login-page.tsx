@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet-async';
 
 export default function LoginPage() {
   return (
-    <div className="grid lg:grid-cols-2 gap-4 lg:gap-12 h-full min-h-[600px] items-center">
+    <div className="grid items-center h-full gap-4 lg:grid-cols-2 lg:gap-12">
       <Helmet>
         <title>Login | MNK Chat</title>
         <meta name="description" content="Login to MNK Chat Application" />
@@ -15,14 +15,15 @@ export default function LoginPage() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex flex-col justify-between h-full min-h-[600px] rounded-[2.5rem] bg-primary/5 border border-primary/10 p-12 relative overflow-hidden"
+        className="hidden lg:flex flex-col justify-between h-full rounded-[2.5rem] bg-primary/5 border border-white/10 p-12 relative overflow-hidden backdrop-blur-3xl"
       >
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-30" />
-        <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-96 h-96 bg-primary/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20 mix-blend-overlay" />
+        <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-96 h-96 bg-primary/20 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 rounded-full w-80 h-80 bg-secondary/20 blur-[100px]" />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-12">
-            <div className="flex items-center justify-center w-12 h-12 overflow-hidden shadow-lg rounded-2xl bg-primary text-primary-foreground shadow-primary/20">
+            <div className="flex items-center justify-center w-12 h-12 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
               <img
                 src="/apple-touch-icon.png"
                 alt="Logo"
@@ -34,7 +35,9 @@ export default function LoginPage() {
 
           <h1 className="mb-6 text-5xl font-bold leading-tight">
             Real-time Chat <br />
-            <span className="text-primary">Portfolio Demo.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-500">
+              Portfolio Demo.
+            </span>
           </h1>
           <p className="max-w-md text-lg text-muted-foreground">
             Explore this full-stack showcase featuring Django Channels, Redis,
@@ -63,7 +66,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="relative z-10 pt-8 mt-12 border-t border-primary/10">
+        <div className="relative z-10 pt-8 mt-12 border-t border-white/10">
           <p className="text-sm text-muted-foreground">
             "Feel free to create an account and test the real-time capabilities.
             This is a personal learning project."
@@ -85,7 +88,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="p-6 border shadow-xl bg-card border-border/50 shadow-primary/5 rounded-3xl md:p-8">
+        <div className="p-6 border shadow-2xl bg-background/40 backdrop-blur-xl border-white/10 shadow-primary/5 rounded-3xl md:p-8">
           <LoginRegistration />
         </div>
 
@@ -113,7 +116,7 @@ function FeatureRow({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}
-      className="flex items-start gap-4 p-4 border rounded-2xl bg-background/40 border-primary/5 backdrop-blur-sm"
+      className="flex items-start gap-4 p-4 transition-colors border rounded-2xl bg-white/5 border-white/10 backdrop-blur-md hover:bg-white/10"
     >
       <div className="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
         <Icon className="w-5 h-5" />

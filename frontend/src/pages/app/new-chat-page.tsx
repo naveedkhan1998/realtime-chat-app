@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
+import { AppShellContext } from '@/layouts/AppShell';
 import { useAppSelector } from '@/app/hooks';
 import { useSearchUsersQuery } from '@/services/userApi';
 import { useCreateChatRoomMutation } from '@/services/chatApi';
@@ -22,6 +23,7 @@ import {
   Mail,
   UserPlus,
   ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 
 export default function NewChatPage() {
@@ -29,6 +31,7 @@ export default function NewChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const navigate = useNavigate();
+  const { isMobile } = useOutletContext<AppShellContext>();
 
   const { data: searchResults, isLoading: searchLoading } = useSearchUsersQuery(
     { query: debouncedSearchQuery },
@@ -36,8 +39,12 @@ export default function NewChatPage() {
   );
   const [createChatRoom, { isLoading: creatingChatRoom }] =
     useCreateChatRoomMutation();
+  const [pendingChatUserId, setPendingChatUserId] = useState<number | null>(
+    null
+  );
 
   const handleCreateChat = async (participantId: number) => {
+    setPendingChatUserId(participantId);
     try {
       const selectedUser = searchResults?.find(
         candidate => candidate.id === participantId
@@ -67,6 +74,8 @@ export default function NewChatPage() {
         description: 'Something went sideways. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setPendingChatUserId(null);
     }
   };
 
@@ -81,6 +90,17 @@ export default function NewChatPage() {
 
       {/* Header */}
       <div className="relative z-10 flex flex-col gap-2">
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start pl-0 -ml-2 text-muted-foreground hover:text-foreground mb-2"
+            onClick={() => navigate('/chat')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        )}
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Directory
@@ -106,7 +126,7 @@ export default function NewChatPage() {
             <Search className="absolute w-6 h-6 transition-colors -translate-y-1/2 left-5 top-1/2 text-muted-foreground group-focus-within:text-primary" />
             <Input
               placeholder="Search for anyone by name or email..."
-              className="h-16 text-lg transition-all shadow-xl pl-14 bg-background border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/20"
+              className="h-16 text-lg transition-all shadow-xl pl-14 bg-white/5 border-white/10 rounded-2xl focus:bg-white/10 focus:ring-2 focus:ring-primary/20 backdrop-blur-xl placeholder:text-muted-foreground/50"
               value={searchQuery}
               onChange={event => setSearchQuery(event.target.value)}
               autoFocus
@@ -131,9 +151,9 @@ export default function NewChatPage() {
               .map(candidate => (
                 <div
                   key={candidate.id}
-                  className="relative flex items-center gap-4 p-4 transition-all duration-300 border group rounded-3xl border-white/5 bg-background/40 backdrop-blur-xl hover:bg-background/60 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
+                  className="relative flex items-center gap-4 p-4 transition-all duration-300 border group rounded-3xl border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
                 >
-                  <Avatar className="transition-transform border-2 shadow-sm h-14 w-14 border-background group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/10">
+                  <Avatar className="transition-transform border-2 shadow-sm h-14 w-14 border-white/10 group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/10">
                     <AvatarImage src={candidate.avatar} alt={candidate.name} />
                     <AvatarFallback className="text-lg font-bold text-white bg-gradient-to-br from-primary to-violet-600">
                       {candidate.name.charAt(0)}
@@ -149,12 +169,22 @@ export default function NewChatPage() {
                     </p>
                   </div>
                   <Button
-                    size="icon"
-                    className="transition-all translate-x-2 rounded-full shadow-none opacity-0 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md group-hover:opacity-100 group-hover:translate-x-0"
+                    size="sm"
+                    className="transition-all rounded-full shadow-none bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
                     onClick={() => handleCreateChat(candidate.id)}
                     disabled={creatingChatRoom}
                   >
-                    <MessageSquarePlus className="w-5 h-5" />
+                    {pendingChatUserId === candidate.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquarePlus className="w-4 h-4 mr-2" />
+                        Start Chat
+                      </>
+                    )}
                   </Button>
                 </div>
               ))}
@@ -175,8 +205,8 @@ export default function NewChatPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">
             <div className="relative mb-8">
-              <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
-              <div className="relative flex items-center justify-center w-24 h-24 border shadow-2xl rounded-3xl bg-gradient-to-br from-primary/10 to-violet-500/10 border-white/10">
+              <div className="absolute inset-0 rounded-full bg-primary/60 blur-2xl" />
+              <div className="relative flex items-center justify-center w-24 h-24 border shadow-2xl rounded-3xl bg-white/5 border-white/10 backdrop-blur-sm">
                 <Sparkles className="w-12 h-12 text-primary" />
               </div>
             </div>
@@ -196,7 +226,7 @@ export default function NewChatPage() {
               ].map((step, i) => (
                 <div
                   key={i}
-                  className="flex flex-col items-center gap-2 p-4 border rounded-2xl bg-white/5 border-white/5"
+                  className="flex flex-col items-center gap-2 p-4 border rounded-2xl bg-white/5 border-white/10"
                 >
                   <step.icon className="w-5 h-5 text-primary" />
                   <span className="text-sm font-medium">{step.label}</span>

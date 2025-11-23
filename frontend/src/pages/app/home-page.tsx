@@ -47,7 +47,7 @@ function HeroSection() {
         >
           <Badge
             variant="outline"
-            className="rounded-full border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-primary backdrop-blur-sm"
+            className="rounded-full border-primary/20 bg-primary/10 px-4 py-1.5 text-sm text-primary backdrop-blur-sm"
           >
             <span className="inline-block w-2 h-2 mr-2 rounded-full bg-primary animate-pulse" />
             Now with Real-time Huddles
@@ -80,7 +80,7 @@ function HeroSection() {
               asChild
               variant="outline"
               size="lg"
-              className="h-12 px-8 text-base rounded-full backdrop-blur-sm hover:bg-primary/5"
+              className="h-12 px-8 text-base rounded-full backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
             >
               <a
                 href="https://github.com/naveedkhan1998/realtime-chat-app"
@@ -100,40 +100,40 @@ function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="relative max-w-6xl mx-auto mt-20 perspective-1000"
         >
-          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-border/40 bg-background/50 shadow-primary/10 backdrop-blur-xl ring-1 ring-white/10">
-            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-border/40 bg-muted/20">
+          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-white/10 bg-background/40 shadow-primary/10 backdrop-blur-xl ring-1 ring-white/10">
+            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-red-500/80" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                 <div className="w-3 h-3 rounded-full bg-green-500/80" />
               </div>
-              <div className="w-2/3 h-6 mx-auto rounded-md bg-muted/40" />
+              <div className="w-2/3 h-6 mx-auto rounded-md bg-white/5" />
             </div>
 
             {/* Mock Interface Content */}
-            <div className="grid h-[400px] grid-cols-[280px_1fr] divide-x divide-border/40 sm:h-[600px]">
-              <div className="hidden p-4 bg-muted/10 sm:block">
+            <div className="grid h-[400px] grid-cols-[280px_1fr] divide-x divide-white/10 sm:h-[600px]">
+              <div className="hidden p-4 bg-white/5 sm:block">
                 <div className="space-y-4">
                   {[1, 2, 3, 4].map(i => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-primary/5"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5"
                     >
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20" />
                       <div className="space-y-1.5">
-                        <div className="w-24 h-3 rounded bg-muted-foreground/20" />
-                        <div className="w-16 h-2 rounded bg-muted-foreground/10" />
+                        <div className="w-24 h-3 rounded bg-white/10" />
+                        <div className="w-16 h-2 rounded bg-white/5" />
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col bg-background/40">
+              <div className="flex flex-col bg-transparent">
                 <div className="flex-1 p-6 space-y-6">
                   <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/20" />
+                    <div className="w-10 h-10 rounded-full bg-primary/60" />
                     <div className="space-y-2">
-                      <div className="px-4 py-2 text-sm rounded-tl-none rounded-2xl bg-muted/30">
+                      <div className="px-4 py-2 text-sm rounded-tl-none rounded-2xl bg-white/10">
                         Hey! Have you checked out the new huddle feature? 🎙️
                       </div>
                       <span className="text-xs text-muted-foreground">
@@ -154,8 +154,8 @@ function HeroSection() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-border/40">
-                  <div className="w-full h-12 border rounded-full bg-muted/20 border-border/20" />
+                <div className="p-4 border-t border-white/10">
+                  <div className="w-full h-12 border rounded-full bg-white/5 border-white/10" />
                 </div>
               </div>
             </div>
@@ -184,7 +184,7 @@ function FeaturesGrid() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
         {/* Large Feature - Realtime */}
-        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
           <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
             <Zap className="w-48 h-48" />
           </div>
@@ -203,7 +203,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Feature - Security */}
-        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
             <Shield className="w-32 h-32" />
           </div>
@@ -219,7 +219,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Feature - Collaboration */}
-        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
             <Code2 className="w-32 h-32" />
           </div>
@@ -235,7 +235,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Large Feature - Huddles */}
-        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border/50 bg-card/50 group hover:border-primary/30">
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
           <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
             <MessageCircle className="w-48 h-48" />
           </div>
@@ -266,7 +266,7 @@ function WorkflowSection() {
 
   return (
     <section id="workflow" className="container px-4 py-20 mx-auto">
-      <div className="relative rounded-[2.5rem] bg-gradient-to-b from-primary/5 to-transparent border border-primary/10 p-12 overflow-hidden">
+      <div className="relative rounded-[2.5rem] bg-white/5 border border-white/10 p-12 overflow-hidden backdrop-blur-md">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
 
         <div className="relative z-10 mb-16 text-center">
@@ -277,7 +277,7 @@ function WorkflowSection() {
         <div className="relative z-10 grid gap-8 md:grid-cols-3">
           {steps.map((step, i) => (
             <div key={i} className="flex flex-col items-center text-center">
-              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-primary/20 text-primary shadow-primary/10">
+              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-white/10 border-white/20 text-primary shadow-primary/10 backdrop-blur-sm">
                 {i + 1}
               </div>
               <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
@@ -301,7 +301,7 @@ function TechStackSection() {
   ];
 
   return (
-    <section id="stack" className="py-16 border-y border-border/40 bg-muted/20">
+    <section id="stack" className="py-16 border-y border-white/10 bg-white/5 backdrop-blur-sm">
       <div className="container px-4 mx-auto">
         <div className="mb-12 text-center">
           <h2 className="text-2xl font-bold">Powered by modern tech</h2>
@@ -312,7 +312,7 @@ function TechStackSection() {
               key={tech.label}
               className="flex flex-col items-center gap-3 group"
             >
-              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-background border-border/50 group-hover:scale-110 group-hover:border-primary/30">
+              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-white/5 border-white/10 group-hover:scale-110 group-hover:bg-white/10">
                 <tech.icon className="w-8 h-8" />
               </div>
               <span className="text-sm font-medium">{tech.label}</span>
@@ -327,7 +327,7 @@ function TechStackSection() {
 function CTASection() {
   return (
     <section className="container px-4 pb-20 mx-auto">
-      <div className="rounded-[3rem] bg-primary text-primary-foreground px-8 py-20 text-center relative overflow-hidden">
+      <div className="rounded-[3rem] bg-gradient-to-br from-primary to-violet-600 text-primary-foreground px-8 py-20 text-center relative overflow-hidden shadow-2xl shadow-primary/20">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="absolute w-64 h-64 rounded-full -top-24 -left-24 bg-white/10 blur-3xl" />
         <div className="absolute w-64 h-64 rounded-full -bottom-24 -right-24 bg-white/10 blur-3xl" />
