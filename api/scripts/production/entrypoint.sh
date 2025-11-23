@@ -1,19 +1,12 @@
 #!/bin/bash
 
-# Run migrations
-echo "Applying database migrations..."
-# uv run manage.py makemigrations
-python3 manage.py migrate
+set -e
 
-# python3 manage.py initadmin
+echo "Entrypoint script starting..."
+echo "Running in production mode..."
 
-# Collect static files (if needed)
-# echo "Collecting static files..."
-#python3 manage.py collectstatic --noinput
+# Migrations and static files are handled externally/locally as per user request
+# to speed up cold starts and avoid conflicts with Supabase/GCS.
 
-# Start the server with Uvicorn ASGI workers
-echo "Starting Django ASGI server..."
-# uvicorn
-# exec gunicorn config.asgi:application --bind 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker
-# daphne
-python3 manage.py runserver 0.0.0.0:8000
+echo "Starting Django ASGI server (Daphne)..."
+exec daphne -b 0.0.0.0 -p 8000 config.asgi:application
