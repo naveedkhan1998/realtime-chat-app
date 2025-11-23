@@ -24,6 +24,8 @@ import {
   ChatRoom,
   chatApi,
   useCreateChatRoomMutation,
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
 } from '@/services/chatApi';
 import { useSearchUsersQuery } from '@/services/userApi';
 import { baseApi } from '@/services/baseApi';
@@ -76,12 +78,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     error: chatRoomsError,
   } = useGetChatRoomsQuery();
 
+  const { data: notifications } = useGetNotificationsQuery();
+  const [markNotificationRead] = useMarkNotificationReadMutation();
+
   const { data: searchResults, isLoading: isSearchingUsers } = useSearchUsersQuery(
     { query: debouncedSearchQuery },
     { skip: !debouncedSearchQuery }
   );
 
   const [createChatRoom] = useCreateChatRoomMutation();
+
+  useEffect(() => {
+    if (notifications) {
+      notifications.forEach(notification => {
+        if (!notification.is_read && notification.chat_room) {
+          dispatch(setUnreadNotification(notification.chat_room));
+        }
+      });
+    }
+  }, [notifications, dispatch]);
 
   useEffect(() => {
     const ws = GlobalWebSocketService.getInstance();
@@ -338,6 +353,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onSelect={() => {
                           setActiveChat(room.id);
                           dispatch(clearUnreadNotification(room.id));
+                          
+                          // Find and mark notification as read
+                          const notification = notifications?.find(
+                            n => n.chat_room === room.id && !n.is_read
+                          );
+                          if (notification) {
+                            markNotificationRead({ id: notification.id });
+                          }
+
                           if (isMobile) onClose();
                           setSearchQuery('');
                         }}

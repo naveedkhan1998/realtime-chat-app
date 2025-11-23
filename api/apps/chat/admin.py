@@ -7,6 +7,7 @@ from .models import (
     ChatRoomParticipant,
     FriendRequest,
     FriendshipNew,
+    Notification
 )
 
 # Register your models here.
@@ -19,3 +20,4 @@ admin.site.register(MessageReadReceipt)
 admin.site.register(ChatRoomParticipant)
 admin.site.register(FriendRequest)
 admin.site.register(FriendshipNew)
+admin.site.register(Notification)
