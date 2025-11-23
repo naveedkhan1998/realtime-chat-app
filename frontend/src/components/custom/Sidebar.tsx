@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     dispatch(baseApi.util.resetApiState());
   };
 
-  // Filter existing chats
+  // Filter and sort existing chats
   const filteredChatRooms = chatRooms?.filter(room => {
     if (!debouncedSearchQuery) return true;
     
@@ -111,6 +111,18 @@ const Sidebar: React.FC<SidebarProps> = ({
       (p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
        p.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
     );
+  }).sort((a, b) => {
+    const getOnlineCount = (room: ChatRoom) => {
+      return room.participants.filter(
+        p => p.id !== user.id && globalOnlineUsers.includes(p.id)
+      ).length;
+    };
+
+    const aOnline = getOnlineCount(a);
+    const bOnline = getOnlineCount(b);
+
+    // Sort by online count descending
+    return bOnline - aOnline;
   });
 
   // Identify users who are already in DM chats to exclude them from "New People"
