@@ -78,6 +78,9 @@ export default function ChatWindow({
   const [remoteStreams, setRemoteStreams] = useState<
     Array<{ userId: number; stream: MediaStream }>
   >([]);
+  const [connectionDetails, setConnectionDetails] = useState<
+    Record<number, any>
+  >({});
 
   const scrollToBottom = useCallback(
     () => {
@@ -196,6 +199,92 @@ export default function ChatWindow({
     );
   }, []);
 
+  const checkConnectionStats = useCallback(async (pc: RTCPeerConnection, peerId: number) => {
+    try {
+      const stats = await pc.getStats();
+      let activePair: any = null;
+      const candidatePairs: any[] = [];
+
+      stats.forEach(report => {
+        if (report.type === 'transport' && report.selectedCandidatePairId) {
+          activePair = stats.get(report.selectedCandidatePairId);
+        }
+        if (report.type === 'candidate-pair') {
+          const local = stats.get(report.localCandidateId);
+          const remote = stats.get(report.remoteCandidateId);
+          candidatePairs.push({
+            id: report.id,
+            state: report.state,
+            selected: report.selected,
+            local: local ? {
+              type: local.candidateType,
+              protocol: local.protocol,
+              address: `${local.address || local.ip}:${local.port}`,
+              url: local.url
+            } : null,
+            remote: remote ? {
+              type: remote.candidateType,
+              protocol: remote.protocol,
+              address: `${remote.address || remote.ip}:${remote.port}`,
+              type_preference: remote.priority
+            } : null
+          });
+        }
+      });
+
+      if (!activePair) {
+        stats.forEach(report => {
+          if (report.type === 'candidate-pair' && report.selected) {
+            activePair = report;
+          }
+        });
+      }
+
+      if (activePair) {
+        const localCandidate = stats.get(activePair.localCandidateId);
+        const remoteCandidate = stats.get(activePair.remoteCandidateId);
+        let type = 'Unknown';
+
+        if (
+          localCandidate?.candidateType === 'relay' ||
+          remoteCandidate?.candidateType === 'relay'
+        ) {
+          type = 'Twilio TURN';
+        } else if (
+          localCandidate?.candidateType === 'srflx' ||
+          remoteCandidate?.candidateType === 'srflx'
+        ) {
+          if (localCandidate?.url) {
+            if (localCandidate.url.includes('google')) type = 'Google STUN';
+            else if (localCandidate.url.includes('twilio')) type = 'Twilio STUN';
+            else type = 'STUN';
+          } else {
+            type = 'STUN';
+          }
+        } else if (
+          localCandidate?.candidateType === 'host' &&
+          remoteCandidate?.candidateType === 'host'
+        ) {
+          type = 'Direct (LAN)';
+        }
+
+        setConnectionDetails(prev => ({
+          ...prev,
+          [peerId]: {
+            type,
+            activePair: {
+              local: localCandidate,
+              remote: remoteCandidate
+            },
+            candidatePairs
+          }
+        }));
+      }
+    } catch (e) {
+      console.error('Error checking stats:', e);
+    }
+  }, []);
+
   const ensurePeerConnection = useCallback(
     (peerId: number, initiator: boolean) => {
       if (peersRef.current.has(peerId)) {
@@ -221,11 +310,19 @@ export default function ChatWindow({
       };
 
       pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          checkConnectionStats(pc, peerId);
+        }
         if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
           pc.close();
           peersRef.current.delete(peerId);
           remoteStreamsRef.current.delete(peerId);
           refreshRemoteStreams();
+          setConnectionDetails(prev => {
+            const next = { ...prev };
+            delete next[peerId];
+            return next;
+          });
         }
       };
 
@@ -248,7 +345,7 @@ export default function ChatWindow({
 
       return pc;
     },
-    [iceServers, refreshRemoteStreams]
+    [iceServers, refreshRemoteStreams, checkConnectionStats]
   );
 
   const startHuddle = useCallback(async () => {
@@ -481,6 +578,7 @@ export default function ChatWindow({
           isHuddleActive={isHuddleActive}
           startHuddle={startHuddle}
           stopHuddle={stopHuddle}
+          connectionDetails={connectionDetails}
         />
 
         <div className="flex-1 pt-24 pb-20 overflow-hidden">
