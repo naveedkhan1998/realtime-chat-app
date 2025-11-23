@@ -130,6 +130,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.chat_room_group_name, {"type": "chat_message", "payload": message_data}
         )
 
+        # Notify participants via global channel
+        participant_ids = await self.get_participant_ids()
+        for participant_id in participant_ids:
+            await self.channel_layer.group_send(
+                f"user_{participant_id}",
+                {
+                    "type": "new_message_notification",
+                    "chat_room_id": self.chat_room_id,
+                    "sender_id": self.user.id,
+                    "sender_name": self.user.name,
+                },
+            )
+
     async def handle_edit_message(
         self, message_id: Optional[int], content: Optional[str]
     ):
@@ -487,6 +500,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         values = conn.hvals(key)
         return [json.loads(value.decode()) for value in values]
 
+    @database_sync_to_async
+    def get_participant_ids(self):
+        return list(
+            self.chat_room.participants.exclude(id=self.user.id).values_list(
+                "id", flat=True
+            )
+        )
+
 
 class GlobalConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -573,6 +594,14 @@ class GlobalConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps({
             "type": "chat_room_created",
             "room": event["room"]
+        }))
+
+    async def new_message_notification(self, event):
+        await self.send(json.dumps({
+            "type": "new_message_notification",
+            "chat_room_id": event["chat_room_id"],
+            "sender_id": event["sender_id"],
+            "sender_name": event.get("sender_name")
         }))
 
     @database_sync_to_async

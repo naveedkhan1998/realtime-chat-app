@@ -15,10 +15,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
-import { useGetChatRoomsQuery, ChatRoom, chatApi, useCreateChatRoomMutation } from '@/services/chatApi';
+import {
+  setUnreadNotification,
+  clearUnreadNotification,
+} from '@/features/chatSlice';
+import {
+  useGetChatRoomsQuery,
+  ChatRoom,
+  chatApi,
+  useCreateChatRoomMutation,
+} from '@/services/chatApi';
 import { useSearchUsersQuery } from '@/services/userApi';
 import { baseApi } from '@/services/baseApi';
-import { GlobalWebSocketService } from '@/utils/websocket';
+import {
+  GlobalWebSocketService,
+  NewMessageNotificationEvent,
+} from '@/utils/websocket';
 import { useDebounce } from '@/utils/hooks';
 import ThemeSwitch from './ThemeSwitch';
 import { cn, getAvatarUrl } from '@/lib/utils';
@@ -84,12 +96,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       );
     };
 
+    const handleNewMessageNotification = (event: NewMessageNotificationEvent) => {
+      if (event.chat_room_id !== activeChat) {
+        dispatch(setUnreadNotification(event.chat_room_id));
+      }
+    };
+
     ws.on('chat_room_created', handleChatRoomCreated);
+    ws.on('new_message_notification', handleNewMessageNotification);
 
     return () => {
       ws.off('chat_room_created', handleChatRoomCreated);
+      ws.off('new_message_notification', handleNewMessageNotification);
     };
-  }, [dispatch]);
+  }, [dispatch, activeChat]);
 
   if (!user) return null;
 
@@ -317,6 +337,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onlineUsers={globalOnlineUsers}
                         onSelect={() => {
                           setActiveChat(room.id);
+                          dispatch(clearUnreadNotification(room.id));
                           if (isMobile) onClose();
                           setSearchQuery('');
                         }}
@@ -413,6 +434,9 @@ function ConversationRow({
   const avatar = room.is_group_chat ? '' : (counterpart?.avatar ?? '');
 
   const isOnline = counterpart ? onlineUsers.includes(counterpart.id) : false;
+  const hasUnread = useAppSelector(
+    state => state.chat.unreadNotifications[room.id]
+  );
 
   return (
     <button
@@ -463,15 +487,23 @@ function ConversationRow({
           >
             {title}
           </span>
+          {hasUnread && (
+            <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full animate-in fade-in zoom-in duration-300">
+              New
+            </span>
+          )}
           {/* You might want to add a timestamp here if available in the room object */}
         </div>
         <p
           className={cn(
             'text-xs truncate transition-colors',
-            active ? 'text-primary/70' : 'text-muted-foreground opacity-80'
+            active ? 'text-primary/70' : 'text-muted-foreground opacity-80',
+            hasUnread && 'font-medium text-foreground'
           )}
         >
-          {room.is_group_chat
+          {hasUnread
+            ? 'New message'
+            : room.is_group_chat
             ? `${room.participants.length} members`
             : 'Click to open chat'}
         </p>

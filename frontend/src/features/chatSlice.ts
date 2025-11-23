@@ -21,6 +21,7 @@ interface ChatState {
     [chatRoomId: number]: Array<{ id: number; name: string }>;
   };
   globalOnlineUsers: number[];
+  unreadNotifications: { [chatRoomId: number]: boolean };
 }
 
 const initialState: ChatState = {
@@ -32,6 +33,7 @@ const initialState: ChatState = {
   cursors: {},
   huddleParticipants: {},
   globalOnlineUsers: [],
+  unreadNotifications: {},
 };
 
 const chatSlice = createSlice({
@@ -224,6 +226,14 @@ const chatSlice = createSlice({
       state.huddleParticipants[action.payload.chatRoomId] =
         action.payload.participants || [];
     },
+    setUnreadNotification(state, action: PayloadAction<number>) {
+      state.unreadNotifications[action.payload] = true;
+    },
+    clearUnreadNotification(state, action: PayloadAction<number>) {
+      if (state.unreadNotifications[action.payload]) {
+        delete state.unreadNotifications[action.payload];
+      }
+    },
   },
 });
 
@@ -244,5 +254,7 @@ export const {
   setGlobalOnlineUsers,
   addGlobalOnlineUser,
   removeGlobalOnlineUser,
+  setUnreadNotification,
+  clearUnreadNotification,
 } = chatSlice.actions;
 export default chatSlice.reducer;
