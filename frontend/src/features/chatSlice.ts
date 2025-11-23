@@ -67,6 +67,24 @@ const chatSlice = createSlice({
       if (!state.messages[chatRoomId]) {
         state.messages[chatRoomId] = [];
       }
+
+      // Logic for reconciling optimistic updates
+      if (message.id > 0) {
+        // Find a matching optimistic message (id < 0)
+        const optimisticMatchIndex = state.messages[chatRoomId].findIndex(
+          m =>
+            m.id < 0 &&
+            m.content === message.content &&
+            m.sender.id === message.sender.id
+        );
+
+        if (optimisticMatchIndex !== -1) {
+          // Replace the optimistic message with the real one
+          state.messages[chatRoomId][optimisticMatchIndex] = message;
+          return;
+        }
+      }
+
       const alreadyExists = state.messages[chatRoomId].some(
         existing => existing.id === message.id
       );

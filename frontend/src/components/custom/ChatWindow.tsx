@@ -13,6 +13,7 @@ import {
   prependMessages,
   setMessagePagination,
   setMessages,
+  addMessage,
 } from '@/features/chatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import ChatHeader from './chat-page/ChatHeader';
@@ -569,6 +570,22 @@ export default function ChatWindow({
       shouldAutoScrollRef.current = true;
       return;
     }
+
+    // Optimistic update
+    const tempId = -Date.now();
+    const optimisticMessage: Message = {
+      id: tempId,
+      chat_room: activeChat,
+      sender: user,
+      content: trimmed,
+      timestamp: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    dispatch(
+      addMessage({ chatRoomId: activeChat, message: optimisticMessage })
+    );
+    shouldAutoScrollRef.current = true;
+
     ws.sendMessage(trimmed);
     shouldAutoScrollRef.current = true;
     reset();
