@@ -6,13 +6,14 @@ import {
   MessageCircle,
   Zap,
   Shield,
-  Code2,
   Database,
   Server,
   ArrowRight,
   Smartphone,
   Globe,
   Cpu,
+  Radio,
+  Bell,
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
@@ -80,7 +81,7 @@ function HeroSection() {
               asChild
               variant="outline"
               size="lg"
-              className="h-12 px-8 text-base rounded-full backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
+              className="h-12 px-8 text-base rounded-full backdrop-blur-sm bg-background/50 border-border hover:bg-accent/50"
             >
               <a
                 href="https://github.com/naveedkhan1998/realtime-chat-app"
@@ -100,40 +101,48 @@ function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="relative max-w-6xl mx-auto mt-20 perspective-1000"
         >
-          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-white/10 bg-background/40 shadow-primary/10 backdrop-blur-xl ring-1 ring-white/10">
-            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
+          {/* Glass Container with Enhanced Border */}
+          <div className="relative overflow-hidden border shadow-2xl rounded-xl border-border bg-background/60 shadow-primary/20 backdrop-blur-2xl ring-1 ring-border/50 group">
+            {/* Gradient Border Effect */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
+            
+            {/* Window Controls */}
+            <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-border/50 bg-muted/30 backdrop-blur-md z-20">
               <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80 shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-sm" />
               </div>
-              <div className="w-2/3 h-6 mx-auto rounded-md bg-white/5" />
+              <div className="w-2/3 h-6 mx-auto rounded-md bg-muted/50 border border-border/20" />
             </div>
 
             {/* Mock Interface Content */}
-            <div className="grid h-[400px] grid-cols-[280px_1fr] divide-x divide-white/10 sm:h-[600px]">
-              <div className="hidden p-4 bg-white/5 sm:block">
-                <div className="space-y-4">
+            <div className="grid h-[400px] grid-cols-1 sm:grid-cols-[280px_1fr] divide-y sm:divide-y-0 sm:divide-x divide-border/50 sm:h-[600px] relative z-10">
+              {/* Sidebar - Hidden on mobile, visible on sm+ */}
+              <div className="hidden p-4 bg-muted/30 sm:block backdrop-blur-sm">
+                <div className="space-y-4 mt-12">
                   {[1, 2, 3, 4].map(i => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20" />
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border/50" />
                       <div className="space-y-1.5">
-                        <div className="w-24 h-3 rounded bg-white/10" />
-                        <div className="w-16 h-2 rounded bg-white/5" />
+                        <div className="w-24 h-3 rounded bg-muted-foreground/20" />
+                        <div className="w-16 h-2 rounded bg-muted-foreground/10" />
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col bg-transparent">
-                <div className="flex-1 p-6 space-y-6">
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/60" />
-                    <div className="space-y-2">
-                      <div className="px-4 py-2 text-sm rounded-tl-none rounded-2xl bg-white/10">
+              
+              {/* Chat Area */}
+              <div className="flex flex-col bg-transparent h-full">
+                <div className="flex-1 p-6 space-y-6 mt-12 overflow-hidden">
+                  <div className="flex gap-4 animate-in slide-in-from-left-4 duration-700 fade-in">
+                    <div className="w-10 h-10 rounded-full bg-primary/60 border border-border/50 shrink-0" />
+                    <div className="space-y-2 max-w-[85%]">
+                      <div className="px-4 py-3 text-sm rounded-tl-none rounded-2xl bg-muted/50 border border-border/50 backdrop-blur-sm">
                         Hey! Have you checked out the new huddle feature? 🎙️
                       </div>
                       <span className="text-xs text-muted-foreground">
@@ -141,10 +150,10 @@ function HeroSection() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-row-reverse gap-4">
-                    <div className="w-10 h-10 rounded-full bg-accent/20" />
-                    <div className="space-y-2">
-                      <div className="px-4 py-2 text-sm rounded-tr-none shadow-md rounded-2xl bg-primary text-primary-foreground shadow-primary/20">
+                  <div className="flex flex-row-reverse gap-4 animate-in slide-in-from-right-4 duration-700 delay-300 fade-in fill-mode-backwards">
+                    <div className="w-10 h-10 rounded-full bg-accent/20 border border-border/50 shrink-0" />
+                    <div className="space-y-2 max-w-[85%]">
+                      <div className="px-4 py-3 text-sm rounded-tr-none shadow-lg rounded-2xl bg-primary text-primary-foreground shadow-primary/20 border border-primary/20">
                         Yeah! The audio quality is surprisingly good. And the
                         shared text pad is a game changer for code reviews.
                       </div>
@@ -154,15 +163,17 @@ function HeroSection() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-white/10">
-                  <div className="w-full h-12 border rounded-full bg-white/5 border-white/10" />
+                <div className="p-4 border-t border-border/50 bg-muted/30 backdrop-blur-sm">
+                  <div className="w-full h-12 border rounded-full bg-muted/50 border-border/50 flex items-center px-4">
+                    <div className="w-24 h-2 rounded bg-muted-foreground/20" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Decorative Elements behind preview */}
-          <div className="absolute -inset-4 -z-10 bg-gradient-to-r from-primary/20 to-accent/20 blur-3xl opacity-30 rounded-[3rem]" />
+          <div className="absolute -inset-4 -z-10 bg-gradient-to-r from-primary/30 to-accent/30 blur-3xl opacity-40 rounded-[3rem] animate-pulse-slow" />
         </motion.div>
       </div>
     </section>
@@ -184,7 +195,7 @@ function FeaturesGrid() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
         {/* Large Feature - Realtime */}
-        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
             <Zap className="w-48 h-48" />
           </div>
@@ -203,7 +214,7 @@ function FeaturesGrid() {
         </div>
 
         {/* Feature - Security */}
-        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
             <Shield className="w-32 h-32" />
           </div>
@@ -218,24 +229,24 @@ function FeaturesGrid() {
           </div>
         </div>
 
-        {/* Feature - Collaboration */}
-        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        {/* Feature - Smart Notifications */}
+        <div className="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
-            <Code2 className="w-32 h-32" />
+            <Bell className="w-32 h-32" />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center justify-center w-12 h-12 mb-4 text-blue-500 rounded-2xl bg-blue-500/10">
-              <Code2 className="w-6 h-6" />
+            <div className="flex items-center justify-center w-12 h-12 mb-4 text-yellow-500 rounded-2xl bg-yellow-500/10">
+              <Bell className="w-6 h-6" />
             </div>
-            <h3 className="mb-2 text-xl font-bold">Live Code</h3>
+            <h3 className="mb-2 text-xl font-bold">Smart Notifications</h3>
             <p className="text-sm text-muted-foreground">
-              Collaborative text pad for sharing code snippets in real-time.
+              Offline-first alerts that sync instantly when you return. Never miss a beat with our intelligent coalescing engine.
             </p>
           </div>
         </div>
 
         {/* Large Feature - Huddles */}
-        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-white/10 bg-white/5 backdrop-blur-md group hover:bg-white/10">
+        <div className="relative row-span-1 p-8 overflow-hidden transition-colors border md:col-span-2 rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50">
           <div className="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
             <MessageCircle className="w-48 h-48" />
           </div>
@@ -244,10 +255,9 @@ function FeaturesGrid() {
               <MessageCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="mb-2 text-2xl font-bold">Group Huddles</h3>
+              <h3 className="mb-2 text-2xl font-bold">Real-time Voice Huddles</h3>
               <p className="max-w-md text-muted-foreground">
-                Jump into voice channels or group chats instantly. Perfect for
-                quick syncs or hanging out.
+                Powered by WebRTC for crystal clear, low-latency audio. We leverage a hybrid network of Google and Twilio STUN/TURN servers to guarantee reliable connections through any firewall.
               </p>
             </div>
           </div>
@@ -260,13 +270,13 @@ function FeaturesGrid() {
 function WorkflowSection() {
   const steps = [
     { title: 'Sign Up', desc: 'Create your account in seconds.' },
-    { title: 'Find Friends', desc: 'Search and add people to your network.' },
+    { title: 'Find People', desc: 'Search for anyone and start a chat instantly.' },
     { title: 'Start Chatting', desc: 'Instant messaging & collaboration.' },
   ];
 
   return (
     <section id="workflow" className="container px-4 py-20 mx-auto">
-      <div className="relative rounded-[2.5rem] bg-white/5 border border-white/10 p-12 overflow-hidden backdrop-blur-md">
+      <div className="relative rounded-[2.5rem] bg-card/50 border border-border p-12 overflow-hidden backdrop-blur-md">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
 
         <div className="relative z-10 mb-16 text-center">
@@ -277,7 +287,7 @@ function WorkflowSection() {
         <div className="relative z-10 grid gap-8 md:grid-cols-3">
           {steps.map((step, i) => (
             <div key={i} className="flex flex-col items-center text-center">
-              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-white/10 border-white/20 text-primary shadow-primary/10 backdrop-blur-sm">
+              <div className="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-border text-primary shadow-primary/10 backdrop-blur-sm">
                 {i + 1}
               </div>
               <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
@@ -298,10 +308,11 @@ function TechStackSection() {
     { icon: Database, label: 'PostgreSQL' },
     { icon: Zap, label: 'Redis' },
     { icon: Cpu, label: 'Channels' },
+    { icon: Radio, label: 'WebRTC' },
   ];
 
   return (
-    <section id="stack" className="py-16 border-y border-white/10 bg-white/5 backdrop-blur-sm">
+    <section id="stack" className="py-16 border-y border-border bg-muted/30 backdrop-blur-sm">
       <div className="container px-4 mx-auto">
         <div className="mb-12 text-center">
           <h2 className="text-2xl font-bold">Powered by modern tech</h2>
@@ -312,7 +323,7 @@ function TechStackSection() {
               key={tech.label}
               className="flex flex-col items-center gap-3 group"
             >
-              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-white/5 border-white/10 group-hover:scale-110 group-hover:bg-white/10">
+              <div className="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
                 <tech.icon className="w-8 h-8" />
               </div>
               <span className="text-sm font-medium">{tech.label}</span>

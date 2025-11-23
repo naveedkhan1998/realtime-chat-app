@@ -129,6 +129,7 @@ export const baseApi = createApi({
     'Messages',
     'TypingStatus',
     'Users',
+    'Notifications',
   ],
   endpoints: builder => ({
     // Existing endpoints

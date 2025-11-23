@@ -1,23 +1,39 @@
-import React, { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   MessageSquareMore,
-  UsersRound,
   Plus,
   Loader2,
   LogOut,
   Search,
   X,
   Sparkles,
+  UserPlus,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
-import { useGetChatRoomsQuery, ChatRoom, chatApi } from '@/services/chatApi';
+import {
+  setUnreadNotification,
+  clearUnreadNotification,
+} from '@/features/chatSlice';
+import {
+  useGetChatRoomsQuery,
+  ChatRoom,
+  chatApi,
+  useCreateChatRoomMutation,
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+} from '@/services/chatApi';
+import { useSearchUsersQuery } from '@/services/userApi';
 import { baseApi } from '@/services/baseApi';
-import { GlobalWebSocketService } from '@/utils/websocket';
+import {
+  GlobalWebSocketService,
+  NewMessageNotificationEvent,
+} from '@/utils/websocket';
+import { useDebounce } from '@/utils/hooks';
 import ThemeSwitch from './ThemeSwitch';
 import { cn, getAvatarUrl } from '@/lib/utils';
 
@@ -34,7 +50,7 @@ interface SidebarProps {
 
 const navItems = [
   { label: 'Chats', icon: MessageSquareMore, to: '/chat' },
-  { label: 'Friends', icon: UsersRound, to: '/friends' },
+  // { label: 'Friends', icon: UsersRound, to: '/friends' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -51,11 +67,36 @@ const Sidebar: React.FC<SidebarProps> = ({
     state => state.chat.globalOnlineUsers
   );
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   const {
     data: chatRooms,
     isLoading: chatRoomsLoading,
     error: chatRoomsError,
   } = useGetChatRoomsQuery();
+
+  const { data: notifications } = useGetNotificationsQuery();
+  const [markNotificationRead] = useMarkNotificationReadMutation();
+
+  const { data: searchResults, isLoading: isSearchingUsers } = useSearchUsersQuery(
+    { query: debouncedSearchQuery },
+    { skip: !debouncedSearchQuery }
+  );
+
+  const [createChatRoom] = useCreateChatRoomMutation();
+
+  useEffect(() => {
+    if (notifications) {
+      notifications.forEach(notification => {
+        if (!notification.is_read && notification.chat_room) {
+          dispatch(setUnreadNotification(notification.chat_room));
+        }
+      });
+    }
+  }, [notifications, dispatch]);
 
   useEffect(() => {
     const ws = GlobalWebSocketService.getInstance();
@@ -70,18 +111,78 @@ const Sidebar: React.FC<SidebarProps> = ({
       );
     };
 
+    const handleNewMessageNotification = (event: NewMessageNotificationEvent) => {
+      if (event.chat_room_id !== activeChat) {
+        dispatch(setUnreadNotification(event.chat_room_id));
+      }
+    };
+
     ws.on('chat_room_created', handleChatRoomCreated);
+    ws.on('new_message_notification', handleNewMessageNotification);
 
     return () => {
       ws.off('chat_room_created', handleChatRoomCreated);
+      ws.off('new_message_notification', handleNewMessageNotification);
     };
-  }, [dispatch]);
+  }, [dispatch, activeChat]);
 
   if (!user) return null;
 
   const handleLogout = () => {
     dispatch(logOut());
     dispatch(baseApi.util.resetApiState());
+  };
+
+  // Filter and sort existing chats
+  const filteredChatRooms = chatRooms?.filter(room => {
+    if (!debouncedSearchQuery) return true;
+    
+    // Check room name (for groups)
+    if (room.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return true;
+
+    // Check participants (for DMs and Groups)
+    return room.participants.some(p => 
+      p.id !== user.id && 
+      (p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
+       p.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+    );
+  }).sort((a, b) => {
+    const getOnlineCount = (room: ChatRoom) => {
+      return room.participants.filter(
+        p => p.id !== user.id && globalOnlineUsers.includes(p.id)
+      ).length;
+    };
+
+    const aOnline = getOnlineCount(a);
+    const bOnline = getOnlineCount(b);
+
+    // Sort by online count descending
+    return bOnline - aOnline;
+  });
+
+  // Identify users who are already in DM chats to exclude them from "New People"
+  const existingDMParticipantIds = new Set(
+    chatRooms
+      ?.filter(r => !r.is_group_chat)
+      .flatMap(r => r.participants)
+      .filter(p => p.id !== user.id)
+      .map(p => p.id)
+  );
+
+  const potentialNewChats = searchResults?.filter(u => 
+    u.id !== user.id && !existingDMParticipantIds.has(u.id)
+  ) || [];
+
+  const handleCreateChat = async (userId: number) => {
+    try {
+      const res = await createChatRoom({ participant_ids: [userId] }).unwrap();
+      setActiveChat(res.id);
+      navigate(`/chat/${res.id}`);
+      if (isMobile) onClose();
+      setSearchQuery(''); // Clear search
+    } catch (e) {
+      console.error('Failed to create chat', e);
+    }
   };
 
   return (
@@ -97,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
     >
       {/* Glass Container */}
-      <div className="flex flex-col w-full h-full overflow-hidden border-r rounded-none shadow-2xl lg:rounded-3xl bg-background/80 backdrop-blur-2xl lg:border border-border/40">
+      <div className="flex flex-col w-full h-full overflow-hidden border-r rounded-none shadow-2xl lg:rounded-3xl bg-background/80 backdrop-blur-2xl lg:border border-border">
         {/* Brand Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">
@@ -147,7 +248,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* User Profile Card */}
         <div className="px-4 py-4">
-          <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border/40">
+          <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border">
             <div className="relative">
               <Avatar className="w-10 h-10 border-2 shadow-sm border-background">
                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
@@ -179,6 +280,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Input
               placeholder="Search conversations..."
               className="h-10 transition-all border-transparent pl-9 bg-muted/50 hover:bg-muted/80 focus:bg-background focus:border-primary/20 rounded-xl placeholder:text-muted-foreground/70"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
@@ -205,24 +308,23 @@ const Sidebar: React.FC<SidebarProps> = ({
               </NavLink>
             ))}
           </nav>
+
+          <NavLink to="/new-chat" onClick={() => isMobile && onClose()}>
+            <Button
+              variant="default"
+              className="justify-start w-full h-10 gap-2 font-semibold border shadow-none rounded-xl bg-primary/10 text-primary hover:bg-primary/60 border-primary/20"
+            >
+              <Plus className="w-4 h-4" />
+              Start New Chat
+            </Button>
+          </NavLink>
         </div>
 
         {/* Chat List */}
         <div className="flex-1 px-2 py-2 mt-2 overflow-y-auto custom-scrollbar">
-          <div className="px-4 mb-2">
-            <NavLink to="/new-chat" onClick={() => isMobile && onClose()}>
-              <Button
-                variant="default"
-                className="justify-start w-full h-10 gap-2 font-semibold border shadow-none rounded-xl bg-primary/10 text-primary hover:bg-primary/60 border-primary/20"
-              >
-                <Plus className="w-4 h-4" />
-                Start New Chat
-              </Button>
-            </NavLink>
-          </div>
           <div className="flex items-center justify-between px-4 py-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-              Recent Messages
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              {searchQuery ? 'Search Results' : 'Recent Messages'}
             </span>
           </div>
 
@@ -235,29 +337,95 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="p-4 text-center">
                 <p className="text-xs text-destructive">Failed to load chats</p>
               </div>
-            ) : chatRooms && chatRooms.length > 0 ? (
-              chatRooms.map(room => (
-                <ConversationRow
-                  key={room.id}
-                  room={room}
-                  active={activeChat === room.id}
-                  currentUserId={user.id}
-                  onlineUsers={globalOnlineUsers}
-                  onSelect={() => {
-                    setActiveChat(room.id);
-                    if (isMobile) onClose();
-                  }}
-                />
-              ))
             ) : (
-              <div className="flex flex-col items-center justify-center px-4 py-12 space-y-3 text-center opacity-60">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                  <Sparkles className="w-6 h-6 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  No conversations yet. Start a new chat!
-                </p>
-              </div>
+              <>
+                {/* Existing Chats */}
+                {filteredChatRooms && filteredChatRooms.length > 0 && (
+                  <>
+                    {searchQuery && <p className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">Existing Chats</p>}
+                    {filteredChatRooms.map(room => (
+                      <ConversationRow
+                        key={room.id}
+                        room={room}
+                        active={activeChat === room.id}
+                        currentUserId={user.id}
+                        onlineUsers={globalOnlineUsers}
+                        onSelect={() => {
+                          setActiveChat(room.id);
+                          dispatch(clearUnreadNotification(room.id));
+                          
+                          // Find and mark notification as read
+                          const notification = notifications?.find(
+                            n => n.chat_room === room.id && !n.is_read
+                          );
+                          if (notification) {
+                            markNotificationRead({ id: notification.id });
+                          }
+
+                          if (isMobile) onClose();
+                          setSearchQuery('');
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* New People (Only when searching) */}
+                {searchQuery && potentialNewChats.length > 0 && (
+                  <>
+                    <p className="px-2 py-1 mt-4 text-[10px] font-semibold text-muted-foreground uppercase">New People</p>
+                    {potentialNewChats.map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => handleCreateChat(u.id)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left hover:bg-secondary/40 border border-transparent group"
+                      >
+                        <Avatar className="h-11 w-11 border-2 border-transparent group-hover:border-primary/30 transition-all">
+                          <AvatarImage src={getAvatarUrl(u.avatar)} alt={u.name} />
+                          <AvatarFallback className="text-xs font-bold bg-secondary text-muted-foreground">
+                            {u.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0 ml-1">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-sm font-semibold text-foreground truncate">
+                              {u.name}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground opacity-80 truncate flex items-center gap-1">
+                            <UserPlus className="w-3 h-3" />
+                            Start new chat
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* No Results State */}
+                {searchQuery && 
+                 (!filteredChatRooms || filteredChatRooms.length === 0) && 
+                 (!potentialNewChats || potentialNewChats.length === 0) && 
+                 !isSearchingUsers && (
+                  <div className="flex flex-col items-center justify-center px-4 py-8 text-center opacity-60">
+                    <p className="text-sm text-muted-foreground">
+                      No results found for "{searchQuery}"
+                    </p>
+                  </div>
+                )}
+
+                {/* Empty State (No chats, no search) */}
+                {!searchQuery && (!chatRooms || chatRooms.length === 0) && (
+                  <div className="flex flex-col items-center justify-center px-4 py-12 space-y-3 text-center opacity-60">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                      <Sparkles className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      No conversations yet. Start a new chat!
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -290,6 +458,9 @@ function ConversationRow({
   const avatar = room.is_group_chat ? '' : (counterpart?.avatar ?? '');
 
   const isOnline = counterpart ? onlineUsers.includes(counterpart.id) : false;
+  const hasUnread = useAppSelector(
+    state => state.chat.unreadNotifications[room.id]
+  );
 
   return (
     <button
@@ -340,15 +511,23 @@ function ConversationRow({
           >
             {title}
           </span>
+          {hasUnread && (
+            <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full animate-in fade-in zoom-in duration-300">
+              New
+            </span>
+          )}
           {/* You might want to add a timestamp here if available in the room object */}
         </div>
         <p
           className={cn(
             'text-xs truncate transition-colors',
-            active ? 'text-primary/70' : 'text-muted-foreground opacity-80'
+            active ? 'text-primary/70' : 'text-muted-foreground opacity-80',
+            hasUnread && 'font-medium text-foreground'
           )}
         >
-          {room.is_group_chat
+          {hasUnread
+            ? 'New message'
+            : room.is_group_chat
             ? `${room.participants.length} members`
             : 'Click to open chat'}
         </p>

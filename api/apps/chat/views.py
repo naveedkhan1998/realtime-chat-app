@@ -19,6 +19,7 @@ from .models import (
     TypingStatus,
     FriendRequest,
     FriendshipNew,
+    Notification,
 )
 from .serializers import (
     ChatRoomSerializer,
@@ -28,6 +29,7 @@ from .serializers import (
     TypingStatusSerializer,
     FriendRequestSerializer,
     FriendshipSerializer,
+    NotificationSerializer,
 )
 from .renderers import ChatRenderer
 from .pagination import MessageCursorPagination
@@ -337,3 +339,30 @@ class TypingStatusViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+### Notification Views ###
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [ChatRenderer]
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by(
+            "-created_at"
+        )
+
+    @action(detail=False, methods=["post"])
+    def mark_all_read(self, request):
+        self.get_queryset().update(is_read=True)
+        return Response({"status": "all notifications marked as read"})
+
+    @action(detail=True, methods=["post"])
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        notification.is_read = True
+        notification.save()
+        return Response({"status": "notification marked as read"})

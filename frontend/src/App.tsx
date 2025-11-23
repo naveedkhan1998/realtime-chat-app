@@ -17,7 +17,6 @@ import { ThemeProvider } from './components/providers/ThemeProvider';
 import LoginPage from './pages/auth/login-page';
 import { useAppSelector } from './app/hooks';
 import HomePage from './pages/app/home-page';
-import FriendsPage from './pages/app/friends-page';
 import ChatPage from './pages/app/chat-page';
 import NewChatPage from './pages/app/new-chat-page';
 import AppShell from './layouts/AppShell';
@@ -74,7 +73,7 @@ const App: React.FC = () => {
                 <Route element={<AppShell isMobile={isMobile} />}>
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/chat/:chatId" element={<ChatPage />} />
-                  <Route path="/friends" element={<FriendsPage />} />
+                  {/* <Route path="/friends" element={<FriendsPage />} /> */}
                   <Route path="/new-chat" element={<NewChatPage />} />
                 </Route>
               </Route>

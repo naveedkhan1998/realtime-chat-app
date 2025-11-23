@@ -219,7 +219,7 @@ export default function ChatHeader({
 
   return (
     <>
-      <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 border-b shadow-sm bg-background/80 backdrop-blur-xl border-border/40">
+      <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 border-b shadow-sm bg-background/80 backdrop-blur-xl border-border">
         <div className="flex items-center flex-1 gap-3">
           {isMobile && (
             <Button

@@ -66,6 +66,14 @@ export interface CreateChatRoomPayload {
   participant_ids: number[];
 }
 
+export interface Notification {
+  id: number;
+  chat_room: number | null;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
 export const chatApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     // Friend Requests
@@ -180,6 +188,26 @@ export const chatApi = baseApi.injectEndpoints({
     getIceServers: builder.query<RTCIceServer[], void>({
       query: () => 'chat/ice-servers/',
     }),
+
+    // Notifications
+    getNotifications: builder.query<Notification[], void>({
+      query: () => 'chat/notifications/',
+      providesTags: ['Notifications'],
+    }),
+    markNotificationRead: builder.mutation<{ status: string }, { id: number }>({
+      query: ({ id }) => ({
+        url: `chat/notifications/${id}/mark_read/`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Notifications'],
+    }),
+    markAllNotificationsRead: builder.mutation<{ status: string }, void>({
+      query: () => ({
+        url: 'chat/notifications/mark_all_read/',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Notifications'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -198,4 +226,7 @@ export const {
   useSendReadReceiptMutation,
   useUpdateTypingStatusMutation,
   useGetIceServersQuery,
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
 } = chatApi;

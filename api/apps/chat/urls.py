@@ -7,6 +7,7 @@ from .views import (
     MessageViewSet,
     MessageReadReceiptViewSet,
     TypingStatusViewSet,
+    NotificationViewSet,
     get_ice_servers,
 )
 
@@ -19,6 +20,7 @@ router.register(
     r"message-read-receipts", MessageReadReceiptViewSet, basename="messagereadreceipt"
 )
 router.register(r"typing-status", TypingStatusViewSet, basename="typingstatus")
+router.register(r"notifications", NotificationViewSet, basename="notification")
 
 urlpatterns = [
     path("", include(router.urls)),

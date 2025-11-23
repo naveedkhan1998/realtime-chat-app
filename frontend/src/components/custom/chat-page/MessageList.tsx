@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Loader2, Smile, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Message, ChatRoom } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
 import MessageBubble from '../MessageBubble';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface MessageListProps {
   messages: Message[];
@@ -17,7 +18,6 @@ interface MessageListProps {
   loadingMore: boolean;
   initialLoading: boolean;
   editingMessageId: number | undefined;
-  showScrollButton: boolean;
   scrollToBottom: () => void;
 }
 
@@ -31,25 +31,39 @@ export default function MessageList({
   loadingMore,
   initialLoading,
   editingMessageId,
-  showScrollButton,
   scrollToBottom,
 }: MessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   // Scroll to bottom on initial load
   useEffect(() => {
     if (!initialLoading && messages.length > 0) {
       // Small delay to ensure rendering is done
       setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({
-          index: messages.length - 1,
-          align: 'end',
+        virtuosoRef.current?.scrollTo({
+          top: 999999,
           behavior: 'auto',
         });
       }, 100);
     }
-  }, [initialLoading, messages.length]); // Re-run if messages length changes significantly? No, only on mount/room change ideally.
-  // Actually, for chat, we want to follow output.
+  }, [initialLoading]); // Only run when loading state changes
+
+  // Auto-scroll when user sends a message
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      // If I sent the last message, force scroll to bottom
+      if (lastMessage.sender.id === user.id) {
+        setTimeout(() => {
+          virtuosoRef.current?.scrollTo({
+            top: 999999,
+            behavior: 'smooth',
+          });
+        }, 50);
+      }
+    }
+  }, [messages, user.id]);
 
   return (
     <div className="relative flex-1 w-full h-full">
@@ -65,6 +79,7 @@ export default function MessageList({
           startReached={handleLoadMore}
           initialTopMostItemIndex={messages.length - 1}
           followOutput="smooth"
+          atBottomStateChange={(atBottom) => setShowScrollButton(!atBottom)}
           components={{
             Header: () => (
               <div className="flex items-center justify-center h-24">
@@ -127,21 +142,30 @@ export default function MessageList({
       )}
 
       {/* Scroll to Bottom Button */}
-      {showScrollButton && (
-        <Button
-          size="icon"
-          className="absolute z-30 w-10 h-10 duration-200 border rounded-full shadow-lg bottom-24 right-8 bg-background/80 backdrop-blur-md border-white/10 text-primary hover:bg-background animate-in fade-in zoom-in"
-          onClick={() => {
-            virtuosoRef.current?.scrollToIndex({
-              index: messages.length - 1,
-              behavior: 'smooth',
-            });
-            scrollToBottom();
-          }}
-        >
-          <ChevronDown className="w-5 h-5" />
-        </Button>
-      )}
+      <AnimatePresence>
+        {showScrollButton && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            className="absolute bottom-24 right-8 z-30"
+          >
+            <Button
+              size="icon"
+              className="w-10 h-10 rounded-full shadow-lg bg-background/80 backdrop-blur-md border border-border text-primary hover:bg-background"
+              onClick={() => {
+                virtuosoRef.current?.scrollTo({
+                  top: 999999,
+                  behavior: 'smooth',
+                });
+                scrollToBottom();
+              }}
+            >
+              <ChevronDown className="w-5 h-5" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -184,6 +184,13 @@ class Notification(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="notifications", on_delete=models.CASCADE
     )
+    chat_room = models.ForeignKey(
+        "ChatRoom",
+        related_name="notifications",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     content = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)

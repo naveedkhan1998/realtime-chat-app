@@ -42,7 +42,7 @@ function MessageBubble({
   return (
     <div
       className={cn(
-        'group relative flex w-full gap-2 px-2 transition-all duration-200 hover:bg-white/[0.02]',
+        'group relative flex w-full gap-2 px-2 transition-all duration-200 hover:bg-muted/30',
         isSent ? 'flex-row-reverse' : 'flex-row',
         isConsecutive ? 'mt-0.5' : 'mt-4'
       )}
@@ -85,10 +85,15 @@ function MessageBubble({
             className={cn(
               'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
               isSent
-                ? 'bg-primary text-primary-foreground rounded-2xl rounded-tr-sm'
-                : 'bg-muted/50 backdrop-blur-md border border-border/50 text-foreground rounded-2xl rounded-tl-sm hover:bg-muted/80',
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/50 backdrop-blur-md border border-border text-foreground hover:bg-muted/80',
               isEditing && 'ring-2 ring-offset-2 ring-primary',
-              isConsecutive && (isSent ? 'rounded-tr-2xl' : 'rounded-tl-2xl')
+              // Border Radius Logic
+              'rounded-2xl',
+              isSent && showAvatar && 'rounded-br-sm', // Tail for last sent
+              !isSent && showAvatar && 'rounded-bl-sm', // Tail for last received
+              isSent && !showAvatar && 'rounded-br-xl', // No tail for middle sent
+              !isSent && !showAvatar && 'rounded-bl-xl' // No tail for middle received
             )}
           >
             <p
@@ -104,8 +109,8 @@ function MessageBubble({
               className={cn(
                 'flex items-center gap-1 mt-1 select-none',
                 isSent
-                  ? 'justify-end text-primary-foreground/70'
-                  : 'justify-start text-muted-foreground/60'
+                  ? 'justify-end text-primary-foreground/80'
+                  : 'justify-start text-muted-foreground/80'
               )}
             >
               <span className="text-[9px] font-medium">{formattedTime}</span>
@@ -135,7 +140,7 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border/40 shadow-sm"
+                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border shadow-sm"
                     onClick={() => onEdit(message)}
                   >
                     <Pencil className="h-3 w-3" />
@@ -145,7 +150,7 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border/40 shadow-sm"
+                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border shadow-sm"
                     onClick={() => onDelete(message)}
                   >
                     <Trash2 className="h-3 w-3" />

@@ -13,28 +13,30 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   PlusCircle,
-  UserPlus,
   Search,
   Users,
   MessageCircle,
 } from 'lucide-react';
 import {
-  Friendship,
   useCreateChatRoomMutation,
-  useGetFriendshipsQuery,
   User,
 } from '@/services/chatApi';
+import { useSearchUsersQuery } from '@/services/userApi';
 import { useAppSelector } from '@/app/hooks';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/hooks/use-toast';
 
 const NewChatDialog: React.FC = () => {
-  const { data: friendships, isLoading } = useGetFriendshipsQuery();
   const [searchQuery, setSearchQuery] = useState('');
+  const { data: searchResults, isLoading } = useSearchUsersQuery(
+    { query: searchQuery },
+    { skip: !searchQuery }
+  );
+  
   const [isGroup, setIsGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
-  const [selectedFriendIds, setSelectedFriendIds] = useState<number[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [createChatRoom, { isLoading: creatingChat }] =
     useCreateChatRoomMutation();
@@ -42,33 +44,17 @@ const NewChatDialog: React.FC = () => {
 
   const currentUser = useAppSelector(state => state.auth.user);
 
-  const filteredFriends = friendships
-    ?.flatMap((friendship: Friendship) =>
-      [friendship.user1, friendship.user2].filter(
-        user => user.id !== currentUser?.id
-      )
-    )
-    .filter((user): user is User => Boolean(user))
-    .reduce<User[]>((acc, user) => {
-      if (!user) return acc;
-      if (!acc.some(existing => existing.id === user.id)) {
-        acc.push(user);
-      }
-      return acc;
-    }, [])
-    .filter(user =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredUsers = searchResults?.filter(user => user.id !== currentUser?.id) || [];
 
-  const handleFriendSelect = (friendId: number) => {
+  const handleUserSelect = (userId: number) => {
     if (isGroup) {
-      setSelectedFriendIds(prev =>
-        prev.includes(friendId)
-          ? prev.filter(id => id !== friendId)
-          : [...prev, friendId]
+      setSelectedUserIds(prev =>
+        prev.includes(userId)
+          ? prev.filter(id => id !== userId)
+          : [...prev, userId]
       );
     } else {
-      setSelectedFriendIds([friendId]);
+      setSelectedUserIds([userId]);
     }
   };
 
@@ -77,14 +63,14 @@ const NewChatDialog: React.FC = () => {
       const payload = {
         name: isGroup ? groupName.trim() : undefined,
         is_group_chat: isGroup,
-        participant_ids: selectedFriendIds,
+        participant_ids: selectedUserIds,
       };
       const chatRoom = await createChatRoom(payload).unwrap();
       // Reset state after successful creation
       setSearchQuery('');
       setIsGroup(false);
       setGroupName('');
-      setSelectedFriendIds([]);
+      setSelectedUserIds([]);
       setIsDialogOpen(false);
       navigate(`/chat/${chatRoom.id}`);
       toast({
@@ -105,7 +91,8 @@ const NewChatDialog: React.FC = () => {
 
   const handleTabChange = (value: string) => {
     setIsGroup(value === 'group');
-    setSelectedFriendIds([]);
+    setSelectedUserIds([]);
+    setSearchQuery('');
   };
 
   return (
@@ -138,18 +125,19 @@ const NewChatDialog: React.FC = () => {
             <div className="relative">
               <Search className="absolute w-4 h-4 text-muted-foreground transform -translate-y-1/2 left-3 top-1/2" />
               <Input
-                placeholder="Search friends"
+                placeholder="Search users..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-10"
-                aria-label="Search friends for direct chat"
+                aria-label="Search users for direct chat"
               />
             </div>
-            <FriendList
-              friends={filteredFriends || []}
-              selectedFriendIds={selectedFriendIds}
-              onFriendSelect={handleFriendSelect}
+            <UserList
+              users={filteredUsers}
+              selectedUserIds={selectedUserIds}
+              onUserSelect={handleUserSelect}
               isLoading={isLoading}
+              searchQuery={searchQuery}
             />
           </TabsContent>
           <TabsContent value="group" className="space-y-4">
@@ -162,33 +150,31 @@ const NewChatDialog: React.FC = () => {
             <div className="relative">
               <Search className="absolute w-4 h-4 text-muted-foreground transform -translate-y-1/2 left-3 top-1/2" />
               <Input
-                placeholder="Search friends"
+                placeholder="Search users to add..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-10"
-                aria-label="Search friends for group chat"
+                aria-label="Search users for group chat"
               />
             </div>
-            <FriendList
-              friends={filteredFriends || []}
-              selectedFriendIds={selectedFriendIds}
-              onFriendSelect={handleFriendSelect}
+            <UserList
+              users={filteredUsers}
+              selectedUserIds={selectedUserIds}
+              onUserSelect={handleUserSelect}
               isLoading={isLoading}
               isGroup
+              searchQuery={searchQuery}
             />
           </TabsContent>
         </Tabs>
-        <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={() => navigate('/friends')}>
-            <UserPlus className="w-4 h-4 mr-2" /> Add Friends
-          </Button>
+        <div className="flex justify-end mt-4">
           <Button
             onClick={handleSubmit}
             disabled={
               creatingChat ||
               (isGroup
-                ? !groupName.trim() || selectedFriendIds.length === 0
-                : selectedFriendIds.length !== 1)
+                ? !groupName.trim() || selectedUserIds.length === 0
+                : selectedUserIds.length !== 1)
             }
             aria-label={isGroup ? 'Start group chat' : 'Start direct chat'}
           >
@@ -200,20 +186,22 @@ const NewChatDialog: React.FC = () => {
   );
 };
 
-interface FriendListProps {
-  friends: User[];
-  selectedFriendIds: number[];
-  onFriendSelect: (friendId: number) => void;
+interface UserListProps {
+  users: User[];
+  selectedUserIds: number[];
+  onUserSelect: (userId: number) => void;
   isLoading: boolean;
   isGroup?: boolean;
+  searchQuery: string;
 }
 
-const FriendList: React.FC<FriendListProps> = ({
-  friends,
-  selectedFriendIds,
-  onFriendSelect,
+const UserList: React.FC<UserListProps> = ({
+  users,
+  selectedUserIds,
+  onUserSelect,
   isLoading,
   isGroup = false,
+  searchQuery,
 }) => {
   return (
     <ScrollArea className="h-[300px] rounded-md border p-4">
@@ -221,39 +209,47 @@ const FriendList: React.FC<FriendListProps> = ({
         <div className="flex items-center justify-center h-full">
           <div
             className="w-8 h-8 border-b-2 border-primary rounded-full animate-spin"
-            aria-label="Loading friends"
+            aria-label="Loading users"
           ></div>
+        </div>
+      ) : users.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+          {searchQuery ? (
+            <p>No users found</p>
+          ) : (
+            <p>Type to search for users</p>
+          )}
         </div>
       ) : (
         <AnimatePresence>
-          {friends?.map(friend => (
+          {users.map(user => (
             <motion.div
-              key={friend?.id}
+              key={user.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
               className={`flex items-center p-2 rounded-md cursor-pointer transition-all ${
-                friend && selectedFriendIds.includes(friend.id)
+                selectedUserIds.includes(user.id)
                   ? 'bg-accent'
                   : 'hover:bg-muted'
               }`}
-              onClick={() => friend && onFriendSelect(friend.id)}
+              onClick={() => onUserSelect(user.id)}
               role="button"
-              aria-pressed={selectedFriendIds.includes(friend?.id)}
-              aria-label={`Select ${friend?.name} for ${isGroup ? 'group' : 'direct'} chat`}
+              aria-pressed={selectedUserIds.includes(user.id)}
+              aria-label={`Select ${user.name} for ${isGroup ? 'group' : 'direct'} chat`}
             >
               <Avatar className="w-10 h-10 mr-3">
-                <AvatarImage src={friend?.avatar} alt={friend?.name} />
-                <AvatarFallback>{friend?.name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="flex-grow">{friend?.name}</span>
+              <span className="flex-grow">{user.name}</span>
               {isGroup && (
                 <div
-                  className={`w-5 h-5 rounded-full border-2 ${selectedFriendIds.includes(friend?.id) ? 'bg-primary border-primary' : 'border-muted'}`}
+                  className={`w-5 h-5 rounded-full border-2 ${selectedUserIds.includes(user.id) ? 'bg-primary border-primary' : 'border-muted'}`}
                   aria-hidden="true"
                 >
-                  {selectedFriendIds.includes(friend?.id) && (
+                  {selectedUserIds.includes(user.id) && (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"

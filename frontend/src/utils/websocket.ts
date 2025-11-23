@@ -115,6 +115,13 @@ export interface GlobalUserOfflineEvent {
   user_id: number;
 }
 
+export interface NewMessageNotificationEvent {
+  type: 'new_message_notification';
+  chat_room_id: number;
+  sender_id: number;
+  sender_name?: string;
+}
+
 export type WebSocketEvent =
   | ChatMessageEvent
   | ChatRoomCreatedEvent
@@ -132,7 +139,8 @@ export type WebSocketEvent =
   | HuddleSignalEvent
   | GlobalOnlineUsersEvent
   | GlobalUserOnlineEvent
-  | GlobalUserOfflineEvent;
+  | GlobalUserOfflineEvent
+  | NewMessageNotificationEvent;
 
 export class WebSocketService {
   private static instance: WebSocketService;

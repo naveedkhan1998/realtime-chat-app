@@ -7,6 +7,7 @@ from .models import (
     TypingStatus,
     FriendRequest,
     FriendshipNew,
+    Notification,
 )
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -214,3 +215,9 @@ class TypingStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypingStatus
         fields = ["id", "chat_room", "user", "is_typing", "updated_at"]
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["id", "chat_room", "content", "created_at", "is_read"]

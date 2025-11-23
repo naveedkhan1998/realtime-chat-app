@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django_redis import get_redis_connection
 
-from .models import ChatRoom, Message
+from .models import ChatRoom, Message, Notification
 from .serializers import MessageSerializer
 
 if TYPE_CHECKING:
@@ -129,6 +129,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.chat_room_group_name, {"type": "chat_message", "payload": message_data}
         )
+
+        # Notify participants
+        participant_ids = await self.get_participant_ids()
+        for participant_id in participant_ids:
+            # Check if user is active in this specific chat room
+            is_in_room = await self.is_user_in_room(participant_id)
+            if is_in_room:
+                continue
+
+            # Check if user is online globally
+            is_online = await self.is_user_online(participant_id)
+
+            if is_online:
+                # User is online but not in room -> Send ephemeral notification only
+                await self.channel_layer.group_send(
+                    f"user_{participant_id}",
+                    {
+                        "type": "new_message_notification",
+                        "chat_room_id": self.chat_room_id,
+                        "sender_id": self.user.id,
+                        "sender_name": self.user.name,
+                    },
+                )
+            else:
+                # User is offline -> Create persistent notification
+                await self.create_notification(
+                    user_id=participant_id,
+                    content=f"New message from {self.user.name}"
+                )
 
     async def handle_edit_message(
         self, message_id: Optional[int], content: Optional[str]
@@ -487,6 +516,44 @@ class ChatConsumer(AsyncWebsocketConsumer):
         values = conn.hvals(key)
         return [json.loads(value.decode()) for value in values]
 
+    @database_sync_to_async
+    def create_notification(self, user_id: int, content: str):
+        try:
+            user = User.objects.get(id=user_id)
+            # Coalescing: Update existing unread notification for this chat or create new one
+            # This ensures max 1 unread notification row per chat per user
+            Notification.objects.update_or_create(
+                user=user,
+                chat_room_id=self.chat_room_id,
+                is_read=False,
+                defaults={
+                    "content": content,
+                    "created_at": timezone.now(),
+                },
+            )
+        except User.DoesNotExist:
+            pass
+
+    @database_sync_to_async
+    def get_participant_ids(self):
+        return list(
+            self.chat_room.participants.exclude(id=self.user.id).values_list(
+                "id", flat=True
+            )
+        )
+
+    @database_sync_to_async
+    def is_user_in_room(self, user_id: int) -> bool:
+        conn = get_redis_connection("default")
+        key = f"chat:presence:{self.chat_room_id}"
+        return conn.hexists(key, user_id)
+
+    @database_sync_to_async
+    def is_user_online(self, user_id: int) -> bool:
+        conn = get_redis_connection("default")
+        key = "global:online_users"
+        return conn.sismember(key, user_id)
+
 
 class GlobalConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -573,6 +640,14 @@ class GlobalConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps({
             "type": "chat_room_created",
             "room": event["room"]
+        }))
+
+    async def new_message_notification(self, event):
+        await self.send(json.dumps({
+            "type": "new_message_notification",
+            "chat_room_id": event["chat_room_id"],
+            "sender_id": event["sender_id"],
+            "sender_name": event.get("sender_name")
         }))
 
     @database_sync_to_async
