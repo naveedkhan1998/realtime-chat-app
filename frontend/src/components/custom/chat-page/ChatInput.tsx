@@ -1,10 +1,10 @@
 import { Paperclip, Send, Smile } from 'lucide-react';
 import { UseFormRegister, UseFormWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Message } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
+import { useEffect, useRef } from 'react';
 
 interface ChatInputProps {
   register: UseFormRegister<{ message: string }>;
@@ -21,6 +21,26 @@ export default function ChatInput({
   editingMessage,
   typingUsers,
 }: ChatInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const messageValue = watch('message');
+  const { ref: registerRef, ...restRegister } = register('message');
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+  }, [messageValue]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
   return (
     <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-background via-background/95 to-transparent">
       <div className="relative w-full max-w-4xl mx-auto">
@@ -51,30 +71,36 @@ export default function ChatInput({
 
         <form
           onSubmit={onSubmit}
-          className="relative flex items-end gap-2 p-2 rounded-[28px] border border-border/40 bg-background/80 backdrop-blur-2xl shadow-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/20"
+          className="relative flex items-end gap-2 p-2 rounded-[24px] border border-border/40 bg-background/80 backdrop-blur-2xl shadow-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/20"
         >
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="flex-shrink-0 w-10 h-10 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary"
+            className="flex-shrink-0 w-10 h-10 mb-0.5 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
           >
             <Paperclip className="w-5 h-5" />
           </Button>
 
-          <Input
-            {...register('message')}
+          <textarea
+            {...restRegister}
+            ref={(e) => {
+              registerRef(e);
+              textareaRef.current = e;
+            }}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="flex-1 min-h-[44px] max-h-[120px] py-3 px-2 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 resize-none text-base"
+            className="flex-1 min-h-[44px] max-h-[200px] py-3 px-2 border-0 bg-transparent focus:ring-0 focus:outline-none placeholder:text-muted-foreground/50 resize-none text-base leading-relaxed scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
             autoComplete="off"
+            rows={1}
           />
 
-          <div className="flex items-center gap-1 pr-1">
+          <div className="flex items-center gap-1 pr-1 mb-0.5">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+              className="transition-colors rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
             >
               <Smile className="w-5 h-5" />
             </Button>

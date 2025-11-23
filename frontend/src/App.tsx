@@ -74,7 +74,7 @@ const App: React.FC = () => {
                 <Route element={<AppShell isMobile={isMobile} />}>
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/chat/:chatId" element={<ChatPage />} />
-                  <Route path="/friends" element={<FriendsPage />} />
+                  {/* <Route path="/friends" element={<FriendsPage />} /> */}
                   <Route path="/new-chat" element={<NewChatPage />} />
                 </Route>
               </Route>

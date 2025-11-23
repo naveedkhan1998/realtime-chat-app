@@ -85,10 +85,15 @@ function MessageBubble({
             className={cn(
               'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
               isSent
-                ? 'bg-primary text-primary-foreground rounded-2xl rounded-tr-sm'
-                : 'bg-muted/50 backdrop-blur-md border border-border/50 text-foreground rounded-2xl rounded-tl-sm hover:bg-muted/80',
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/50 backdrop-blur-md border border-border/50 text-foreground hover:bg-muted/80',
               isEditing && 'ring-2 ring-offset-2 ring-primary',
-              isConsecutive && (isSent ? 'rounded-tr-2xl' : 'rounded-tl-2xl')
+              // Border Radius Logic
+              'rounded-2xl',
+              isSent && showAvatar && 'rounded-br-sm', // Tail for last sent
+              !isSent && showAvatar && 'rounded-bl-sm', // Tail for last received
+              isSent && !showAvatar && 'rounded-br-xl', // No tail for middle sent
+              !isSent && !showAvatar && 'rounded-bl-xl' // No tail for middle received
             )}
           >
             <p

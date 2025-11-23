@@ -22,7 +22,6 @@ import {
   Globe,
   Mail,
   UserPlus,
-  ArrowRight,
   ArrowLeft,
 } from 'lucide-react';
 
@@ -80,7 +79,7 @@ export default function NewChatPage() {
   };
 
   return (
-    <div className="relative flex flex-col h-full gap-6 p-6 overflow-hidden">
+    <div className="relative flex flex-col h-full gap-6 p-4 md:p-8 overflow-hidden">
       <Helmet>
         <title>New Chat | MNK Chat</title>
         <meta name="description" content="Start a new conversation" />
@@ -89,44 +88,44 @@ export default function NewChatPage() {
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Header */}
-      <div className="relative z-10 flex flex-col gap-2">
+      <div className="relative z-10 flex flex-col gap-4 max-w-4xl mx-auto w-full">
         {isMobile && (
           <Button
             variant="ghost"
             size="sm"
-            className="self-start pl-0 -ml-2 text-muted-foreground hover:text-foreground mb-2"
+            className="self-start pl-0 -ml-2 text-muted-foreground hover:text-foreground"
             onClick={() => navigate('/chat')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
         )}
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Directory
-          </h1>
-          <Badge
-            variant="secondary"
-            className="bg-primary/10 text-primary border-primary/20"
-          >
-            <Globe className="w-3 h-3 mr-1" />
-            Global Search
-          </Badge>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              New Message
+            </h1>
+            <Badge
+              variant="secondary"
+              className="bg-primary/10 text-primary border-primary/20"
+            >
+              <Globe className="w-3 h-3 mr-1" />
+              Directory
+            </Badge>
+          </div>
+          <p className="text-muted-foreground">
+            Find people and start a conversation.
+          </p>
         </div>
-        <p className="text-lg text-muted-foreground">
-          Discover people and start new conversations.
-        </p>
-      </div>
 
-      {/* Search Area */}
-      <div className="relative z-10 w-full max-w-3xl mx-auto mt-4">
-        <div className="relative group">
-          <div className="absolute transition duration-1000 -inset-1 bg-gradient-to-r from-primary to-violet-600 rounded-3xl blur opacity-20 group-hover:opacity-40 group-hover:duration-200"></div>
+        {/* Search Area */}
+        <div className="relative group w-full">
+          <div className="absolute transition duration-1000 -inset-0.5 bg-gradient-to-r from-primary to-violet-600 rounded-2xl blur opacity-20 group-hover:opacity-40 group-hover:duration-200"></div>
           <div className="relative">
-            <Search className="absolute w-6 h-6 transition-colors -translate-y-1/2 left-5 top-1/2 text-muted-foreground group-focus-within:text-primary" />
+            <Search className="absolute w-5 h-5 transition-colors -translate-y-1/2 left-4 top-1/2 text-muted-foreground group-focus-within:text-primary" />
             <Input
-              placeholder="Search for anyone by name or email..."
-              className="h-16 text-lg transition-all shadow-xl pl-14 bg-white/5 border-white/10 rounded-2xl focus:bg-white/10 focus:ring-2 focus:ring-primary/20 backdrop-blur-xl placeholder:text-muted-foreground/50"
+              placeholder="Search by name or email..."
+              className="h-14 text-base transition-all shadow-lg pl-12 bg-background/80 border-border/50 rounded-xl focus:bg-background focus:ring-2 focus:ring-primary/20 backdrop-blur-xl placeholder:text-muted-foreground/50"
               value={searchQuery}
               onChange={event => setSearchQuery(event.target.value)}
               autoFocus
@@ -136,31 +135,31 @@ export default function NewChatPage() {
       </div>
 
       {/* Results Area */}
-      <div className="relative z-10 flex-1 pr-2 mt-4 overflow-y-auto custom-scrollbar">
+      <div className="relative z-10 flex-1 w-full max-w-4xl mx-auto mt-2 overflow-y-auto custom-scrollbar pr-2">
         {searchLoading ? (
-          <div className="flex flex-col items-center justify-center gap-4 h-60">
-            <Loader2 className="w-10 h-10 animate-spin text-primary/50" />
-            <p className="text-muted-foreground animate-pulse">
-              Searching the directory...
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
+            <p className="text-sm text-muted-foreground animate-pulse">
+              Searching directory...
             </p>
           </div>
         ) : searchResults && searchResults.length > 0 ? (
-          <div className="grid max-w-5xl grid-cols-1 gap-4 mx-auto md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {searchResults
               .filter(candidate => candidate.id !== user?.id)
               .map(candidate => (
                 <div
                   key={candidate.id}
-                  className="relative flex items-center gap-4 p-4 transition-all duration-300 border group rounded-3xl border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
+                  className="relative flex items-center gap-4 p-3 transition-all duration-200 border group rounded-2xl border-border/40 bg-card/50 hover:bg-accent/50 hover:border-primary/20 hover:shadow-md"
                 >
-                  <Avatar className="transition-transform border-2 shadow-sm h-14 w-14 border-white/10 group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/10">
+                  <Avatar className="transition-transform border shadow-sm h-12 w-12 border-border/50 group-hover:scale-105">
                     <AvatarImage src={candidate.avatar} alt={candidate.name} />
-                    <AvatarFallback className="text-lg font-bold text-white bg-gradient-to-br from-primary to-violet-600">
+                    <AvatarFallback className="text-base font-bold text-primary-foreground bg-primary/80">
                       {candidate.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <h3 className="text-base font-semibold truncate text-foreground">
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <h3 className="text-sm font-semibold truncate text-foreground">
                       {candidate.name}
                     </h3>
                     <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
@@ -170,69 +169,44 @@ export default function NewChatPage() {
                   </div>
                   <Button
                     size="sm"
-                    className="transition-all rounded-full shadow-none bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md"
+                    variant="secondary"
+                    className="h-9 px-4 transition-all rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground shadow-none hover:shadow-md"
                     onClick={() => handleCreateChat(candidate.id)}
                     disabled={creatingChatRoom}
                   >
                     {pendingChatUserId === candidate.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Starting...
-                      </>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <>
-                        <MessageSquarePlus className="w-4 h-4 mr-2" />
-                        Start Chat
-                      </>
+                      <MessageSquarePlus className="w-4 h-4" />
                     )}
+                    <span className="ml-2 hidden sm:inline">Chat</span>
                   </Button>
                 </div>
               ))}
           </div>
         ) : debouncedSearchQuery ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center opacity-60">
-            <div className="flex items-center justify-center w-20 h-20 mb-6 border rounded-3xl bg-destructive/5 border-destructive/10">
-              <UserPlus className="w-10 h-10 text-destructive/40" />
+          <div className="flex flex-col items-center justify-center py-16 text-center opacity-80">
+            <div className="flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-muted">
+              <UserPlus className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-foreground">
+            <h3 className="mb-1 text-lg font-semibold text-foreground">
               No users found
             </h3>
-            <p className="max-w-sm mx-auto text-base text-muted-foreground">
-              We couldn't find anyone matching "{searchQuery}". Try a different
-              name or email.
+            <p className="text-sm text-muted-foreground">
+              We couldn't find anyone matching "{searchQuery}".
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 rounded-full bg-primary/60 blur-2xl" />
-              <div className="relative flex items-center justify-center w-24 h-24 border shadow-2xl rounded-3xl bg-white/5 border-white/10 backdrop-blur-sm">
-                <Sparkles className="w-12 h-12 text-primary" />
+          <div className="flex flex-col items-center justify-center py-16 opacity-60">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 rounded-full bg-primary/40 blur-xl" />
+              <div className="relative flex items-center justify-center w-20 h-20 border shadow-xl rounded-2xl bg-card border-border/50">
+                <Sparkles className="w-10 h-10 text-primary" />
               </div>
             </div>
-            <h3 className="mb-3 text-2xl font-bold text-foreground">
-              Global Directory
-            </h3>
-            <p className="max-w-md text-lg leading-relaxed text-center text-muted-foreground">
-              Search for anyone in the organization to start a secure, encrypted
-              conversation instantly.
+            <p className="max-w-sm text-center text-muted-foreground">
+              Type a name or email above to find people in the global directory.
             </p>
-
-            <div className="grid w-full max-w-2xl grid-cols-1 gap-4 mt-12 sm:grid-cols-3 opacity-70">
-              {[
-                { icon: Search, label: 'Search' },
-                { icon: ArrowRight, label: 'Select' },
-                { icon: MessageSquarePlus, label: 'Chat' },
-              ].map((step, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center gap-2 p-4 border rounded-2xl bg-white/5 border-white/10"
-                >
-                  <step.icon className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">{step.label}</span>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>

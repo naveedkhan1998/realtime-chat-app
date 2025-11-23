@@ -611,7 +611,6 @@ export default function ChatWindow({
             loadingMore={loadingMore}
             initialLoading={initialLoading}
             editingMessageId={editingMessage?.id}
-            showScrollButton={false}
             scrollToBottom={scrollToBottom}
           />
         </div>

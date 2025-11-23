@@ -260,7 +260,7 @@ function FeaturesGrid() {
 function WorkflowSection() {
   const steps = [
     { title: 'Sign Up', desc: 'Create your account in seconds.' },
-    { title: 'Find Friends', desc: 'Search and add people to your network.' },
+    { title: 'Find People', desc: 'Search for anyone and start a chat instantly.' },
     { title: 'Start Chatting', desc: 'Instant messaging & collaboration.' },
   ];
 
