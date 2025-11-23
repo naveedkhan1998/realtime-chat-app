@@ -42,7 +42,7 @@ export default function ChatHeader({
   stopHuddle,
 }: ChatHeaderProps) {
   return (
-    <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 border-b shadow-sm bg-background/80 backdrop-blur-xl border-white/5">
+    <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-6 py-4 border-b shadow-sm bg-background/80 backdrop-blur-xl border-border/40">
       <div className="flex items-center flex-1 gap-3">
         {isMobile && (
           <Button
@@ -63,7 +63,7 @@ export default function ChatHeader({
             }
             alt={activeRoom?.name || otherParticipant.name}
           />
-          <AvatarFallback className="font-bold bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+          <AvatarFallback className="font-bold bg-primary/10 text-primary">
             {(activeRoom?.is_group_chat
               ? activeRoom.name
               : otherParticipant.name

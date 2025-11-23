@@ -1,4 +1,6 @@
 import { type ReactNode, useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { AppShellContext } from '@/layouts/AppShell';
 import { useAppSelector } from '@/app/hooks';
 import {
   useGetFriendshipsQuery,
@@ -32,6 +34,7 @@ import {
   Mail,
   Check,
   X,
+  ArrowLeft,
   LucideProps,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -39,6 +42,8 @@ import { Helmet } from 'react-helmet-async';
 
 export default function Friends() {
   const user = useAppSelector(state => state.auth.user);
+  const navigate = useNavigate();
+  const { isMobile } = useOutletContext<AppShellContext>();
   const [searchQuery, setSearchQuery] = useState('');
   const [friendFilter, setFriendFilter] = useState('all');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -150,6 +155,17 @@ export default function Friends() {
 
       {/* Header */}
       <div className="relative z-10 flex flex-col gap-2">
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start pl-0 mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate('/chat')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        )}
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Connections
         </h1>
@@ -164,10 +180,10 @@ export default function Friends() {
         className="relative z-10 flex flex-col flex-1 gap-6 overflow-hidden"
       >
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <TabsList className="p-1 border shadow-sm bg-background/50 backdrop-blur-md rounded-2xl border-white/10">
+          <TabsList className="p-1 border shadow-sm bg-white/5 backdrop-blur-md rounded-2xl border-white/10">
             <TabsTrigger
               value="friends"
-              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary/60 data-[state=active]:text-primary-foreground transition-all"
             >
               Friends{' '}
               <Badge
@@ -179,7 +195,7 @@ export default function Friends() {
             </TabsTrigger>
             <TabsTrigger
               value="requests"
-              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary/60 data-[state=active]:text-primary-foreground transition-all"
             >
               Requests
               {pendingCount > 0 && (
@@ -193,7 +209,7 @@ export default function Friends() {
             </TabsTrigger>
             <TabsTrigger
               value="discover"
-              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+              className="rounded-xl px-6 py-2.5 data-[state=active]:bg-primary/60 data-[state=active]:text-primary-foreground transition-all"
             >
               Discover
             </TabsTrigger>
@@ -205,7 +221,7 @@ export default function Friends() {
               placeholder="Filter connections..."
               value={friendFilter}
               onChange={e => setFriendFilter(e.target.value)}
-              className="pl-10 transition-all shadow-sm h-11 bg-background/50 border-white/10 rounded-2xl focus:bg-background focus:ring-2 focus:ring-primary/20"
+              className="pl-10 transition-all shadow-sm h-11 bg-white/5 border-white/10 rounded-2xl focus:bg-white/10 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50"
             />
           </div>
         </div>
@@ -284,7 +300,7 @@ export default function Friends() {
                   <Search className="absolute w-6 h-6 transition-colors -translate-y-1/2 left-5 top-1/2 text-muted-foreground group-focus-within:text-primary" />
                   <Input
                     placeholder="Search for people by name or email..."
-                    className="h-16 text-lg transition-all shadow-xl pl-14 bg-background border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/20"
+                    className="h-16 text-lg transition-all shadow-xl pl-14 bg-background/80 border-white/10 rounded-2xl focus:ring-2 focus:ring-primary/20 backdrop-blur-xl"
                     value={searchQuery}
                     onChange={event => setSearchQuery(event.target.value)}
                   />
@@ -327,7 +343,7 @@ export default function Friends() {
             ) : (
               <div className="flex flex-col items-center justify-center py-20 opacity-50">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
+                  <div className="absolute inset-0 rounded-full bg-primary/60 blur-xl" />
                   <Sparkles className="relative w-16 h-16 mb-6 text-primary" />
                 </div>
                 <p className="text-xl font-medium">
@@ -344,8 +360,8 @@ export default function Friends() {
 
 function FriendCard({ user, action }: { user: User; action?: ReactNode }) {
   return (
-    <div className="relative flex items-center gap-4 p-4 transition-all duration-300 border group rounded-3xl border-white/5 bg-background/40 backdrop-blur-xl hover:bg-background/60 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5">
-      <Avatar className="transition-transform border-2 shadow-sm h-14 w-14 border-background group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/10">
+    <div className="relative flex items-center gap-4 p-4 transition-all duration-300 border group rounded-3xl border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5">
+      <Avatar className="transition-transform border-2 shadow-sm h-14 w-14 border-white/10 group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/10">
         <AvatarImage src={user.avatar} alt={user.name} />
         <AvatarFallback className="text-lg font-bold text-white bg-gradient-to-br from-primary to-violet-600">
           {user.name.charAt(0)}
@@ -377,9 +393,9 @@ function RequestCard({
   isProcessing: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-4 p-5 transition-all duration-300 border rounded-3xl border-white/5 bg-background/40 backdrop-blur-xl hover:bg-background/60 hover:border-primary/20 hover:shadow-xl">
+    <div className="flex flex-col gap-4 p-5 transition-all duration-300 border rounded-3xl border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary/20 hover:shadow-xl">
       <div className="flex items-center gap-4">
-        <Avatar className="w-12 h-12 border-2 shadow-sm border-background">
+        <Avatar className="w-12 h-12 border-2 shadow-sm border-white/10">
           <AvatarImage src={user.avatar} alt={user.name} />
           <AvatarFallback className="font-bold bg-muted text-muted-foreground">
             {user.name.charAt(0)}
@@ -397,7 +413,7 @@ function RequestCard({
         <Button
           variant="outline"
           size="sm"
-          className="rounded-xl border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 h-9"
+          className="rounded-xl border-white/10 bg-white/5 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 h-9"
           onClick={onDecline}
           disabled={isProcessing}
         >
@@ -431,7 +447,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
-      <div className="flex items-center justify-center w-20 h-20 mb-6 border shadow-inner rounded-3xl bg-gradient-to-br from-primary/10 to-violet-500/10 border-white/5">
+      <div className="flex items-center justify-center w-20 h-20 mb-6 border shadow-inner rounded-3xl bg-white/5 border-white/10 backdrop-blur-sm">
         <Icon className="w-10 h-10 text-primary/60" />
       </div>
       <h3 className="mb-2 text-xl font-bold text-foreground">{title}</h3>

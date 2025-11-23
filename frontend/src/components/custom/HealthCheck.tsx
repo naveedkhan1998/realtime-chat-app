@@ -96,7 +96,7 @@ export default function HealthCheck({ children }: HealthCheckProps) {
             {/* Header */}
             <div className="flex flex-col items-center mb-8 space-y-4">
               <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                <div className="absolute inset-0 rounded-full bg-primary/60 animate-ping" />
                 <div className="relative p-4 rounded-full bg-primary/10 ring-1 ring-primary/20">
                   <Server className="w-8 h-8 text-primary" />
                 </div>

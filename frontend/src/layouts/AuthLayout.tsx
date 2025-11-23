@@ -1,33 +1,23 @@
 import { Outlet, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import ThemeSwitch from '@/components/custom/ThemeSwitch';
+import { BackgroundBlobs } from '@/components/ui/background-blobs';
 
 export default function AuthLayout() {
   return (
-    <div className="relative flex items-center justify-center w-full min-h-screen p-4 overflow-hidden bg-background">
-      {/* Background Decor */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 w-full h-full -translate-x-1/2 opacity-50 left-1/2 max-w-7xl">
-          <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-[100px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-accent/5 blur-[100px]" />
-        </div>
-      </div>
+    <div className="relative flex min-h-[100dvh] w-full items-center justify-center bg-background/80 p-4 md:p-8">
+      <BackgroundBlobs />
 
-      <div className="w-full max-w-6xl">
-        <header className="absolute z-20 flex items-center gap-4 top-6 left-6 md:top-10 md:left-10">
-          <Link
-            to="/"
-            className="flex items-center gap-2 px-4 py-2 transition-colors border rounded-full text-muted-foreground hover:text-foreground bg-background/50 border-border/50 backdrop-blur-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back to Home</span>
-          </Link>
-          <ThemeSwitch
-            variant="outline"
-            className="rounded-full bg-background/50 border-border/50 backdrop-blur-sm"
-          />
-        </header>
+      <header className="absolute left-4 top-4 z-50 md:left-8 md:top-8">
+        <Link
+          to="/"
+          className="group flex items-center gap-2 rounded-full border border-white/10 bg-background/50 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-md transition-all hover:bg-background/80 hover:text-foreground hover:pr-5"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          <span>Back</span>
+        </Link>
+      </header>
 
+      <div className="relative z-10 flex w-full max-w-6xl items-center justify-center py-12 md:py-0">
         <main className="w-full">
           <Outlet />
         </main>

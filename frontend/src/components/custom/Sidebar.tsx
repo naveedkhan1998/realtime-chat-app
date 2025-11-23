@@ -76,11 +76,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
     >
       {/* Glass Container */}
-      <div className="flex flex-col w-full h-full overflow-hidden border-r rounded-none shadow-2xl lg:rounded-3xl bg-background/80 backdrop-blur-2xl lg:border border-white/10">
+      <div className="flex flex-col w-full h-full overflow-hidden border-r rounded-none shadow-2xl lg:rounded-3xl bg-background/80 backdrop-blur-2xl lg:border border-border/40">
         {/* Brand Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center overflow-hidden shadow-lg h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
+            <div className="flex items-center justify-center overflow-hidden shadow-lg h-9 w-9 rounded-xl bg-primary shadow-primary/20">
               <img
                 src="/apple-touch-icon.png"
                 alt="Logo"
@@ -126,11 +126,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* User Profile Card */}
         <div className="px-4 py-4">
-          <div className="flex items-center gap-3 p-3 border rounded-2xl bg-secondary/30 border-white/5">
+          <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border/40">
             <div className="relative">
               <Avatar className="w-10 h-10 border-2 shadow-sm border-background">
                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
-                <AvatarFallback className="font-bold bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+                <AvatarFallback className="font-bold bg-primary/10 text-primary">
                   {user.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
@@ -157,11 +157,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Search className="absolute w-4 h-4 transition-colors -translate-y-1/2 left-3 top-1/2 text-muted-foreground group-focus-within:text-primary" />
             <Input
               placeholder="Search conversations..."
-              className="h-10 transition-all border-transparent pl-9 bg-secondary/50 hover:bg-secondary/80 focus:bg-background focus:border-primary/20 rounded-xl placeholder:text-muted-foreground/70"
+              className="h-10 transition-all border-transparent pl-9 bg-muted/50 hover:bg-muted/80 focus:bg-background focus:border-primary/20 rounded-xl placeholder:text-muted-foreground/70"
             />
           </div>
 
-          <nav className="flex p-1 space-x-1 bg-secondary/30 rounded-xl">
+          <nav className="flex p-1 space-x-1 bg-muted/30 rounded-xl">
             {navItems.map(item => (
               <NavLink
                 key={item.to}
@@ -175,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     'flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                     isActive
                       ? 'bg-background text-primary shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   )
                 }
               >
@@ -192,7 +192,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavLink to="/new-chat" onClick={() => isMobile && onClose()}>
               <Button
                 variant="default"
-                className="justify-start w-full h-10 gap-2 font-semibold border shadow-none rounded-xl bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                className="justify-start w-full h-10 gap-2 font-semibold border shadow-none rounded-xl bg-primary/10 text-primary hover:bg-primary/60 border-primary/20"
               >
                 <Plus className="w-4 h-4" />
                 Start New Chat
