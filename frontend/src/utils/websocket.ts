@@ -1,10 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Message } from '@/services/chatApi';
+import { Message, ChatRoom } from '@/services/chatApi';
 
 export interface ChatMessageEvent {
   type: 'chat_message';
   message: Message;
+}
+
+export interface ChatRoomCreatedEvent {
+  type: 'chat_room_created';
+  room: ChatRoom;
 }
 
 export interface TypingStatusEvent {
@@ -112,6 +117,7 @@ export interface GlobalUserOfflineEvent {
 
 export type WebSocketEvent =
   | ChatMessageEvent
+  | ChatRoomCreatedEvent
   | TypingStatusEvent
   | ReadReceiptEvent
   | MessageUpdatedEvent

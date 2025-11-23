@@ -29,11 +29,12 @@ export default function ChatPage() {
   const dispatch = useAppDispatch();
   const accessToken = useAppSelector(state => state.auth.accessToken);
 
-  const { data: chatRooms } = useGetChatRoomsQuery(undefined, {
-    pollingInterval: 10000,
+  const { activeRoom } = useGetChatRoomsQuery(undefined, {
+    selectFromResult: ({ data }) => ({
+      activeRoom: data?.find(room => room.id === activeChat),
+    }),
   });
 
-  const activeRoom = chatRooms?.find(room => room.id === activeChat);
   const pageTitle = activeRoom
     ? `${activeRoom.name || 'Chat'} | MNK Chat`
     : 'Chat | MNK Chat';
@@ -162,7 +163,7 @@ export default function ChatPage() {
           activeChat={activeChat}
           setActiveChat={setActiveChat}
           isMobile={isMobile}
-          chatRooms={chatRooms}
+          activeRoom={activeRoom}
         />
       ) : (
         <div className="relative flex flex-col items-center justify-center h-full p-8 overflow-hidden text-center">

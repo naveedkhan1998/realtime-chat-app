@@ -202,6 +202,19 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
 
         chat_room.refresh_from_db()
         output = self.get_serializer(chat_room)
+        
+        # Broadcast chat_room_created event to all participants
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            for participant in users:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{participant.id}",
+                    {
+                        "type": "chat_room_created",
+                        "room": output.data
+                    }
+                )
+
         headers = self.get_success_headers(output.data)
         return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
 

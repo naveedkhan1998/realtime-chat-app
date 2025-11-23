@@ -3,6 +3,8 @@ import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/custom/Sidebar';
 import { cn } from '@/lib/utils';
 import { BackgroundBlobs } from '@/components/ui/background-blobs';
+import { useAppSelector } from '@/app/hooks';
+import { GlobalWebSocketService } from '@/utils/websocket';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -44,8 +46,19 @@ export default function AppShell({ isMobile }: AppShellProps) {
     description: 'Navigate your real-time collaboration hub.',
   };
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const accessToken = useAppSelector(state => state.auth.accessToken);
 
   const isMobileChatList = isMobile && location.pathname === '/chat';
+
+  useEffect(() => {
+    if (accessToken) {
+      const ws = GlobalWebSocketService.getInstance();
+      ws.connect(accessToken);
+      return () => {
+        ws.disconnect();
+      };
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     if (!isMobile) {

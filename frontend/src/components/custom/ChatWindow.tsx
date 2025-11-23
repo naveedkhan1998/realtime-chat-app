@@ -24,7 +24,7 @@ interface ChatWindowProps {
   activeChat: number;
   setActiveChat: (chatId: number | undefined) => void;
   isMobile: boolean;
-  chatRooms: ChatRoom[] | undefined;
+  activeRoom: ChatRoom | undefined;
 }
 
 const emptyMessages: Message[] = [];
@@ -37,7 +37,7 @@ export default function ChatWindow({
   activeChat,
   setActiveChat,
   isMobile,
-  chatRooms,
+  activeRoom,
 }: ChatWindowProps) {
   const dispatch = useAppDispatch();
   const shouldAutoScrollRef = useRef(true);
@@ -82,18 +82,14 @@ export default function ChatWindow({
     Record<number, any>
   >({});
 
-  const scrollToBottom = useCallback(
-    () => {
-      // Handled by Virtuoso or passed down if needed
-      // For now, we can rely on Virtuoso's followOutput
-    },
-    []
-  );
+  const scrollToBottom = useCallback(() => {
+    // Handled by Virtuoso or passed down if needed
+    // For now, we can rely on Virtuoso's followOutput
+  }, []);
 
-  const activeRoom = chatRooms?.find(chat => chat.id === activeChat);
-  const otherParticipant =
-    (activeRoom?.participants.find(participant => participant.id !== user.id) ||
-    user) as UserProfile;
+  const otherParticipant = (activeRoom?.participants.find(
+    participant => participant.id !== user.id
+  ) || user) as UserProfile;
 
   const extractCursor = useCallback((url: string | null) => {
     if (!url) return null;
@@ -199,91 +195,114 @@ export default function ChatWindow({
     );
   }, []);
 
-  const checkConnectionStats = useCallback(async (pc: RTCPeerConnection, peerId: number) => {
-    try {
-      const stats = await pc.getStats();
-      let activePair: any = null;
-      const candidatePairs: any[] = [];
+  const checkConnectionStats = useCallback(
+    async (pc: RTCPeerConnection, peerId: number) => {
+      try {
+        const stats = await pc.getStats();
+        let activePair: any = null;
+        const candidatePairs: any[] = [];
 
-      stats.forEach(report => {
-        if (report.type === 'transport' && report.selectedCandidatePairId) {
-          activePair = stats.get(report.selectedCandidatePairId);
-        }
-        if (report.type === 'candidate-pair') {
-          const local = stats.get(report.localCandidateId);
-          const remote = stats.get(report.remoteCandidateId);
-          candidatePairs.push({
-            id: report.id,
-            state: report.state,
-            selected: report.selected,
-            local: local ? {
-              type: local.candidateType,
-              protocol: local.protocol,
-              address: `${local.address || local.ip}:${local.port}`,
-              url: local.url
-            } : null,
-            remote: remote ? {
-              type: remote.candidateType,
-              protocol: remote.protocol,
-              address: `${remote.address || remote.ip}:${remote.port}`,
-              type_preference: remote.priority
-            } : null
-          });
-        }
-      });
-
-      if (!activePair) {
         stats.forEach(report => {
-          if (report.type === 'candidate-pair' && report.selected) {
-            activePair = report;
+          if (report.type === 'transport' && report.selectedCandidatePairId) {
+            activePair = stats.get(report.selectedCandidatePairId);
+          }
+          if (report.type === 'candidate-pair') {
+            const local = stats.get(report.localCandidateId);
+            const remote = stats.get(report.remoteCandidateId);
+            candidatePairs.push({
+              id: report.id,
+              state: report.state,
+              selected: report.selected,
+              local: local
+                ? {
+                    type: local.candidateType,
+                    protocol: local.protocol,
+                    address: `${local.address || local.ip}:${local.port}`,
+                    url: local.url,
+                  }
+                : null,
+              remote: remote
+                ? {
+                    type: remote.candidateType,
+                    protocol: remote.protocol,
+                    address: `${remote.address || remote.ip}:${remote.port}`,
+                    type_preference: remote.priority,
+                  }
+                : null,
+            });
           }
         });
-      }
 
-      if (activePair) {
-        const localCandidate = stats.get(activePair.localCandidateId);
-        const remoteCandidate = stats.get(activePair.remoteCandidateId);
-        let type = 'Unknown';
-
-        if (
-          localCandidate?.candidateType === 'relay' ||
-          remoteCandidate?.candidateType === 'relay'
-        ) {
-          type = 'Twilio TURN';
-        } else if (
-          localCandidate?.candidateType === 'srflx' ||
-          remoteCandidate?.candidateType === 'srflx'
-        ) {
-          if (localCandidate?.url) {
-            if (localCandidate.url.includes('google')) type = 'Google STUN';
-            else if (localCandidate.url.includes('twilio')) type = 'Twilio STUN';
-            else type = 'STUN';
-          } else {
-            type = 'STUN';
-          }
-        } else if (
-          localCandidate?.candidateType === 'host' &&
-          remoteCandidate?.candidateType === 'host'
-        ) {
-          type = 'Direct (LAN)';
+        if (!activePair) {
+          stats.forEach(report => {
+            if (report.type === 'candidate-pair' && report.selected) {
+              activePair = report;
+            }
+          });
         }
 
-        setConnectionDetails(prev => ({
-          ...prev,
-          [peerId]: {
-            type,
-            activePair: {
-              local: localCandidate,
-              remote: remoteCandidate
-            },
-            candidatePairs
+        if (activePair) {
+          const localCandidate = stats.get(activePair.localCandidateId);
+          const remoteCandidate = stats.get(activePair.remoteCandidateId);
+          let type = 'Unknown';
+
+          const localType = localCandidate?.candidateType;
+          const remoteType = remoteCandidate?.candidateType;
+
+          if (localType === 'relay' || remoteType === 'relay') {
+            type = 'Twilio TURN';
+          } else if (localType === 'host' && remoteType === 'host') {
+            type = 'Direct (LAN)';
+          } else if (
+            localType === 'srflx' ||
+            remoteType === 'srflx' ||
+            localType === 'prflx' ||
+            remoteType === 'prflx'
+          ) {
+            if (localCandidate?.url) {
+              if (localCandidate.url.includes('google')) type = 'Google STUN';
+              else if (localCandidate.url.includes('twilio'))
+                type = 'Twilio STUN';
+              else type = 'STUN';
+            } else {
+              // We are likely 'host' or 'prflx' without a URL, but remote is public/reflexive
+              type = 'NAT Traversal (P2P)';
+            }
+          } else {
+            type = `${localType} ↔ ${remoteType}`;
           }
-        }));
+
+          setConnectionDetails(prev => ({
+            ...prev,
+            [peerId]: {
+              type,
+              activePair: {
+                local: localCandidate,
+                remote: remoteCandidate,
+              },
+              candidatePairs,
+            },
+          }));
+        }
+      } catch (e) {
+        console.error('Error checking stats:', e);
       }
-    } catch (e) {
-      console.error('Error checking stats:', e);
-    }
-  }, []);
+    },
+    []
+  );
+
+  // Poll for stats updates to handle race conditions and state changes
+  useEffect(() => {
+    if (!isHuddleActive) return;
+    const interval = setInterval(() => {
+      peersRef.current.forEach((pc, peerId) => {
+        if (pc.connectionState === 'connected') {
+          checkConnectionStats(pc, peerId);
+        }
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isHuddleActive, checkConnectionStats]);
 
   const ensurePeerConnection = useCallback(
     (peerId: number, initiator: boolean) => {

@@ -569,6 +569,12 @@ class GlobalConsumer(AsyncWebsocketConsumer):
             "user_id": event["user_id"]
         }))
 
+    async def chat_room_created(self, event):
+        await self.send(json.dumps({
+            "type": "chat_room_created",
+            "room": event["room"]
+        }))
+
     @database_sync_to_async
     def set_global_presence(self, is_online: bool):
         conn = get_redis_connection("default")
