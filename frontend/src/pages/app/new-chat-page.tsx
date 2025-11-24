@@ -20,7 +20,6 @@ import {
   MessageSquarePlus,
   Sparkles,
   Globe,
-  Mail,
   UserPlus,
   ArrowLeft,
 } from 'lucide-react';
@@ -162,10 +161,6 @@ export default function NewChatPage() {
                     <h3 className="text-sm font-semibold truncate text-foreground">
                       {candidate.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
-                      <Mail className="w-3 h-3 opacity-70" />
-                      {candidate.email}
-                    </p>
                   </div>
                   <Button
                     size="sm"

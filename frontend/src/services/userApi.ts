@@ -9,12 +9,18 @@ export interface UserProfile {
   name: string;
 }
 
+export interface User {
+  id: number;
+  avatar: string;
+  name: string;
+}
+
 export const userApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     getUserProfile: builder.query<UserProfile, void>({
       query: () => 'accounts/profile/',
     }),
-    searchUsers: builder.query<UserProfile[], { query: string }>({
+    searchUsers: builder.query<User[], { query: string }>({
       query: ({ query }) =>
         `accounts/users/?search=${encodeURIComponent(query)}`,
       providesTags: ['Users'],

@@ -31,7 +31,6 @@ import {
   Sparkles,
   Users2,
   Shield,
-  Mail,
   Check,
   X,
   ArrowLeft,
@@ -371,10 +370,6 @@ function FriendCard({ user, action }: { user: User; action?: ReactNode }) {
         <h3 className="text-base font-semibold truncate text-foreground">
           {user.name}
         </h3>
-        <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
-          <Mail className="w-3 h-3 opacity-70" />
-          {user.email}
-        </p>
       </div>
       {action}
     </div>

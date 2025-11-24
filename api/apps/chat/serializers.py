@@ -18,7 +18,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "name", "email", "avatar"]
+        fields = ["id", "name", "avatar"]
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):
