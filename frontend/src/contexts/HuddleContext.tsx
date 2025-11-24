@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -8,7 +8,11 @@ import React, {
   ReactNode,
 } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { HuddleWebSocketService, HuddleSignalEvent, HuddleParticipantsEvent } from '@/utils/websocket';
+import {
+  HuddleWebSocketService,
+  HuddleSignalEvent,
+  HuddleParticipantsEvent,
+} from '@/utils/websocket';
 import { useGetIceServersQuery } from '@/services/chatApi';
 import { setHuddleParticipants } from '@/features/chatSlice';
 
@@ -47,10 +51,10 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
   const [huddleChatId, setHuddleChatId] = useState<number | null>(null);
   const user = useAppSelector(state => state.auth.user);
   const accessToken = useAppSelector(state => state.auth.accessToken);
-  
+
   // We need to access the participants of the *huddle chat*, not necessarily the active chat.
-  const huddleParticipants = useAppSelector(state => 
-    huddleChatId ? state.chat.huddleParticipants[huddleChatId] ?? [] : []
+  const huddleParticipants = useAppSelector(state =>
+    huddleChatId ? (state.chat.huddleParticipants[huddleChatId] ?? []) : []
   );
 
   const { data: iceServers } = useGetIceServersQuery();
@@ -78,16 +82,18 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const ws = HuddleWebSocketService.getInstance();
     const handleParticipants = (event: HuddleParticipantsEvent) => {
-        if (huddleChatId) {
-            dispatch(setHuddleParticipants({
-                chatRoomId: huddleChatId,
-                participants: event.participants
-            }));
-        }
+      if (huddleChatId) {
+        dispatch(
+          setHuddleParticipants({
+            chatRoomId: huddleChatId,
+            participants: event.participants,
+          })
+        );
+      }
     };
     ws.on('huddle_participants', handleParticipants);
     return () => {
-        ws.off('huddle_participants', handleParticipants);
+      ws.off('huddle_participants', handleParticipants);
     };
   }, [huddleChatId, dispatch]);
 
@@ -262,53 +268,38 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     [iceServers, refreshRemoteStreams, checkConnectionStats]
   );
 
-  const startHuddle = useCallback(async (chatId: number) => {
-    if (isHuddleActive) return;
-    if (!user || !accessToken) return;
+  const startHuddle = useCallback(
+    async (chatId: number) => {
+      if (isHuddleActive) return;
+      if (!user || !accessToken) return;
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localStreamRef.current = stream;
-      if (localAudioRef.current) {
-        localAudioRef.current.srcObject = stream;
-      }
-      
-      // Connect the Huddle WebSocket
-      const ws = HuddleWebSocketService.getInstance();
-      ws.connect(chatId, accessToken);
-      
-      setIsHuddleActive(true);
-      setHuddleChatId(chatId);
-      huddleJoinTimeRef.current = Date.now();
-      
-      // Wait a bit for connection to establish? 
-      // Actually connectSocket is async in nature but returns void. 
-      // We can send the join event. If socket is not ready, it might fail or queue?
-      // BaseWebSocketService checks readyState.
-      
-      // We might need to wait for 'open' event, but for now let's assume it connects quickly 
-      // or we rely on the fact that we might already be connected if we were in the chat.
-      // But wait, HuddleWebSocketService is a NEW connection.
-      
-      // Let's add a small delay or retry mechanism for the join event if needed.
-      // Or better, listen for 'open' in the service. 
-      // For now, let's just try sending it.
-      
-      // Actually, we should probably wait for the socket to be open.
-      // But BaseWebSocketService doesn't expose a promise for connection.
-      
-      // Let's just send it. If it fails, the user might need to retry.
-      // Ideally we should wait for connection.
-      
-      setTimeout(() => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        localStreamRef.current = stream;
+        if (localAudioRef.current) {
+          localAudioRef.current.srcObject = stream;
+        }
+
+        // Connect the Huddle WebSocket
+        const ws = HuddleWebSocketService.getInstance();
+        ws.connect(chatId, accessToken);
+
+        setIsHuddleActive(true);
+        setHuddleChatId(chatId);
+        huddleJoinTimeRef.current = Date.now();
+
+        setTimeout(() => {
           ws.sendHuddleJoin();
-      }, 500); // Small delay to allow connection
-
-    } catch (error) {
-      console.error('❌ Failed to start huddle:', error);
-      alert('Failed to access microphone.');
-    }
-  }, [isHuddleActive, user, accessToken]);
+        }, 500); // Small delay to allow connection
+      } catch (error) {
+        console.error('❌ Failed to start huddle:', error);
+        alert('Failed to access microphone.');
+      }
+    },
+    [isHuddleActive, user, accessToken]
+  );
 
   const stopHuddle = useCallback(() => {
     if (isHuddleActive) {
@@ -369,13 +360,13 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isHuddleActive || !localStreamRef.current || !user) return;
-    
+
     huddleParticipants.forEach(participant => {
       if (participant.id === user.id) return;
       const initiator = user.id < participant.id;
       ensurePeerConnection(participant.id, initiator);
     });
-    
+
     peersRef.current.forEach((pc, peerId) => {
       if (!huddleParticipants.some(participant => participant.id === peerId)) {
         pc.close();
@@ -397,24 +388,13 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     if (!isHuddleActive || !user) return;
     const timeSinceJoin = Date.now() - huddleJoinTimeRef.current;
     if (timeSinceJoin < 2000) return;
-    
-    // If we are the only one in the huddle participants list (or it's empty/undefined)
-    // But wait, huddleParticipants includes us? 
-    // The backend usually broadcasts the full list.
-    
+
     if (
       huddleParticipants &&
       huddleParticipants.length > 0 &&
       !huddleParticipants.some(participant => participant.id === user.id)
     ) {
-       // If we are NOT in the participants list, something is wrong, or we were kicked/disconnected?
-       // Or maybe the list hasn't updated yet.
-       // The original logic was:
-       // !huddleParticipants.some(participant => participant.id === user.id)
-       // This means "I am not in the list".
-       
-       // If I am not in the list, I should probably leave.
-       stopHuddle();
+      stopHuddle();
     }
   }, [huddleParticipants, isHuddleActive, stopHuddle, user]);
 
