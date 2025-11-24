@@ -70,12 +70,24 @@ const chatSlice = createSlice({
 
       // Logic for reconciling optimistic updates
       if (message.id > 0) {
-        // Find a matching optimistic message (id < 0)
+        // 1. Try to match by client_id (Deterministic & Robust)
+        if (message.client_id) {
+          const optimisticMatchIndex = state.messages[chatRoomId].findIndex(
+            m => m.client_id === message.client_id && m.id < 0
+          );
+          if (optimisticMatchIndex !== -1) {
+            state.messages[chatRoomId][optimisticMatchIndex] = message;
+            return;
+          }
+        }
+
+        // 2. Fallback: Match by sender + content/attachment (Heuristic)
+        // We match if sender is same AND (content is same OR both have attachments)
         const optimisticMatchIndex = state.messages[chatRoomId].findIndex(
           m =>
             m.id < 0 &&
-            m.content === message.content &&
-            m.sender.id === message.sender.id
+            m.sender.id === message.sender.id &&
+            (m.content === message.content || (m.attachment && message.attachment))
         );
 
         if (optimisticMatchIndex !== -1) {

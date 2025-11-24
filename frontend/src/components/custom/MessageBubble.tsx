@@ -5,6 +5,7 @@ import { Message, User } from '@/services/chatApi';
 import { cn, getAvatarUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, CheckCheck, Clock } from 'lucide-react';
+import { MessageAttachment } from './chat-page/MessageAttachment';
 
 interface MessageBubbleProps {
   message: Message;
@@ -37,7 +38,8 @@ function MessageBubble({
   const timestamp = new Date(message.timestamp);
   const updatedTime = new Date(message.updated_at);
   const formattedTime = format(timestamp, 'HH:mm');
-  const edited = updatedTime.getTime() !== timestamp.getTime();
+  // Only show edited if the difference is more than 1 second (1000ms) to account for server processing time
+  const edited = updatedTime.getTime() - timestamp.getTime() > 1000;
   const isPending = message.id < 0;
 
   return (
@@ -82,7 +84,7 @@ function MessageBubble({
           </span>
         )}
 
-        <div className="relative group/bubble max-w-full">
+        <div className="relative max-w-full group/bubble">
           <div
             className={cn(
               'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
@@ -98,6 +100,14 @@ function MessageBubble({
               !isSent && !showAvatar && 'rounded-bl-xl' // No tail for middle received
             )}
           >
+            {message.attachment && (
+              <div className="mb-2">
+                <MessageAttachment 
+                  url={message.attachment} 
+                  type={message.attachment_type as any}
+                />
+              </div>
+            )}
             <p
               className={cn(
                 'whitespace-pre-wrap leading-relaxed break-words',
@@ -146,20 +156,20 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border shadow-sm"
+                    className="border rounded-full shadow-sm h-7 w-7 hover:bg-background/50 hover:text-primary backdrop-blur-sm border-border"
                     onClick={() => onEdit(message)}
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="w-3 h-3" />
                   </Button>
                 )}
                 {onDelete && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border shadow-sm"
+                    className="border rounded-full shadow-sm h-7 w-7 hover:bg-destructive/10 hover:text-destructive backdrop-blur-sm border-border"
                     onClick={() => onDelete(message)}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="w-3 h-3" />
                   </Button>
                 )}
               </>

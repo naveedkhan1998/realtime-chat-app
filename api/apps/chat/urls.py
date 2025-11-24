@@ -9,6 +9,7 @@ from .views import (
     TypingStatusViewSet,
     NotificationViewSet,
     get_ice_servers,
+    get_upload_url,
 )
 
 router = DefaultRouter()
@@ -25,4 +26,5 @@ router.register(r"notifications", NotificationViewSet, basename="notification")
 urlpatterns = [
     path("", include(router.urls)),
     path("ice-servers/", get_ice_servers, name="ice-servers"),
+    path("upload-url/", get_upload_url, name="upload-url"),
 ]

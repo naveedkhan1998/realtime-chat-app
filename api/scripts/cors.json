@@ -1,0 +1,14 @@
+[
+    {
+      "origin": [
+        "http://localhost:5173",
+        "https://chat-frontend.mnaveedk.com",
+        "https://chat.mnaveedk.com",
+        "http://localhost:8000",
+        "https://chat-backend.mnaveedk.com"
+      ],
+      "method": ["GET", "PUT", "POST", "OPTIONS", "HEAD"],
+      "responseHeader": ["Content-Type", "x-goog-resumable", "Authorization", "x-goog-acl", "x-goog-content-length-range"],
+      "maxAgeSeconds": 3600
+    }
+]

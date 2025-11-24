@@ -60,6 +60,10 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    attachment = models.FileField(
+        upload_to="attachments/", null=True, blank=True
+    )
+    attachment_type = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         indexes = [

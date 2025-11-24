@@ -58,7 +58,7 @@ export default function AuthInitializer() {
   }, [userData, error, dispatch]);
 
   useEffect(() => {
-    if (accessToken && user) {
+    if (accessToken) {
       const ws = GlobalWebSocketService.getInstance();
       ws.connect(accessToken);
 
@@ -82,10 +82,15 @@ export default function AuthInitializer() {
         ws.off('global.online_users', handleOnlineUsers);
         ws.off('global.user_online', handleUserOnline);
         ws.off('global.user_offline', handleUserOffline);
-        ws.disconnect();
       };
     }
-  }, [accessToken, user, dispatch]);
+  }, [accessToken, dispatch]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      GlobalWebSocketService.getInstance().disconnect();
+    }
+  }, [accessToken]);
 
   return null;
 }
