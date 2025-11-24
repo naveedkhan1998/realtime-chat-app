@@ -464,10 +464,6 @@ export class GlobalWebSocketService extends BaseWebSocketService {
   }
 
   connect(token: string) {
-    if (this.isConnected()) {
-      return;
-    }
-
     const baseUrl = import.meta.env.VITE_BASE_API_URL;
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socketUrl = `${protocol}://${baseUrl}/ws/global/?token=${token}`;
