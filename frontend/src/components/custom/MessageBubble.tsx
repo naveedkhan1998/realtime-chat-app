@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, User } from '@/services/chatApi';
 import { cn, getAvatarUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, CheckCheck, Clock, Paperclip } from 'lucide-react';
+import { Pencil, Trash2, CheckCheck, Clock } from 'lucide-react';
+import { MessageAttachment } from './chat-page/MessageAttachment';
 
 interface MessageBubbleProps {
   message: Message;
@@ -83,7 +84,7 @@ function MessageBubble({
           </span>
         )}
 
-        <div className="relative group/bubble max-w-full">
+        <div className="relative max-w-full group/bubble">
           <div
             className={cn(
               'relative px-4 py-2.5 text-sm shadow-sm transition-all duration-200 overflow-hidden',
@@ -101,29 +102,10 @@ function MessageBubble({
           >
             {message.attachment && (
               <div className="mb-2">
-                {message.attachment_type === 'image' || (!message.attachment_type && message.attachment.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) ? (
-                  <img
-                    src={message.attachment}
-                    alt="Attachment"
-                    className="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => window.open(message.attachment, '_blank')}
-                    style={{ maxHeight: '300px' }}
-                  />
-                ) : (
-                  <a
-                    href={message.attachment}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 bg-background/20 rounded-md hover:bg-background/30 transition-colors"
-                  >
-                    <Paperclip className="w-4 h-4" />
-                    <span className="text-xs underline">
-                        {message.attachment_type === 'video' ? 'Download Video' : 
-                         message.attachment_type === 'audio' ? 'Download Audio' : 
-                         'Download Attachment'}
-                    </span>
-                  </a>
-                )}
+                <MessageAttachment 
+                  url={message.attachment} 
+                  type={message.attachment_type as any}
+                />
               </div>
             )}
             <p
@@ -174,20 +156,20 @@ function MessageBubble({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-background/50 hover:text-primary rounded-full backdrop-blur-sm border border-border shadow-sm"
+                    className="border rounded-full shadow-sm h-7 w-7 hover:bg-background/50 hover:text-primary backdrop-blur-sm border-border"
                     onClick={() => onEdit(message)}
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="w-3 h-3" />
                   </Button>
                 )}
                 {onDelete && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive rounded-full backdrop-blur-sm border border-border shadow-sm"
+                    className="border rounded-full shadow-sm h-7 w-7 hover:bg-destructive/10 hover:text-destructive backdrop-blur-sm border-border"
                     onClick={() => onDelete(message)}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="w-3 h-3" />
                   </Button>
                 )}
               </>

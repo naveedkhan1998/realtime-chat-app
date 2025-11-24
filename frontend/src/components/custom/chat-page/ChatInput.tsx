@@ -1,4 +1,4 @@
-import { Paperclip, Send, Smile, X, Image as ImageIcon, FileText } from 'lucide-react';
+import { Paperclip, Send, Smile, Image as ImageIcon, FileText } from 'lucide-react';
 import { UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,8 @@ interface ChatInputProps {
   onSendMessage: (message: string, file?: File) => void;
 }
 
+import { AttachmentPreview } from './AttachmentPreview';
+
 export default function ChatInput({
   register,
   watch,
@@ -40,7 +42,6 @@ export default function ChatInput({
   const { ref: registerRef, ...restRegister } = register('message');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { theme } = useTheme();
 
   // Auto-resize textarea
@@ -59,10 +60,7 @@ export default function ChatInput({
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     // Validate size (2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('File size must be less than 2MB');
@@ -88,16 +86,32 @@ export default function ChatInput({
     }
 
     setSelectedFile(processedFile);
-    const url = URL.createObjectURL(processedFile);
-    setPreviewUrl(url);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          await processFile(file);
+          return;
+        }
+      }
+    }
   };
 
   const clearFile = () => {
     setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
     if (imageInputRef.current) imageInputRef.current.value = '';
     if (docInputRef.current) docInputRef.current.value = '';
   };
@@ -146,7 +160,7 @@ export default function ChatInput({
 
         {/* Emoji Picker */}
         {showEmojiPicker && (
-          <div className="absolute bottom-full left-0 mb-2 z-50">
+          <div className="absolute left-0 z-50 mb-2 bottom-full">
             <EmojiPicker
               onEmojiClick={onEmojiClick}
               theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
@@ -156,32 +170,9 @@ export default function ChatInput({
         )}
 
         {/* File Preview */}
-        {previewUrl && (
-          <div className="absolute bottom-full left-0 mb-2 p-2 bg-background/80 backdrop-blur-md rounded-lg border border-border shadow-lg">
-            <div className="relative">
-              {selectedFile?.type.startsWith('image/') ? (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="h-20 w-auto rounded-md object-cover"
-                />
-              ) : (
-                <div className="flex items-center gap-2 p-2">
-                  <Paperclip className="w-4 h-4" />
-                  <span className="text-xs max-w-[150px] truncate">
-                    {selectedFile?.name}
-                  </span>
-                </div>
-              )}
-              <Button
-                size="icon"
-                variant="destructive"
-                className="absolute -top-2 -right-2 h-5 w-5 rounded-full"
-                onClick={clearFile}
-              >
-                <X className="w-3 h-3" />
-              </Button>
-            </div>
+        {selectedFile && (
+          <div className="absolute left-0 z-10 mb-2 bottom-full">
+            <AttachmentPreview file={selectedFile} onRemove={clearFile} />
           </div>
         )}
 
@@ -217,11 +208,11 @@ export default function ChatInput({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem onClick={() => imageInputRef.current?.click()}>
-                <ImageIcon className="mr-2 h-4 w-4" />
+                <ImageIcon className="w-4 h-4 mr-2" />
                 <span>Image or Video</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => docInputRef.current?.click()}>
-                <FileText className="mr-2 h-4 w-4" />
+                <FileText className="w-4 h-4 mr-2" />
                 <span>Document</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -234,6 +225,7 @@ export default function ChatInput({
               textareaRef.current = e;
             }}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder="Type a message..."
             className="flex-1 min-h-[44px] max-h-[200px] py-3 px-2 border-0 bg-transparent focus:ring-0 focus:outline-none placeholder:text-muted-foreground/50 resize-none text-base leading-relaxed scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
             autoComplete="off"
