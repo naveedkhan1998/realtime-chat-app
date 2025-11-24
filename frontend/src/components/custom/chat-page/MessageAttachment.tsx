@@ -203,7 +203,7 @@ export function MessageAttachment({
             </div>
           </div>
         </DialogTrigger>
-                <DialogContent className="max-w-screen w-screen h-screen max-h-screen p-0 bg-transparent border-none shadow-none [&>button]:hidden">
+        <DialogContent className="max-w-none w-screen h-[100dvh] p-0 bg-transparent border-none shadow-none [&>button]:hidden top-0 left-0 translate-x-0 translate-y-0">
           <DialogTitle className="hidden">Image Preview</DialogTitle>
           <ImageViewer src={url} onClose={() => setIsOpen(false)} />
         </DialogContent>

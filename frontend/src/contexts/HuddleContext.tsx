@@ -289,10 +289,6 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         setIsHuddleActive(true);
         setHuddleChatId(chatId);
         huddleJoinTimeRef.current = Date.now();
-
-        setTimeout(() => {
-          ws.sendHuddleJoin();
-        }, 500); // Small delay to allow connection
       } catch (error) {
         console.error('❌ Failed to start huddle:', error);
         alert('Failed to access microphone.');
@@ -383,11 +379,10 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     user,
   ]);
 
-  // Auto-leave if alone for too long
   useEffect(() => {
     if (!isHuddleActive || !user) return;
     const timeSinceJoin = Date.now() - huddleJoinTimeRef.current;
-    if (timeSinceJoin < 2000) return;
+    if (timeSinceJoin < 5000) return;
 
     if (
       huddleParticipants &&

@@ -600,6 +600,9 @@ class HuddleConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.user_group, self.channel_name)
         await self.accept()
 
+        # Auto-join huddle on connection
+        await self.handle_huddle_join()
+
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.chat_room_group_name, self.channel_name
