@@ -143,8 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Check participants (for DMs and Groups)
     return room.participants.some(p => 
       p.id !== user.id && 
-      (p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
-       p.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+      p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
     );
   }).sort((a, b) => {
     const getOnlineCount = (room: ChatRoom) => {
