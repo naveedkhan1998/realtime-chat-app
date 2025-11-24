@@ -13,6 +13,7 @@ import ErrorToast from './components/custom/ErrorToast';
 import AuthInitializer from './components/custom/AuthInitializer';
 import HealthCheck from './components/custom/HealthCheck';
 import { ThemeProvider } from './components/providers/ThemeProvider';
+import { HuddleProvider } from './contexts/HuddleContext';
 
 import LoginPage from './pages/auth/login-page';
 import { useAppSelector } from './app/hooks';
@@ -67,7 +68,13 @@ const App: React.FC = () => {
                 />
               </Route>
               <Route element={<PrivateRoute />}>
-                <Route element={<AppShell isMobile={isMobile} />}>
+                <Route
+                  element={
+                    <HuddleProvider>
+                      <AppShell isMobile={isMobile} />
+                    </HuddleProvider>
+                  }
+                >
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/chat/:chatId" element={<ChatPage />} />
                   {/* <Route path="/friends" element={<FriendsPage />} /> */}

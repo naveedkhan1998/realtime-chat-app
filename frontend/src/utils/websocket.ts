@@ -420,33 +420,6 @@ export class WebSocketService extends BaseWebSocketService {
   sendCursorUpdate(cursor: { start: number; end: number }) {
     this.send({ type: 'cursor_update', cursor });
   }
-
-  sendHuddleJoin() {
-    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_join event');
-    this.send({ type: 'huddle_join' });
-  }
-
-  sendHuddleLeave() {
-    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_leave event');
-    this.send({ type: 'huddle_leave' });
-  }
-
-  requestHuddleState() {
-    if (import.meta.env.DEV)
-      console.log('🎙️ Requesting huddle state (lazy load)');
-    this.send({ type: 'request_huddle_state' });
-  }
-
-  sendHuddleSignal(
-    targetId: number,
-    payload: {
-      type: 'offer' | 'answer' | 'candidate';
-      sdp?: RTCSessionDescriptionInit;
-      candidate?: RTCIceCandidateInit;
-    }
-  ) {
-    this.send({ type: 'huddle_signal', target_id: targetId, payload });
-  }
 }
 
 export class GlobalWebSocketService extends BaseWebSocketService {
@@ -469,5 +442,62 @@ export class GlobalWebSocketService extends BaseWebSocketService {
     const socketUrl = `${protocol}://${baseUrl}/ws/global/?token=${token}`;
 
     this.connectSocket(socketUrl);
+  }
+}
+
+export class HuddleWebSocketService extends BaseWebSocketService {
+  private static instance: HuddleWebSocketService;
+  private currentChatRoomId: number | null = null;
+
+  private constructor() {
+    super();
+  }
+
+  static getInstance() {
+    if (!HuddleWebSocketService.instance) {
+      HuddleWebSocketService.instance = new HuddleWebSocketService();
+    }
+    return HuddleWebSocketService.instance;
+  }
+
+  connect(chatRoomId: number, token: string) {
+    if (this.currentChatRoomId === chatRoomId && this.isConnected()) {
+      if (import.meta.env.DEV)
+        console.log('Already connected to this huddle room');
+      return;
+    }
+
+    const baseUrl = import.meta.env.VITE_BASE_API_URL;
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socketUrl = `${protocol}://${baseUrl}/ws/huddle/${chatRoomId}/?token=${token}`;
+
+    this.currentChatRoomId = chatRoomId;
+    this.connectSocket(socketUrl);
+  }
+
+  disconnect() {
+    super.disconnect();
+    this.currentChatRoomId = null;
+  }
+
+  sendHuddleJoin() {
+    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_join event (Huddle Service)');
+    this.send({ type: 'huddle_join' });
+  }
+
+  sendHuddleLeave() {
+    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_leave event (Huddle Service)');
+    this.send({ type: 'huddle_leave' });
+  }
+
+  sendHuddleSignal(
+    targetId: number,
+    payload: {
+      type: 'offer' | 'answer' | 'candidate';
+      sdp?: RTCSessionDescriptionInit;
+      candidate?: RTCIceCandidateInit;
+    }
+  ) {
+    this.send({ type: 'huddle_signal', target_id: targetId, payload });
   }
 }

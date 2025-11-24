@@ -97,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {"type": "presence_update", "action": "leave", "user": removed},
             )
         await self.clear_typing_state()
-        await self.leave_huddle()
+        # await self.leave_huddle()  <-- Removed from ChatConsumer
 
     async def receive(self, text_data: str):
         data = json.loads(text_data)
@@ -115,12 +115,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.handle_collab_update(data.get("content"))
         elif event_type == "cursor_update":
             await self.handle_cursor_update(data.get("cursor"))
-        elif event_type == "huddle_join":
-            await self.handle_huddle_join()
-        elif event_type == "huddle_leave":
-            await self.handle_huddle_leave()
-        elif event_type == "huddle_signal":
-            await self.handle_huddle_signal(data)
+        # Huddle events moved to HuddleConsumer, but we keep them here for backward compatibility
+        # or if the frontend sends them to the wrong socket (though we should fix frontend).
+        # Actually, if we remove them, the old frontend code might break if it's not updated.
+        # But we are updating the frontend.
+        # However, ChatConsumer still needs to handle 'huddle_participants' broadcast reception.
+
+        # We can remove the handlers for huddle_join/leave/signal from here to enforce separation.
+        # But let's keep receive logic clean.
 
     async def handle_send_message(self, content: Optional[str]):
         if not content or not content.strip():
@@ -155,8 +157,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             else:
                 # User is offline -> Create persistent notification
                 await self.create_notification(
-                    user_id=participant_id,
-                    content=f"New message from {self.user.name}"
+                    user_id=participant_id, content=f"New message from {self.user.name}"
                 )
 
     async def handle_edit_message(
@@ -269,10 +270,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     json.dumps({"type": "chat_message", "message": message_data})
                 )
             else:
-                print(f"Warning: chat_message event missing payload/message: {event.keys()}")
+                print(
+                    f"Warning: chat_message event missing payload/message: {event.keys()}"
+                )
         except Exception as e:
             print(f"Error sending chat_message: {e}")
             import traceback
+
             traceback.print_exc()
 
     async def message_updated(self, event):
@@ -286,7 +290,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def message_deleted(self, event):
         try:
             await self.send(
-                json.dumps({"type": "message_deleted", "message_id": event["message_id"]})
+                json.dumps(
+                    {"type": "message_deleted", "message_id": event["message_id"]}
+                )
             )
         except Exception as e:
             print(f"Error sending message_deleted: {e}")
@@ -390,17 +396,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         pipeline.hset(key, self.user.id, json.dumps(payload))
         pipeline.expire(key, PRESENCE_TTL)
         pipeline.execute()
-        
+
         # Optimization: If too many users, return only count and a sample
         all_users = conn.hvals(key)
         total_count = len(all_users)
-        
+
         if total_count > 50:
-             # Return top 50 to avoid huge payloads
-             users = [json.loads(value) for value in all_users[:50]]
-             return {"count": total_count, "users": users, "truncated": True}
-        
-        return {"count": total_count, "users": [json.loads(value) for value in all_users], "truncated": False}
+            # Return top 50 to avoid huge payloads
+            users = [json.loads(value) for value in all_users[:50]]
+            return {"count": total_count, "users": users, "truncated": True}
+
+        return {
+            "count": total_count,
+            "users": [json.loads(value) for value in all_users],
+            "truncated": False,
+        }
 
     @database_sync_to_async
     def remove_presence(self) -> Optional[Dict[str, Any]]:
@@ -410,7 +420,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if removed is not None:
             conn.hdel(key, self.user.id)
         return json.loads(removed) if removed else None
-
 
     @database_sync_to_async
     def clear_typing_state(self):
@@ -571,6 +580,132 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return conn.sismember(key, user_id)
 
 
+class HuddleConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.chat_room_id = int(self.scope["url_route"]["kwargs"]["chat_room_id"])
+        self.chat_room_group_name = f"chat_{self.chat_room_id}"
+        self.user = self.scope["user"]
+        self.user_group = f"user_{self.user.id}"
+
+        if not self.user.is_authenticated:
+            await self.close(code=4001)
+            return
+
+        # Verify participation
+        if not await self.is_participant():
+            await self.close(code=4003)
+            return
+
+        await self.channel_layer.group_add(self.chat_room_group_name, self.channel_name)
+        await self.channel_layer.group_add(self.user_group, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.chat_room_group_name, self.channel_name
+        )
+        await self.channel_layer.group_discard(self.user_group, self.channel_name)
+        await self.leave_huddle()
+
+    async def receive(self, text_data: str):
+        data = json.loads(text_data)
+        event_type = data.get("type")
+
+        if event_type == "huddle_join":
+            await self.handle_huddle_join()
+        elif event_type == "huddle_leave":
+            await self.handle_huddle_leave()
+        elif event_type == "huddle_signal":
+            await self.handle_huddle_signal(data)
+
+    async def handle_huddle_join(self):
+        participants = await self.add_huddle_participant()
+        await self.channel_layer.group_send(
+            self.chat_room_group_name,
+            {"type": "huddle_participants", "participants": participants},
+        )
+
+    async def handle_huddle_leave(self):
+        participants = await self.remove_huddle_participant()
+        await self.channel_layer.group_send(
+            self.chat_room_group_name,
+            {
+                "type": "huddle_participants",
+                "participants": participants if participants is not None else [],
+            },
+        )
+
+    async def leave_huddle(self):
+        participants = await self.remove_huddle_participant()
+        if participants is not None:
+            await self.channel_layer.group_send(
+                self.chat_room_group_name,
+                {"type": "huddle_participants", "participants": participants},
+            )
+
+    async def handle_huddle_signal(self, data: Dict[str, Any]):
+        target_id = data.get("target_id")
+        payload = data.get("payload")
+        if not isinstance(target_id, int) or payload is None:
+            return
+        await self.channel_layer.group_send(
+            f"user_{target_id}",
+            {
+                "type": "huddle_signal",
+                "from": {"id": self.user.id, "name": self.user.name},
+                "payload": payload,
+            },
+        )
+
+    async def huddle_participants(self, event):
+        await self.send(
+            json.dumps(
+                {"type": "huddle_participants", "participants": event["participants"]}
+            )
+        )
+
+    async def huddle_signal(self, event):
+        await self.send(
+            json.dumps(
+                {
+                    "type": "huddle_signal",
+                    "from": event["from"],
+                    "payload": event["payload"],
+                }
+            )
+        )
+
+    @database_sync_to_async
+    def is_participant(self):
+        return ChatRoom.objects.filter(
+            id=self.chat_room_id, participants__id=self.user.id
+        ).exists()
+
+    @database_sync_to_async
+    def add_huddle_participant(self):
+        conn = get_redis_connection("default")
+        key = f"chat:huddle:{self.chat_room_id}"
+        payload = json.dumps({"id": self.user.id, "name": self.user.name})
+        pipeline = conn.pipeline(True)
+        pipeline.hset(key, self.user.id, payload)
+        pipeline.expire(key, HUDDLE_TTL)
+        pipeline.execute()
+        return [json.loads(value.decode()) for value in conn.hvals(key)]
+
+    @database_sync_to_async
+    def remove_huddle_participant(self):
+        conn = get_redis_connection("default")
+        key = f"chat:huddle:{self.chat_room_id}"
+        if not conn.hexists(key, self.user.id):
+            return None
+        pipeline = conn.pipeline(True)
+        pipeline.hdel(key, self.user.id)
+        pipeline.expire(key, HUDDLE_TTL)
+        pipeline.execute()
+        values = conn.hvals(key)
+        return [json.loads(value.decode()) for value in values]
+
+
 class GlobalConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
@@ -580,28 +715,23 @@ class GlobalConsumer(AsyncWebsocketConsumer):
 
         self.user_group = f"user_{self.user.id}"
         self.global_group = "global_presence"
-        
+
         await self.channel_layer.group_add(self.user_group, self.channel_name)
         await self.channel_layer.group_add(self.global_group, self.channel_name)
-        
+
         await self.accept()
-        
+
         # Mark as globally online and get current list
         online_users = await self.set_global_presence(True)
-        
+
         # Send initial list to self
-        await self.send(json.dumps({
-            "type": "global.online_users",
-            "online_users": online_users
-        }))
-        
+        await self.send(
+            json.dumps({"type": "global.online_users", "online_users": online_users})
+        )
+
         # Broadcast join to others
         await self.channel_layer.group_send(
-            self.global_group,
-            {
-                "type": "global.user_online",
-                "user_id": self.user.id
-            }
+            self.global_group, {"type": "global.user_online", "user_id": self.user.id}
         )
 
     async def disconnect(self, close_code):
@@ -610,61 +740,63 @@ class GlobalConsumer(AsyncWebsocketConsumer):
 
         if hasattr(self, "user_group"):
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
-        
+
         if hasattr(self, "global_group"):
             await self.channel_layer.group_discard(self.global_group, self.channel_name)
-        
+
         await self.set_global_presence(False)
-        
+
         # Broadcast leave
         if hasattr(self, "global_group"):
             await self.channel_layer.group_send(
                 self.global_group,
-                {
-                    "type": "global.user_offline",
-                    "user_id": self.user.id
-                }
+                {"type": "global.user_offline", "user_id": self.user.id},
             )
 
     async def receive(self, text_data):
         pass
 
     async def huddle_signal(self, event):
-        await self.send(json.dumps({
-            "type": "huddle_signal",
-            "from": event["from"],
-            "payload": event["payload"]
-        }))
-        
+        await self.send(
+            json.dumps(
+                {
+                    "type": "huddle_signal",
+                    "from": event["from"],
+                    "payload": event["payload"],
+                }
+            )
+        )
+
     async def global_user_online(self, event):
         if event["user_id"] == self.user.id:
             return
-        await self.send(json.dumps({
-            "type": "global.user_online",
-            "user_id": event["user_id"]
-        }))
+        await self.send(
+            json.dumps({"type": "global.user_online", "user_id": event["user_id"]})
+        )
 
     async def global_user_offline(self, event):
         if event["user_id"] == self.user.id:
             return
-        await self.send(json.dumps({
-            "type": "global.user_offline",
-            "user_id": event["user_id"]
-        }))
+        await self.send(
+            json.dumps({"type": "global.user_offline", "user_id": event["user_id"]})
+        )
 
     async def chat_room_created(self, event):
-        await self.send(json.dumps({
-            "type": "chat_room_created",
-            "room": event["room"]
-        }))
+        await self.send(
+            json.dumps({"type": "chat_room_created", "room": event["room"]})
+        )
 
     async def new_message_notification(self, event):
-        await self.send(json.dumps({
-            "type": "new_message_notification",
-            "chat_room_id": event["chat_room_id"],
-            "sender_id": event["sender_id"],
-            "sender_name": event.get("sender_name")
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "new_message_notification",
+                    "chat_room_id": event["chat_room_id"],
+                    "sender_id": event["sender_id"],
+                    "sender_name": event.get("sender_name"),
+                }
+            )
+        )
 
     @database_sync_to_async
     def set_global_presence(self, is_online: bool):
@@ -674,8 +806,7 @@ class GlobalConsumer(AsyncWebsocketConsumer):
             conn.sadd(key, self.user.id)
         else:
             conn.srem(key, self.user.id)
-        
+
         # Return list of online users (IDs)
         # Convert bytes to int
         return [int(uid) for uid in conn.smembers(key)]
-
