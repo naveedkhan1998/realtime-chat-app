@@ -6,6 +6,8 @@ import {
   ChatRoom,
   useLazyGetMessagesPageQuery,
   useGetIceServersQuery,
+  useSendMessageMutation,
+  useGetUploadUrlMutation,
 } from '@/services/chatApi';
 import { WebSocketService, type HuddleSignalEvent } from '@/utils/websocket';
 import { UserProfile } from '@/services/userApi';
@@ -63,6 +65,8 @@ export default function ChatWindow({
   const { register, handleSubmit, reset, setValue, watch } = useForm<{
     message: string;
   }>();
+  const [sendMessageMutation] = useSendMessageMutation();
+  const [getUploadUrl] = useGetUploadUrlMutation();
   const [fetchMessagesPage] = useLazyGetMessagesPageQuery();
   const { data: iceServers } = useGetIceServersQuery();
   const [initialLoading, setInitialLoading] = useState(false);
@@ -558,10 +562,11 @@ export default function ChatWindow({
     });
   }, [huddleParticipants, activeRoom]);
 
-  const onSubmit = handleSubmit(({ message }) => {
+  const handleSendMessage = async (message: string, file?: File) => {
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !file) return;
     const ws = WebSocketService.getInstance();
+
     if (editingMessage) {
       if (trimmed !== editingMessage.content.trim()) {
         ws.sendEditMessage(editingMessage.id, trimmed);
@@ -573,23 +578,100 @@ export default function ChatWindow({
 
     // Optimistic update
     const tempId = -Date.now();
+    const clientId = crypto.randomUUID(); // Generate a unique client ID
+    let optimisticAttachmentUrl: string | undefined;
+    let optimisticAttachmentType: 'image' | 'file' | undefined;
+
+    if (file) {
+        optimisticAttachmentUrl = URL.createObjectURL(file);
+        optimisticAttachmentType = file.type.startsWith('image/') ? 'image' : 'file';
+    }
+
     const optimisticMessage: Message = {
-      id: tempId,
-      chat_room: activeChat,
-      sender: user,
-      content: trimmed,
-      timestamp: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+        id: tempId,
+        chat_room: activeChat,
+        sender: user,
+        content: trimmed || (file ? 'Sent an attachment' : ''),
+        timestamp: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        attachment: optimisticAttachmentUrl,
+        attachment_type: optimisticAttachmentType,
+        client_id: clientId,
     };
+    
     dispatch(
-      addMessage({ chatRoomId: activeChat, message: optimisticMessage })
+        addMessage({ chatRoomId: activeChat, message: optimisticMessage })
     );
     shouldAutoScrollRef.current = true;
 
-    ws.sendMessage(trimmed);
+    if (file) {
+      try {
+        // 1. Try to get a signed URL
+        const { url, key } = await getUploadUrl({
+          filename: file.name,
+          content_type: file.type,
+        }).unwrap();
+
+        // 2. Upload to GCS directly
+        await fetch(url, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
+        });
+
+        // 3. Send message with attachment key
+        const formData = new FormData();
+        formData.append('chat_room', activeChat.toString());
+        formData.append('content', trimmed || 'Sent an attachment');
+        formData.append('attachment_key', key);
+        formData.append('client_id', clientId);
+
+        await sendMessageMutation(formData).unwrap();
+
+      } catch (error: any) {
+        // Fallback to direct upload if Signed URL fails (e.g. local dev or 501)
+        if (error?.status === 400 || error?.status === 501) {
+           const formData = new FormData();
+           formData.append('chat_room', activeChat.toString());
+           formData.append('content', trimmed || 'Sent an attachment');
+           formData.append('client_id', clientId);
+           // Ensure filename is passed explicitly to FormData
+           if (file.name) {
+             formData.append('attachment', file, file.name);
+           } else {
+             formData.append('attachment', file);
+           }
+           
+           try {
+             await sendMessageMutation(formData).unwrap();
+           } catch (fallbackError) {
+             console.error('Failed to send message with attachment (fallback)', fallbackError);
+           }
+        } else {
+           console.error('Failed to upload file or get signed URL', error);
+        }
+      }
+    } else {
+      // Send text message with client_id
+      const formData = new FormData();
+      formData.append('chat_room', activeChat.toString());
+      formData.append('content', trimmed);
+      formData.append('client_id', clientId);
+      
+      // We use FormData here to be consistent, or we can update the mutation to accept object with client_id
+      // Since sendMessageMutation accepts Partial<Message> | FormData, let's use object for text
+      await sendMessageMutation({
+          chat_room: activeChat,
+          content: trimmed,
+          client_id: clientId,
+      }).unwrap();
+    }
+
     shouldAutoScrollRef.current = true;
     reset();
-  });
+  };
 
   return (
     <>
@@ -635,10 +717,12 @@ export default function ChatWindow({
 
         <ChatInput
           register={register}
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit(() => {})}
           watch={watch}
+          setValue={setValue}
           editingMessage={editingMessage}
           typingUsers={typingUsers as any}
+          onSendMessage={handleSendMessage}
         />
 
         <DeleteMessageDialog

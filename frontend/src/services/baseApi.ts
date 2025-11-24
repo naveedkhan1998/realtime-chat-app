@@ -93,11 +93,21 @@ const baseQueryWithReauth: BaseQueryFn<
 
 const getErrorMessage = (error: FetchBaseQueryError): string => {
   if ('status' in error) {
-    const data = error.data as { errors?: Record<string, string[]> };
-    if (data && data.errors) {
-      // Extract error messages from the 'errors' key
-      const errorMessages = extractErrorMessages(data.errors);
-      return errorMessages.join('\n');
+    const data = error.data as any;
+    if (data) {
+      if (data.errors) {
+        // Extract error messages from the 'errors' key
+        const errorMessages = extractErrorMessages(data.errors);
+        return errorMessages.join('\n');
+      }
+      // Check for 'detail' (DRF standard)
+      if (data.detail) {
+        return data.detail;
+      }
+      // Check for 'message' (Generic)
+      if (data.message) {
+        return data.message;
+      }
     }
     return 'An unknown server error occurred.';
   }

@@ -34,8 +34,11 @@ export interface Message {
   chat_room: number;
   sender: User;
   content: string;
+  attachment?: string;
+  attachment_type?: 'image' | 'video' | 'audio' | 'file';
   timestamp: string;
   updated_at: string;
+  client_id?: string;
 }
 
 export interface MessageReadReceipt {
@@ -146,15 +149,21 @@ export const chatApi = baseApi.injectEndpoints({
         { type: 'Messages', id: arg.chat_room_id },
       ],
     }),
-    sendMessage: builder.mutation<Message, Partial<Message>>({
+    sendMessage: builder.mutation<Message, Partial<Message> | FormData>({
       query: body => ({
         url: 'chat/messages/',
         method: 'POST',
         body,
       }),
-      invalidatesTags: (_result, _error, arg) => [
-        { type: 'Messages', id: arg.chat_room },
-      ],
+      invalidatesTags: (_result, _error, arg) => {
+        let chatRoomId;
+        if (arg instanceof FormData) {
+          chatRoomId = arg.get('chat_room');
+        } else {
+          chatRoomId = arg.chat_room;
+        }
+        return [{ type: 'Messages', id: Number(chatRoomId) }];
+      },
     }),
 
     // Message Read Receipts
@@ -207,6 +216,14 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Notifications'],
     }),
+
+    // Upload URL
+    getUploadUrl: builder.mutation<{ url: string; key: string }, { filename: string; content_type: string }>({
+      query: (params) => ({
+        url: `chat/upload-url/?filename=${params.filename}&content_type=${params.content_type}`,
+        method: 'GET',
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -228,4 +245,5 @@ export const {
   useGetNotificationsQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
+  useGetUploadUrlMutation,
 } = chatApi;

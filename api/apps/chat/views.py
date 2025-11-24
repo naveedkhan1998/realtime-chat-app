@@ -10,6 +10,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import os
 from twilio.rest import Client
+from django.conf import settings
 
 from .models import (
     ChatRoom,
@@ -82,6 +83,63 @@ def get_ice_servers(request):
     #     )
 
     return Response(ice_servers)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_upload_url(request):
+    """
+    Generates a signed URL for uploading files directly to GCS.
+    If not using GCS, returns a 400 Bad Request indicating direct upload is not supported.
+    """
+    if not settings.DEBUG and settings.GS_BUCKET_NAME:
+        try:
+            from google.cloud import storage
+            import datetime
+
+            bucket_name = settings.GS_BUCKET_NAME
+            filename = request.query_params.get("filename")
+            content_type = request.query_params.get("content_type")
+
+            if not filename or not content_type:
+                return Response(
+                    {"detail": "filename and content_type are required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Generate a unique filename
+            import uuid
+            ext = filename.split(".")[-1]
+            uuid_name = uuid.uuid4()
+            blob_name = f"media/attachments/{uuid_name}.{ext}"
+            django_key = f"attachments/{uuid_name}.{ext}"
+
+            storage_client = storage.Client(credentials=settings.GS_CREDENTIALS)
+            bucket = storage_client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+
+            url = blob.generate_signed_url(
+                version="v4",
+                expiration=datetime.timedelta(minutes=15),
+                method="PUT",
+                content_type=content_type,
+            )
+
+            return Response({"url": url, "key": django_key})
+        except ImportError:
+             return Response(
+                {"detail": "Google Cloud Storage libraries not installed."},
+                status=status.HTTP_501_NOT_IMPLEMENTED,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    return Response(
+        {"detail": "Direct upload not supported in this environment."},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 ### Friend Request Views ###
@@ -267,7 +325,28 @@ class MessageViewSet(viewsets.ModelViewSet):
         chat_room = serializer.validated_data["chat_room"]
         if not chat_room.participants.filter(id=self.request.user.id).exists():
             raise PermissionDenied("You are not a participant in this chat room.")
-        serializer.save(sender=self.request.user)
+        
+        # Capture client_id from the initial data (it was popped in serializer.create)
+        client_id = serializer.initial_data.get("client_id")
+        
+        message = serializer.save(sender=self.request.user)
+        
+        # Prepare payload
+        data = MessageSerializer(
+            message, context=self.get_serializer_context()
+        ).data
+        
+        # Inject client_id back into the response payload for optimistic reconciliation
+        if client_id:
+            data["client_id"] = client_id
+
+        self._broadcast_message_event(
+            message.chat_room_id,
+            "chat_message",
+            {
+                "payload": data
+            },
+        )
 
     def perform_update(self, serializer):
         instance = self.get_object()

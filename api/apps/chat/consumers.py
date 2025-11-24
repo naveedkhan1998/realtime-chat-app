@@ -261,19 +261,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        await self.send(
-            json.dumps({"type": "chat_message", "message": event["payload"]})
-        )
+        try:
+            # Handle both 'payload' (new format) and 'message' (old format/fallback)
+            message_data = event.get("payload") or event.get("message")
+            if message_data:
+                await self.send(
+                    json.dumps({"type": "chat_message", "message": message_data})
+                )
+            else:
+                print(f"Warning: chat_message event missing payload/message: {event.keys()}")
+        except Exception as e:
+            print(f"Error sending chat_message: {e}")
+            import traceback
+            traceback.print_exc()
 
     async def message_updated(self, event):
-        await self.send(
-            json.dumps({"type": "message_updated", "message": event["message"]})
-        )
+        try:
+            await self.send(
+                json.dumps({"type": "message_updated", "message": event["message"]})
+            )
+        except Exception as e:
+            print(f"Error sending message_updated: {e}")
 
     async def message_deleted(self, event):
-        await self.send(
-            json.dumps({"type": "message_deleted", "message_id": event["message_id"]})
-        )
+        try:
+            await self.send(
+                json.dumps({"type": "message_deleted", "message_id": event["message_id"]})
+            )
+        except Exception as e:
+            print(f"Error sending message_deleted: {e}")
 
     async def typing_status(self, event):
         await self.send(

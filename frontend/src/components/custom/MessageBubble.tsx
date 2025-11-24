@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, User } from '@/services/chatApi';
 import { cn, getAvatarUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, CheckCheck, Clock } from 'lucide-react';
+import { Pencil, Trash2, CheckCheck, Clock, Paperclip } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -37,7 +37,8 @@ function MessageBubble({
   const timestamp = new Date(message.timestamp);
   const updatedTime = new Date(message.updated_at);
   const formattedTime = format(timestamp, 'HH:mm');
-  const edited = updatedTime.getTime() !== timestamp.getTime();
+  // Only show edited if the difference is more than 1 second (1000ms) to account for server processing time
+  const edited = updatedTime.getTime() - timestamp.getTime() > 1000;
   const isPending = message.id < 0;
 
   return (
@@ -98,6 +99,33 @@ function MessageBubble({
               !isSent && !showAvatar && 'rounded-bl-xl' // No tail for middle received
             )}
           >
+            {message.attachment && (
+              <div className="mb-2">
+                {message.attachment_type === 'image' || (!message.attachment_type && message.attachment.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) ? (
+                  <img
+                    src={message.attachment}
+                    alt="Attachment"
+                    className="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => window.open(message.attachment, '_blank')}
+                    style={{ maxHeight: '300px' }}
+                  />
+                ) : (
+                  <a
+                    href={message.attachment}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-background/20 rounded-md hover:bg-background/30 transition-colors"
+                  >
+                    <Paperclip className="w-4 h-4" />
+                    <span className="text-xs underline">
+                        {message.attachment_type === 'video' ? 'Download Video' : 
+                         message.attachment_type === 'audio' ? 'Download Audio' : 
+                         'Download Attachment'}
+                    </span>
+                  </a>
+                )}
+              </div>
+            )}
             <p
               className={cn(
                 'whitespace-pre-wrap leading-relaxed break-words',
