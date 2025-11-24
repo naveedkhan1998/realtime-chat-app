@@ -142,64 +142,163 @@ export type WebSocketEvent =
   | GlobalUserOfflineEvent
   | NewMessageNotificationEvent;
 
-export class WebSocketService {
-  private static instance: WebSocketService;
-  private socket: WebSocket | null = null;
-  private callbacks: { [key: string]: Array<(data: any) => void> } = {};
-  private currentChatRoomId: number | null = null;
+abstract class BaseWebSocketService {
+  protected socket: WebSocket | null = null;
+  protected callbacks: { [key: string]: Array<(data: any) => void> } = {};
+  protected reconnectAttempts = 0;
+  protected maxReconnectAttempts = 10;
+  protected baseReconnectInterval = 1000;
+  protected reconnectTimer: NodeJS.Timeout | null = null;
+  protected isExplicitlyDisconnected = false;
+  protected url: string | null = null;
+  protected pingInterval: NodeJS.Timeout | null = null;
 
-  private constructor() {}
-
-  static getInstance() {
-    if (!WebSocketService.instance) {
-      WebSocketService.instance = new WebSocketService();
-    }
-    return WebSocketService.instance;
+  constructor() {
+    this.setupWindowListeners();
   }
 
-  connect(chatRoomId: number, token: string) {
-    if (this.socket && this.currentChatRoomId === chatRoomId) {
-      if (import.meta.env.DEV) console.log('Already connected to this chat room');
+  protected setupWindowListeners() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        if (!this.socket && !this.isExplicitlyDisconnected && this.url) {
+          if (import.meta.env.DEV)
+            console.log('🌐 Network online, reconnecting...');
+          this.reconnect();
+        }
+      });
+
+      window.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          if (!this.socket && !this.isExplicitlyDisconnected && this.url) {
+            if (import.meta.env.DEV)
+              console.log('👁️ App visible, checking connection...');
+            this.reconnect();
+          }
+        }
+      });
+    }
+  }
+
+  protected connectSocket(url: string) {
+    // If we are already connected/connecting to the SAME url, do nothing.
+    if (this.socket && this.url === url) {
+      if (
+        this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING
+      ) {
+        return;
+      }
+    }
+
+    this.url = url;
+    this.isExplicitlyDisconnected = false;
+
+    if (this.socket) {
+      this.socket.onclose = null; // Prevent triggering reconnect for the old socket
+      this.socket.close();
+      this.socket = null;
+    }
+
+    try {
+      this.socket = new WebSocket(url);
+
+      this.socket.onopen = () => {
+        if (import.meta.env.DEV) console.log(`✅ WebSocket connected`);
+        this.reconnectAttempts = 0;
+        this.startHeartbeat();
+        this.onOpen();
+      };
+
+      this.socket.onmessage = event => {
+        try {
+          const data = JSON.parse(event.data);
+          this.handleSocketMessage(data);
+        } catch (e) {
+          console.error('Error parsing WebSocket message:', e);
+        }
+      };
+
+      this.socket.onclose = event => {
+        this.stopHeartbeat();
+        if (import.meta.env.DEV)
+          console.log(`❌ WebSocket disconnected code=${event.code}`);
+        this.socket = null;
+        this.onClose();
+
+        if (!this.isExplicitlyDisconnected) {
+          this.scheduleReconnect();
+        }
+      };
+
+      this.socket.onerror = error => {
+        console.error('WebSocket error:', error);
+      };
+    } catch (err) {
+      console.error('Failed to create WebSocket:', err);
+      this.scheduleReconnect();
+    }
+  }
+
+  protected scheduleReconnect() {
+    if (this.reconnectTimer) return;
+
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('Max reconnect attempts reached. Giving up.');
       return;
     }
 
-    // Disconnect the existing WebSocket connection if switching chat rooms
-    this.disconnect();
+    const delay = Math.min(
+      this.baseReconnectInterval * Math.pow(1.5, this.reconnectAttempts),
+      30000
+    );
 
-    const baseUrl = import.meta.env.VITE_BASE_API_URL;
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const socketUrl = `${protocol}://${baseUrl}/ws/chat/${chatRoomId}/?token=${token}`;
+    if (import.meta.env.DEV)
+      console.log(
+        `🔄 Reconnecting in ${delay}ms (Attempt ${this.reconnectAttempts + 1})`
+      );
 
-    this.socket = new WebSocket(socketUrl);
-    this.currentChatRoomId = chatRoomId;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.reconnectAttempts++;
+      if (this.url) {
+        this.connectSocket(this.url);
+      }
+    }, delay);
+  }
 
-    this.socket.onopen = () => {
-      if (import.meta.env.DEV) console.log('WebSocket connected');
-    };
-
-    this.socket.onmessage = event => {
-      const data: WebSocketEvent = JSON.parse(event.data);
-      this.handleSocketMessage(data);
-    };
-
-    this.socket.onclose = () => {
-      if (import.meta.env.DEV) console.log('WebSocket disconnected');
-      this.socket = null;
-      this.currentChatRoomId = null;
-    };
-
-    this.socket.onerror = error => {
-      console.error('WebSocket error:', error);
-    };
+  protected reconnect() {
+    if (this.url) {
+      this.connectSocket(this.url);
+    }
   }
 
   disconnect() {
+    this.isExplicitlyDisconnected = true;
+    this.stopHeartbeat();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.socket) {
-      this.socket.onclose = null; // Prevent triggering onclose twice
+      this.socket.onclose = null;
       this.socket.close();
       this.socket = null;
-      this.currentChatRoomId = null;
-      if (import.meta.env.DEV) console.log('WebSocket disconnected manually');
+    }
+    this.url = null;
+    if (import.meta.env.DEV) console.log('🛑 WebSocket disconnected manually');
+  }
+
+  protected startHeartbeat() {
+    this.stopHeartbeat();
+    this.pingInterval = setInterval(() => {
+      this.send({ type: 'ping' });
+    }, 30000);
+  }
+
+  protected stopHeartbeat() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
     }
   }
 
@@ -209,88 +308,16 @@ export class WebSocketService {
 
   send(data: any) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
+      try {
+        this.socket.send(JSON.stringify(data));
+      } catch (e) {
+        console.error('WebSocket send error:', e);
+      }
     } else {
-      // Only log in non-production to avoid noise during development StrictMode
       if (import.meta.env.DEV) {
         console.warn('WebSocket is not open. Cannot send data');
       }
     }
-  }
-
-  sendMessage(content: string) {
-    const data = {
-      type: 'send_message',
-      content,
-    };
-    this.send(data);
-  }
-
-  sendTypingStatus(isTyping: boolean) {
-    const data = {
-      type: 'typing',
-      is_typing: isTyping,
-    };
-    this.send(data);
-  }
-
-  sendReadReceipt(messageId: number) {
-    const data = {
-      type: 'read_receipt',
-      message_id: messageId,
-    };
-    this.send(data);
-  }
-
-  sendEditMessage(messageId: number, content: string) {
-    const data = {
-      type: 'edit_message',
-      message_id: messageId,
-      content,
-    };
-    this.send(data);
-  }
-
-  sendDeleteMessage(messageId: number) {
-    const data = {
-      type: 'delete_message',
-      message_id: messageId,
-    };
-    this.send(data);
-  }
-
-  sendCollaborativeNote(content: string) {
-    this.send({ type: 'collab_update', content });
-  }
-
-  sendCursorUpdate(cursor: { start: number; end: number }) {
-    this.send({ type: 'cursor_update', cursor });
-  }
-
-  sendHuddleJoin() {
-    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_join event');
-    this.send({ type: 'huddle_join' });
-  }
-
-  sendHuddleLeave() {
-    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_leave event');
-    this.send({ type: 'huddle_leave' });
-  }
-
-  requestHuddleState() {
-    if (import.meta.env.DEV) console.log('🎙️ Requesting huddle state (lazy load)');
-    this.send({ type: 'request_huddle_state' });
-  }
-
-  sendHuddleSignal(
-    targetId: number,
-    payload: {
-      type: 'offer' | 'answer' | 'candidate';
-      sdp?: RTCSessionDescriptionInit;
-      candidate?: RTCIceCandidateInit;
-    }
-  ) {
-    this.send({ type: 'huddle_signal', target_id: targetId, payload });
   }
 
   on<T extends WebSocketEvent>(
@@ -317,22 +344,117 @@ export class WebSocketService {
     }
   }
 
-  private handleSocketMessage(data: WebSocketEvent) {
+  protected handleSocketMessage(data: WebSocketEvent) {
     const eventType = data.type;
-    if (import.meta.env.DEV) console.log('📨 WebSocket received:', eventType, data);
+    if (import.meta.env.DEV && eventType !== ('ping' as any))
+      console.log('📨 WebSocket received:', eventType);
 
     if (this.callbacks[eventType]) {
       this.callbacks[eventType].forEach(callback => callback(data));
     }
   }
+
+  protected onOpen() {}
+  protected onClose() {}
 }
 
-export class GlobalWebSocketService {
-  private static instance: GlobalWebSocketService;
-  private socket: WebSocket | null = null;
-  private callbacks: { [key: string]: Array<(data: any) => void> } = {};
+export class WebSocketService extends BaseWebSocketService {
+  private static instance: WebSocketService;
+  private currentChatRoomId: number | null = null;
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
+
+  static getInstance() {
+    if (!WebSocketService.instance) {
+      WebSocketService.instance = new WebSocketService();
+    }
+    return WebSocketService.instance;
+  }
+
+  connect(chatRoomId: number, token: string) {
+    if (this.currentChatRoomId === chatRoomId && this.isConnected()) {
+      if (import.meta.env.DEV)
+        console.log('Already connected to this chat room');
+      return;
+    }
+
+    const baseUrl = import.meta.env.VITE_BASE_API_URL;
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socketUrl = `${protocol}://${baseUrl}/ws/chat/${chatRoomId}/?token=${token}`;
+
+    this.currentChatRoomId = chatRoomId;
+    this.connectSocket(socketUrl);
+  }
+
+  disconnect() {
+    super.disconnect();
+    this.currentChatRoomId = null;
+  }
+
+  sendMessage(content: string) {
+    this.send({ type: 'send_message', content });
+  }
+
+  sendTypingStatus(isTyping: boolean) {
+    this.send({ type: 'typing', is_typing: isTyping });
+  }
+
+  sendReadReceipt(messageId: number) {
+    this.send({ type: 'read_receipt', message_id: messageId });
+  }
+
+  sendEditMessage(messageId: number, content: string) {
+    this.send({ type: 'edit_message', message_id: messageId, content });
+  }
+
+  sendDeleteMessage(messageId: number) {
+    this.send({ type: 'delete_message', message_id: messageId });
+  }
+
+  sendCollaborativeNote(content: string) {
+    this.send({ type: 'collab_update', content });
+  }
+
+  sendCursorUpdate(cursor: { start: number; end: number }) {
+    this.send({ type: 'cursor_update', cursor });
+  }
+
+  sendHuddleJoin() {
+    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_join event');
+    this.send({ type: 'huddle_join' });
+  }
+
+  sendHuddleLeave() {
+    if (import.meta.env.DEV) console.log('🎙️ Sending huddle_leave event');
+    this.send({ type: 'huddle_leave' });
+  }
+
+  requestHuddleState() {
+    if (import.meta.env.DEV)
+      console.log('🎙️ Requesting huddle state (lazy load)');
+    this.send({ type: 'request_huddle_state' });
+  }
+
+  sendHuddleSignal(
+    targetId: number,
+    payload: {
+      type: 'offer' | 'answer' | 'candidate';
+      sdp?: RTCSessionDescriptionInit;
+      candidate?: RTCIceCandidateInit;
+    }
+  ) {
+    this.send({ type: 'huddle_signal', target_id: targetId, payload });
+  }
+}
+
+export class GlobalWebSocketService extends BaseWebSocketService {
+  private static instance: GlobalWebSocketService;
+
+  private constructor() {
+    super();
+  }
 
   static getInstance() {
     if (!GlobalWebSocketService.instance) {
@@ -342,7 +464,7 @@ export class GlobalWebSocketService {
   }
 
   connect(token: string) {
-    if (this.socket) {
+    if (this.isConnected()) {
       return;
     }
 
@@ -350,59 +472,6 @@ export class GlobalWebSocketService {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socketUrl = `${protocol}://${baseUrl}/ws/global/?token=${token}`;
 
-    this.socket = new WebSocket(socketUrl);
-
-    this.socket.onopen = () => {
-      if (import.meta.env.DEV) console.log('Global WebSocket connected');
-    };
-
-    this.socket.onmessage = event => {
-      const data: WebSocketEvent = JSON.parse(event.data);
-      this.handleSocketMessage(data);
-    };
-
-    this.socket.onclose = () => {
-      if (import.meta.env.DEV) console.log('Global WebSocket disconnected');
-      this.socket = null;
-    };
-
-    this.socket.onerror = error => {
-      console.error('Global WebSocket error:', error);
-    };
-  }
-
-  disconnect() {
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
-  }
-
-  on<T extends WebSocketEvent>(
-    eventType: T['type'],
-    callback: (data: any) => void
-  ): void {
-    if (!this.callbacks[eventType]) {
-      this.callbacks[eventType] = [];
-    }
-    this.callbacks[eventType].push(callback);
-  }
-
-  off<T extends WebSocketEvent>(
-    eventType: T['type'],
-    callback: (data: any) => void
-  ): void {
-    if (this.callbacks[eventType]) {
-      this.callbacks[eventType] = this.callbacks[eventType].filter(
-        cb => cb !== callback
-      );
-    }
-  }
-
-  private handleSocketMessage(data: WebSocketEvent) {
-    const eventType = data.type;
-    if (this.callbacks[eventType]) {
-      this.callbacks[eventType].forEach(callback => callback(data));
-    }
+    this.connectSocket(socketUrl);
   }
 }
