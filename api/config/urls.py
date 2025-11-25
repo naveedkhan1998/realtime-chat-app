@@ -32,6 +32,8 @@ urlpatterns = (
         path("admin/", admin.site.urls, name="admin"),
         path("api/accounts/", include("apps.accounts.urls")),
         path("api/chat/", include("apps.chat.urls")),
+        # HTMX Frontend Routes
+        path("", include("apps.chat.urls_htmx")),
     ]
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

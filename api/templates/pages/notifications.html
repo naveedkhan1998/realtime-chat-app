@@ -1,0 +1,80 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Notifications - Chat App{% endblock %}
+{% block mobile_title %}Notifications{% endblock %}
+
+{% block main_content %}
+<div id="main-content" class="flex-1 flex flex-col bg-white dark:bg-gray-800">
+    <!-- Header -->
+    <header class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div>
+            <h1 class="font-semibold text-lg">Notifications</h1>
+            {% if unread_count > 0 %}
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ unread_count }} unread</p>
+            {% endif %}
+        </div>
+        
+        {% if notifications %}
+        <button hx-post="{% url 'htmx:mark_all_notifications_read' %}"
+                hx-swap="none"
+                class="text-sm text-primary-600 hover:text-primary-700">
+            Mark all as read
+        </button>
+        {% endif %}
+    </header>
+    
+    <!-- Notifications List -->
+    <div class="flex-1 overflow-y-auto scrollbar-thin">
+        {% for notification in notifications %}
+        <div id="notification-{{ notification.id }}"
+             class="flex items-start gap-3 px-4 py-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors {% if not notification.is_read %}bg-primary-50 dark:bg-primary-900/10{% endif %}">
+            
+            <!-- Icon based on notification type -->
+            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                {% if notification.notification_type == 'message' %}
+                bg-blue-100 dark:bg-blue-900/30
+                {% elif notification.notification_type == 'friend_request' %}
+                bg-green-100 dark:bg-green-900/30
+                {% else %}
+                bg-gray-100 dark:bg-gray-700
+                {% endif %}">
+                {% if notification.notification_type == 'message' %}
+                <i data-lucide="message-circle" class="w-5 h-5 text-blue-600"></i>
+                {% elif notification.notification_type == 'friend_request' %}
+                <i data-lucide="user-plus" class="w-5 h-5 text-green-600"></i>
+                {% else %}
+                <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
+                {% endif %}
+            </div>
+            
+            <div class="flex-1 min-w-0">
+                <p class="text-gray-900 dark:text-white">
+                    {{ notification.message }}
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {{ notification.created_at|timesince }} ago
+                </p>
+            </div>
+            
+            {% if not notification.is_read %}
+            <button hx-post="{% url 'htmx:mark_notification_read' notification.id %}"
+                    hx-target="#notification-{{ notification.id }}"
+                    hx-swap="outerHTML"
+                    class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    title="Mark as read">
+                <i data-lucide="check" class="w-4 h-4 text-gray-500"></i>
+            </button>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="bell-off" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400">No notifications yet</p>
+            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">We'll notify you when something happens</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

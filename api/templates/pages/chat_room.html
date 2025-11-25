@@ -1,0 +1,300 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}{{ room_name }} - Chat App{% endblock %}
+{% block mobile_title %}{{ room_name }}{% endblock %}
+
+{% block main_content %}
+<div class="flex-1 flex overflow-hidden h-full" 
+     x-data="chatRoom({{ room.id }})"
+     @edit-message.window="startEdit($event.detail.id, $event.detail.content)">
+    
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col min-w-0 h-full">
+        <!-- Chat Header -->
+        <header class="hidden lg:flex flex-shrink-0 items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-4">
+                {% if room.is_group_chat %}
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5 text-white"></i>
+                </div>
+                {% else %}
+                {% with other_user=room.other_participant %}
+                {% if other_user.avatar %}
+                <img src="{{ other_user.avatar.url }}" alt="{{ other_user.name }}" class="w-10 h-10 rounded-full object-cover">
+                {% else %}
+                <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                    <span class="text-primary-600 dark:text-primary-400 font-semibold">
+                        {{ other_user.name|slice:":1"|upper }}
+                    </span>
+                </div>
+                {% endif %}
+                {% endwith %}
+                {% endif %}
+                
+                <div>
+                    <h2 class="font-semibold text-gray-900 dark:text-white">{{ room_name }}</h2>
+                    <p id="typing-status" class="text-sm text-gray-500 dark:text-gray-400">
+                        <span id="online-status" {% if not room.is_group_chat and room.other_participant %}data-user-id="{{ room.other_participant.id }}"{% endif %}>
+                            {% if not room.is_group_chat and room.other_participant.id in online_users %}
+                            <span class="text-green-500">● Online</span>
+                            {% else %}
+                            <span>Offline</span>
+                            {% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Voice Huddle Button -->
+                <button @click="toggleHuddle()"
+                        :class="inHuddle ? 'bg-red-500 hover:bg-red-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700'"
+                        class="p-2 rounded-lg transition-colors"
+                        title="Voice Huddle">
+                    <i data-lucide="phone" class="w-5 h-5" :class="inHuddle ? 'text-white' : ''"></i>
+                </button>
+                
+                <!-- Info Panel Toggle -->
+                <button @click="showInfo = !showInfo"
+                        class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="Chat Info">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Messages Area -->
+        <div id="messages-container" 
+             class="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4 bg-gray-50 dark:bg-gray-900 min-h-0"
+             hx-get="{% url 'htmx:messages_partial' room.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             @scroll="handleScroll($event)">
+            <!-- Messages will be loaded here -->
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+        </div>
+        
+        <!-- Typing Indicator -->
+        <div id="typing-indicator" class="hidden flex-shrink-0 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+            <div class="flex items-center gap-2">
+                <div class="flex gap-1">
+                    <span class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></span>
+                </div>
+                <span id="typing-user-name">Someone</span> is typing...
+            </div>
+        </div>
+        
+        <!-- Edit Message Bar -->
+        <div x-show="editingMessage" 
+             x-transition
+             class="flex-shrink-0 px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800 flex items-center justify-between"
+             x-cloak>
+            <div class="flex items-center gap-2 text-sm text-yellow-700 dark:text-yellow-400">
+                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                <span>Editing message</span>
+            </div>
+            <button @click="cancelEdit()" class="text-yellow-700 dark:text-yellow-400 hover:opacity-70">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        
+        <!-- Message Input -->
+        <div class="flex-shrink-0 px-4 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <form @submit.prevent="sendMessage()" class="flex items-end gap-2">
+                <!-- Attachment Button -->
+                <label class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                    <i data-lucide="paperclip" class="w-5 h-5 text-gray-500"></i>
+                    <input type="file" 
+                           x-ref="fileInput"
+                           @change="handleFileSelect($event)"
+                           class="hidden"
+                           accept="image/*,.pdf,.doc,.docx,.txt">
+                </label>
+                
+                <!-- Attachment Preview -->
+                <div x-show="selectedFile" 
+                     class="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg"
+                     x-cloak>
+                    <i data-lucide="file" class="w-4 h-4"></i>
+                    <span x-text="selectedFile?.name" class="text-sm truncate max-w-[150px]"></span>
+                    <button type="button" @click="clearFile()" class="hover:text-red-500">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                
+                <!-- Message Input -->
+                <div class="flex-1 relative">
+                    <textarea x-model="messageContent"
+                              x-ref="messageInput"
+                              @input="handleTyping()"
+                              @keydown.enter.prevent="if (!$event.shiftKey) sendMessage()"
+                              rows="1"
+                              placeholder="Type a message..."
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none max-h-32 transition-colors"
+                              style="min-height: 40px;"></textarea>
+                </div>
+                
+                <!-- Emoji Button -->
+                <button type="button" 
+                        class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="Emoji">
+                    <i data-lucide="smile" class="w-5 h-5 text-gray-500"></i>
+                </button>
+                
+                <!-- Send Button -->
+                <button type="submit"
+                        :disabled="!messageContent.trim() && !selectedFile"
+                        class="p-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Info Panel -->
+    <aside x-show="showInfo"
+           x-transition:enter="transform transition-transform duration-300"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transform transition-transform duration-300"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full"
+           class="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-y-auto flex-shrink-0"
+           x-cloak>
+        {% include "partials/chat_info_panel.html" %}
+    </aside>
+</div>
+
+<script>
+function chatRoom(roomId) {
+    return {
+        roomId: roomId,
+        messageContent: '',
+        selectedFile: null,
+        editingMessage: null,
+        showInfo: false,
+        inHuddle: false,
+        typingTimeout: null,
+        
+        init() {
+            // Initialize WebSocket connection for this room
+            this.initWebSocket();
+            
+            // Auto-resize textarea
+            this.$watch('messageContent', () => {
+                const textarea = this.$refs.messageInput;
+                if (textarea) {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+                }
+            });
+        },
+        
+        sendMessage() {
+            const content = this.messageContent.trim();
+            if (!content && !this.selectedFile) return;
+            
+            if (this.editingMessage) {
+                // Edit existing message
+                if (window.chatSocket) {
+                    window.chatSocket.editMessage(this.editingMessage, content, this.roomId);
+                }
+                this.cancelEdit();
+            } else {
+                // Send new message
+                if (window.chatSocket) {
+                    window.chatSocket.sendMessage(this.roomId, content, this.selectedFile);
+                }
+            }
+            
+            this.messageContent = '';
+            this.clearFile();
+        },
+        
+        handleTyping() {
+            if (window.chatSocket) {
+                window.chatSocket.sendTyping(this.roomId, true);
+            }
+            
+            clearTimeout(this.typingTimeout);
+            this.typingTimeout = setTimeout(() => {
+                if (window.chatSocket) {
+                    window.chatSocket.sendTyping(this.roomId, false);
+                }
+            }, 2000);
+        },
+        
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.selectedFile = file;
+            }
+        },
+        
+        clearFile() {
+            this.selectedFile = null;
+            if (this.$refs.fileInput) {
+                this.$refs.fileInput.value = '';
+            }
+        },
+        
+        startEdit(messageId, content) {
+            this.editingMessage = messageId;
+            this.messageContent = content;
+            this.$refs.messageInput.focus();
+        },
+        
+        cancelEdit() {
+            this.editingMessage = null;
+            this.messageContent = '';
+        },
+        
+        initWebSocket() {
+            // Wait for WebSocket to be ready and authenticated before subscribing
+            const subscribeToRoom = () => {
+                if (window.chatSocket && window.chatSocket.isAuthenticated) {
+                    window.chatSocket.subscribeToRoom(this.roomId);
+                    console.log('✅ Subscribed to room', this.roomId, 'on page load');
+                } else if (window.chatSocket && window.chatSocket.socket && window.chatSocket.socket.readyState === WebSocket.OPEN) {
+                    // Socket is open but not authenticated yet, wait a bit
+                    setTimeout(subscribeToRoom, 100);
+                } else {
+                    // Socket not ready, wait for it
+                    setTimeout(subscribeToRoom, 200);
+                }
+            };
+            
+            // Start the subscription process
+            subscribeToRoom();
+        },
+        
+        toggleHuddle() {
+            this.inHuddle = !this.inHuddle;
+            if (window.chatSocket) {
+                if (this.inHuddle) {
+                    window.chatSocket.joinHuddle(this.roomId);
+                } else {
+                    window.chatSocket.leaveHuddle(this.roomId);
+                }
+            }
+        },
+        
+        handleScroll(event) {
+            const container = event.target;
+            if (container.scrollTop < 100 && !this.loadingMore) {
+                // Load more messages
+                this.loadMoreMessages();
+            }
+        },
+        
+        loadMoreMessages() {
+            // Handled by HTMX infinite scroll
+        }
+    }
+}
+</script>
+{% endblock %}

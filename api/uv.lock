@@ -130,8 +130,10 @@ dependencies = [
     { name = "django-cleanup" },
     { name = "django-cors-headers" },
     { name = "django-filter" },
+    { name = "django-htmx" },
     { name = "django-redis" },
     { name = "django-storages" },
+    { name = "django-widget-tweaks" },
     { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
     { name = "google-api-core" },
@@ -202,8 +204,10 @@ requires-dist = [
     { name = "django-cleanup", specifier = "==9.0.0" },
     { name = "django-cors-headers", specifier = "==4.6.0" },
     { name = "django-filter", specifier = "==24.3" },
+    { name = "django-htmx", specifier = ">=1.17.0" },
     { name = "django-redis", specifier = "==5.4.0" },
     { name = "django-storages", specifier = "==1.14.4" },
+    { name = "django-widget-tweaks", specifier = ">=1.5.0" },
     { name = "djangorestframework", specifier = "==3.15.2" },
     { name = "djangorestframework-simplejwt", specifier = "==5.3.1" },
     { name = "google-api-core", specifier = "==2.23.0" },
@@ -543,6 +547,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-htmx"
+version = "1.26.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e8/ea/3d0fb10e6ebbceab57b5e228c8ae5e4ebed3b6d6767d07468923ca000fa3/django_htmx-1.26.0.tar.gz", hash = "sha256:88ecc2f8a3f13ad5a50e6b16be127f04fba369124cc40a09b21ce33babb04aa6", size = 65345, upload-time = "2025-09-22T09:23:41.582Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/fc/dbbc54af504427f5f248a73cf9a2d40bfd22631bbf042d313563acc4d223/django_htmx-1.26.0-py3-none-any.whl", hash = "sha256:3a80ffaa6df5a07e833752cd8ada7cee0fa711787841ab17a805075b1aecacc7", size = 62122, upload-time = "2025-09-22T09:23:40.18Z" },
+]
+
+[[package]]
 name = "django-redis"
 version = "5.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -565,6 +582,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6d/88/77b5ede11147941dece064bd80ac618f6a4b91b4c9d5d305a2660014941e/django-storages-1.14.4.tar.gz", hash = "sha256:69aca94d26e6714d14ad63f33d13619e697508ee33ede184e462ed766dc2a73f", size = 83496, upload-time = "2024-07-09T04:10:32.201Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/69/a4b2f2dfa51fd18fd898e10cc41d73a30965da7cb3b683f1375b1dc3dd5c/django_storages-1.14.4-py3-none-any.whl", hash = "sha256:d61930acb4a25e3aebebc6addaf946a3b1df31c803a6bf1af2f31c9047febaa3", size = 31809, upload-time = "2024-07-09T04:10:29.348Z" },
+]
+
+[[package]]
+name = "django-widget-tweaks"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/fe/26eb92fba83844e71bbec0ced7fc2e843e5990020e3cc676925204031654/django-widget-tweaks-1.5.0.tar.gz", hash = "sha256:1c2180681ebb994e922c754804c7ffebbe1245014777ac47897a81f57cc629c7", size = 14767, upload-time = "2023-08-25T15:29:12.778Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/6a/6cb6deb5c38b785c77c3ba66f53051eada49205979c407323eb666930915/django_widget_tweaks-1.5.0-py3-none-any.whl", hash = "sha256:a41b7b2f05bd44d673d11ebd6c09a96f1d013ee98121cb98c384fe84e33b881e", size = 8960, upload-time = "2023-08-25T15:29:05.644Z" },
 ]
 
 [[package]]

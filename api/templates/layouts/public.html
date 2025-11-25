@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    {% include "components/navbar.html" %}
+    
+    <main class="flex-1">
+        {% block main_content %}{% endblock %}
+    </main>
+    
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400">
+            <p>&copy; 2024 Chat App. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

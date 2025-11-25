@@ -1,0 +1,167 @@
+{% extends "layouts/public.html" %}
+
+{% block title %}Chat App - Real-time Communication{% endblock %}
+
+{% block main_content %}
+<!-- Hero Section -->
+<section class="py-20 px-4">
+    <div class="container mx-auto text-center">
+        <h1 class="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            Connect with Anyone,
+            <span class="text-primary-600">Anywhere</span>
+        </h1>
+        <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Experience seamless real-time communication with our modern chat application. 
+            Fast, secure, and designed for the way you work.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if user.is_authenticated %}
+            <a href="{% url 'htmx:chat_list' %}" 
+               class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                Open Chat
+            </a>
+            {% else %}
+            <a href="{% url 'htmx:register' %}" 
+               class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2">
+                <i data-lucide="rocket" class="w-5 h-5"></i>
+                Get Started Free
+            </a>
+            <a href="{% url 'htmx:login' %}" 
+               class="px-8 py-3 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2">
+                <i data-lucide="log-in" class="w-5 h-5"></i>
+                Sign In
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-20 bg-white dark:bg-gray-800">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+            Everything You Need to Stay Connected
+        </h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="zap" class="w-6 h-6 text-primary-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Real-time Messaging</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Instant message delivery with typing indicators and read receipts. Stay connected in real-time.
+                </p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="mic" class="w-6 h-6 text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Voice Huddles</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Jump into quick voice conversations with WebRTC-powered audio. No scheduling needed.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="users" class="w-6 h-6 text-purple-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Group Chats</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Create group conversations for teams, friends, or communities. Collaborate efficiently.
+                </p>
+            </div>
+            
+            <!-- Feature 4 -->
+            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="file-text" class="w-6 h-6 text-yellow-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Collaborative Notes</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Share and edit notes together in real-time. Perfect for brainstorming and meeting notes.
+                </p>
+            </div>
+            
+            <!-- Feature 5 -->
+            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Secure & Private</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Your conversations are protected with modern security practices. Your privacy matters.
+                </p>
+            </div>
+            
+            <!-- Feature 6 -->
+            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="smartphone" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Works Everywhere</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Responsive design that works on any device. Chat from your phone, tablet, or desktop.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-20">
+    <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Built for Modern Communication
+            </h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+                Our chat application is built with cutting-edge technology including Django Channels for 
+                real-time WebSocket communication, HTMX for seamless interactions, and a modern UI 
+                powered by Tailwind CSS and Alpine.js.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                    Django
+                </span>
+                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                    HTMX
+                </span>
+                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                    Alpine.js
+                </span>
+                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                    WebSockets
+                </span>
+                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                    Tailwind CSS
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20 bg-primary-600">
+    <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">
+            Ready to Get Started?
+        </h2>
+        <p class="text-xl text-primary-100 mb-8">
+            Join thousands of users who are already chatting.
+        </p>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'htmx:register' %}" 
+           class="px-8 py-3 bg-white hover:bg-gray-100 text-primary-600 font-semibold rounded-lg transition-colors inline-flex items-center gap-2">
+            Create Your Account
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

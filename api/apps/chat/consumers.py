@@ -185,18 +185,24 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Authenticate user via token in message payload."""
         token = data.get("token")
         if not token:
-            await self.send(json.dumps({
-                "type": "auth.error",
-                "message": "Token required"
-            }))
+            try:
+                await self.send(json.dumps({
+                    "type": "auth.error",
+                    "message": "Token required"
+                }))
+            except Exception:
+                pass
             return
 
         user = await self._get_user_from_token(token)
         if not user or isinstance(user, AnonymousUser) or not user.is_authenticated:
-            await self.send(json.dumps({
-                "type": "auth.error",
-                "message": "Invalid or expired token"
-            }))
+            try:
+                await self.send(json.dumps({
+                    "type": "auth.error",
+                    "message": "Invalid or expired token"
+                }))
+            except Exception:
+                pass
             await self.close(code=4001)
             return
 
@@ -232,7 +238,16 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _get_user_from_token(self, token: str):
-        """Validate JWT and return user."""
+        """Validate JWT or session and return user."""
+        # Support session-based auth (for HTMX frontend)
+        if token == "session":
+            # Get user from scope (set by Django Channels middleware)
+            scope_user = self.scope.get("user")
+            if scope_user and scope_user.is_authenticated:
+                return scope_user
+            return AnonymousUser()
+        
+        # JWT token auth (for React frontend)
         cache_key = f"user_token_{token}"
         user = cache.get(cache_key)
         
@@ -1025,7 +1040,12 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     def _add_huddle_participant(self, room_id: int) -> List[Dict[str, Any]]:
         conn = get_redis_connection("default")
         key = f"chat:huddle:{room_id}"
-        payload = json.dumps({"id": self.user.id, "name": self.user.name})
+        avatar = getattr(self.user, "avatar", None)
+        payload = json.dumps({
+            "id": self.user.id, 
+            "name": self.user.name,
+            "avatar": avatar.url if avatar else None
+        })
         pipeline = conn.pipeline(True)
         pipeline.hset(key, self.user.id, payload)
         pipeline.expire(key, HUDDLE_TTL)

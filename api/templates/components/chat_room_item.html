@@ -1,0 +1,77 @@
+{% load static %}
+
+<!-- Chat Room Item -->
+{% with room_id_str=room.id|stringformat:"s" %}
+<a href="{% url 'htmx:chat_room' room.id %}" 
+   class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {% if room_id_str == active %}bg-primary-50 dark:bg-primary-900/20 border-r-2 border-primary-600{% endif %}"
+   hx-get="{% url 'htmx:chat_room' room.id %}"
+   hx-target="#main-content"
+   hx-push-url="true"
+   hx-swap="innerHTML"
+   {% if not room.is_group_chat and room.other_participant %}data-user-id="{{ room.other_participant.id }}"{% endif %}>
+{% endwith %}
+    
+    <!-- Avatar -->
+    <div class="relative flex-shrink-0">
+        {% if room.is_group_chat %}
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <i data-lucide="users" class="w-6 h-6 text-white"></i>
+        </div>
+        {% else %}
+        {% with other_user=room.other_participant %}
+        {% if other_user.avatar %}
+        <img src="{{ other_user.avatar.url }}" alt="{{ other_user.name }}" class="w-12 h-12 rounded-full object-cover">
+        {% else %}
+        <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+            <span class="text-primary-600 dark:text-primary-400 font-semibold text-lg">
+                {{ other_user.name|slice:":1"|upper }}
+            </span>
+        </div>
+        {% endif %}
+        <!-- Online indicator -->
+        <span class="online-status absolute bottom-0 right-0 w-3 h-3 border-2 border-white dark:border-gray-800 rounded-full {% if other_user.id in online_users %}bg-green-500{% else %}bg-gray-400 hidden{% endif %}"></span>
+        {% endwith %}
+        {% endif %}
+    </div>
+    
+    <!-- Content -->
+    <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-2">
+            <span class="font-semibold truncate">
+                {% if room.is_group_chat %}
+                    {{ room.name|default:"Group Chat" }}
+                {% else %}
+                    {{ room.other_participant.name }}
+                {% endif %}
+            </span>
+            {% if room.last_message %}
+            <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                {{ room.last_message.timestamp|timesince }} ago
+            </span>
+            {% endif %}
+        </div>
+        
+        <div class="flex items-center justify-between gap-2 mt-1">
+            <p class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {% if room.last_message %}
+                    {% if room.last_message.sender == request.user %}
+                        <span class="text-gray-400">You: </span>
+                    {% endif %}
+                    {% if room.last_message.attachment %}
+                        <i data-lucide="paperclip" class="w-3 h-3 inline"></i> Attachment
+                    {% else %}
+                        {{ room.last_message.content|truncatechars:30 }}
+                    {% endif %}
+                {% else %}
+                    <span class="italic">No messages yet</span>
+                {% endif %}
+            </p>
+            
+            {% if room.unread_count > 0 %}
+            <span class="flex-shrink-0 w-5 h-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                {{ room.unread_count }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</a>

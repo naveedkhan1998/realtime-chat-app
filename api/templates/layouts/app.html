@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-dvh flex" x-data="appLayout()">
+    <!-- Mobile sidebar overlay -->
+    <div x-show="sidebarOpen" 
+         x-transition:enter="transition-opacity ease-linear duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="sidebarOpen = false"
+         class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+         x-cloak>
+    </div>
+    
+    <!-- Sidebar -->
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+           class="fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out flex flex-col h-dvh">
+        {% include "components/sidebar.html" %}
+    </aside>
+    
+    <!-- Main content -->
+    <main class="flex-1 flex flex-col h-dvh lg:min-w-0 overflow-hidden">
+        <!-- Mobile header -->
+        <header class="lg:hidden flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-4">
+            <button @click="sidebarOpen = true" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+            <h1 class="font-semibold text-lg">{% block mobile_title %}Chat{% endblock %}</h1>
+        </header>
+        
+        <div id="main-content" class="flex-1 flex overflow-hidden min-h-0">
+            {% block main_content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<script>
+    function appLayout() {
+        return {
+            sidebarOpen: false,
+            init() {
+                // Close sidebar on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.sidebarOpen = false;
+                });
+            }
+        }
+    }
+</script>
+
+{% include "partials/websocket_handler.html" %}
+{% endblock %}

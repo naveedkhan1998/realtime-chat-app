@@ -1,0 +1,74 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}New Chat - Chat App{% endblock %}
+{% block mobile_title %}New Chat{% endblock %}
+
+{% block main_content %}
+<div id="main-content" class="flex-1 flex flex-col bg-white dark:bg-gray-800">
+    <!-- Header -->
+    <header class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'htmx:chat_list' %}" 
+               class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="font-semibold text-lg">New Chat</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Search for users to start a conversation</p>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Search -->
+    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <i data-lucide="search" class="w-5 h-5"></i>
+            </span>
+            <input type="text"
+                   id="user-search"
+                   name="search"
+                   placeholder="Search by name or email..."
+                   autocomplete="off"
+                   hx-get="{% url 'htmx:search_users' %}"
+                   hx-trigger="keyup changed delay:300ms"
+                   hx-target="#search-results"
+                   hx-indicator="#search-spinner"
+                   class="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors">
+            <span id="search-spinner" class="htmx-indicator absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg class="animate-spin h-5 w-5 text-primary-600" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </span>
+        </div>
+    </div>
+    
+    <!-- Search Results -->
+    <div id="search-results" class="flex-1 overflow-y-auto scrollbar-thin">
+        <!-- Initial state -->
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="users" class="w-8 h-8 text-gray-400"></i>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400">Search for users to start chatting</p>
+        </div>
+    </div>
+    
+    <!-- Friends Section -->
+    <div class="border-t border-gray-200 dark:border-gray-700">
+        <div class="p-4">
+            <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                Your Friends
+            </h3>
+        </div>
+        <div id="friends-list"
+             hx-get="{% url 'htmx:friends_partial' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="max-h-48 overflow-y-auto scrollbar-thin">
+            <!-- Friends will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}

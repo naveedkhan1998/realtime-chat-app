@@ -1,0 +1,49 @@
+{% for user_item in users %}
+<div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    <div class="flex items-center gap-3">
+        {% if user_item.avatar %}
+        <img src="{{ user_item.avatar.url }}" alt="{{ user_item.name }}" class="w-10 h-10 rounded-full object-cover">
+        {% else %}
+        <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+            <span class="text-primary-600 dark:text-primary-400 font-semibold">
+                {{ user_item.name|slice:":1"|upper }}
+            </span>
+        </div>
+        {% endif %}
+        <div>
+            <p class="font-medium text-gray-900 dark:text-white">{{ user_item.name }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ user_item.email }}</p>
+        </div>
+    </div>
+    
+    <div id="friend-action-{{ user_item.id }}">
+        {% if user_item.relationship == 'friend' %}
+        <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm rounded-full">
+            Friends
+        </span>
+        {% elif user_item.relationship == 'pending_sent' %}
+        <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-sm rounded-full">
+            Request Sent
+        </span>
+        {% elif user_item.relationship == 'pending_received' %}
+        <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm rounded-full">
+            Accept Request
+        </span>
+        {% else %}
+        <button hx-post="{% url 'htmx:send_friend_request' %}"
+                hx-vals='{"user_id": "{{ user_item.id }}"}'
+                hx-target="#friend-action-{{ user_item.id }}"
+                hx-swap="innerHTML"
+                class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+            Add Friend
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="flex flex-col items-center justify-center py-8 text-center">
+    <i data-lucide="search-x" class="w-12 h-12 text-gray-300 mb-3"></i>
+    <p class="text-gray-500 dark:text-gray-400">No users found</p>
+    <p class="text-sm text-gray-400 dark:text-gray-500">Try a different search term</p>
+</div>
+{% endfor %}

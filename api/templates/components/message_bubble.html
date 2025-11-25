@@ -1,0 +1,198 @@
+{% load static %}
+
+<!-- Message Bubble Component -->
+<div class="flex {% if is_own_message %}justify-end{% else %}justify-start{% endif %} message-enter"
+     id="message-{{ message.id }}"
+     x-data="{ showActions: false, showMenu: false, showLightbox: false }">
+    
+    <div class="flex gap-2 max-w-[80%] {% if is_own_message %}flex-row-reverse{% endif %}"
+         @mouseenter="showActions = true"
+         @mouseleave="showActions = false; showMenu = false">
+        
+        <!-- Avatar (for other users) -->
+        {% if not is_own_message %}
+        <div class="flex-shrink-0">
+            {% if message.sender.avatar %}
+            <img src="{{ message.sender.avatar.url }}" alt="{{ message.sender.name }}" class="w-8 h-8 rounded-full object-cover">
+            {% else %}
+            <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <span class="text-gray-600 dark:text-gray-400 text-sm font-semibold">
+                    {{ message.sender.name|slice:":1"|upper }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="flex flex-col {% if is_own_message %}items-end{% else %}items-start{% endif %}">
+            <!-- Sender name (for group chats, other users only) -->
+            {% if not is_own_message and is_group %}
+            <span class="text-xs text-gray-500 dark:text-gray-400 mb-1 ml-1">{{ message.sender.name }}</span>
+            {% endif %}
+            
+            <div class="flex items-end gap-2 {% if is_own_message %}flex-row-reverse{% endif %}">
+                <!-- Message Content -->
+                <div class="rounded-2xl {% if message.attachment and message.attachment_type == 'image' or message.attachment_type == 'video' %}p-1{% else %}px-4 py-2{% endif %} {% if is_own_message %}bg-primary-600 text-white rounded-br-md{% else %}bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md{% endif %}">
+                    
+                    <!-- Attachment -->
+                    {% if message.attachment %}
+                    <div class="{% if message.content %}mb-2{% endif %}">
+                        {% if message.attachment_type == 'image' %}
+                        <!-- Image Attachment with Lightbox -->
+                        <div class="relative group">
+                            <img src="{{ message.attachment.url }}" 
+                                 alt="Image" 
+                                 class="rounded-xl max-w-xs max-h-72 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                                 loading="lazy"
+                                 @click="showLightbox = true">
+                            <!-- Zoom icon overlay -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div class="bg-black/40 rounded-full p-2">
+                                    <i data-lucide="zoom-in" class="w-5 h-5 text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif message.attachment_type == 'video' %}
+                        <!-- Video Attachment -->
+                        <video controls 
+                               class="rounded-xl max-w-xs max-h-72"
+                               preload="metadata">
+                            <source src="{{ message.attachment.url }}" type="video/mp4">
+                            Your browser does not support video.
+                        </video>
+                        
+                        {% elif message.attachment_type == 'audio' %}
+                        <!-- Audio Attachment -->
+                        <div class="{% if is_own_message %}bg-primary-700{% else %}bg-gray-300 dark:bg-gray-600{% endif %} rounded-lg p-3 min-w-[200px]">
+                            <audio controls class="w-full h-8" preload="metadata">
+                                <source src="{{ message.attachment.url }}">
+                            </audio>
+                        </div>
+                        
+                        {% else %}
+                        <!-- Document/File Attachment -->
+                        <a href="{{ message.attachment.url }}" 
+                           target="_blank"
+                           download
+                           class="flex items-center gap-3 p-3 {% if is_own_message %}bg-primary-700 hover:bg-primary-800{% else %}bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500{% endif %} rounded-xl transition-colors min-w-[200px]">
+                            {% with filename=message.attachment.name %}
+                            {% if '.pdf' in filename %}
+                            <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
+                            </div>
+                            {% elif '.doc' in filename or '.docx' in filename %}
+                            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
+                            </div>
+                            {% elif '.xls' in filename or '.xlsx' in filename %}
+                            <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-white"></i>
+                            </div>
+                            {% else %}
+                            <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="file" class="w-5 h-5 text-white"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium truncate">{{ filename|slice:"-30:" }}</p>
+                                <p class="text-xs opacity-70">Click to download</p>
+                            </div>
+                            <i data-lucide="download" class="w-5 h-5 flex-shrink-0"></i>
+                            {% endwith %}
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Text Content -->
+                    {% if message.content %}
+                    <div class="{% if message.attachment and message.attachment_type == 'image' or message.attachment_type == 'video' %}px-3 py-2{% endif %}">
+                        <p class="whitespace-pre-wrap break-words">{{ message.content }}</p>
+                        
+                        <!-- Edited indicator -->
+                        {% if message.is_edited %}
+                        <span class="text-xs opacity-70 italic">(edited)</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Actions Menu -->
+                <div x-show="showActions" 
+                     x-transition
+                     class="relative"
+                     x-cloak>
+                    <button @click="showMenu = !showMenu" 
+                            class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-gray-500"></i>
+                    </button>
+                    
+                    <div x-show="showMenu"
+                         @click.away="showMenu = false"
+                         class="absolute {% if is_own_message %}right-0{% else %}left-0{% endif %} bottom-full mb-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10 min-w-[120px]"
+                         x-cloak>
+                        
+                        {% if is_own_message %}
+                        <button @click="$dispatch('edit-message', { id: {{ message.id }}, content: '{{ message.content|escapejs }}' }); showMenu = false"
+                                class="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            Edit
+                        </button>
+                        <button hx-delete="{% url 'htmx:delete_message' message.id %}"
+                                hx-target="#message-{{ message.id }}"
+                                hx-swap="outerHTML"
+                                hx-confirm="Are you sure you want to delete this message?"
+                                class="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            Delete
+                        </button>
+                        {% else %}
+                        <button @click="navigator.clipboard.writeText('{{ message.content|escapejs }}'); showMenu = false; $dispatch('show-toast', { message: 'Copied to clipboard', type: 'success' })"
+                                class="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                            Copy
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timestamp and read status -->
+            <div class="flex items-center gap-1 mt-1 px-1">
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ message.timestamp|date:"g:i A" }}
+                </span>
+                {% if is_own_message %}
+                <span class="text-xs text-gray-400">
+                    <i data-lucide="check" class="w-3 h-3"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lightbox for images -->
+    {% if message.attachment and message.attachment_type == 'image' %}
+    <div x-show="showLightbox"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="showLightbox = false"
+         @keydown.escape.window="showLightbox = false"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+         x-cloak>
+        <button @click="showLightbox = false" 
+                class="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-lg transition-colors">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        <img src="{{ message.attachment.url }}" 
+             alt="Image" 
+             class="max-w-full max-h-full object-contain"
+             @click.stop>
+    </div>
+    {% endif %}
+</div>

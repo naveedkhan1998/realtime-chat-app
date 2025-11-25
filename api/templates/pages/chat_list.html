@@ -1,0 +1,25 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Chat - Chat App{% endblock %}
+{% block mobile_title %}Chats{% endblock %}
+
+{% block main_content %}
+<div id="main-content" class="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
+    <div class="text-center max-w-md">
+        <div class="w-24 h-24 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="message-square" class="w-12 h-12 text-primary-600"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Welcome to Chat App
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+            Select a conversation from the sidebar or start a new chat to begin messaging.
+        </p>
+        <a href="{% url 'htmx:new_chat' %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            Start New Chat
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,812 @@
+<!-- WebSocket Handler for HTMX -->
+<script>
+class ChatWebSocket {
+    constructor() {
+        this.socket = null;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectDelay = 1000;
+        this.subscribedRooms = new Set();
+        this.onlineUsers = new Set();
+        this.isAuthenticated = false;
+        this.isConnecting = false;
+        
+        // WebRTC/Huddle state
+        this.activeHuddleRoom = null;
+        this.localStream = null;
+        this.peerConnections = new Map();
+        this.remoteStreams = new Map();
+        
+        // Callbacks for UI updates
+        this.onHuddleParticipants = null;
+        this.onRemoteStream = null;
+    }
+    
+    connect() {
+        if (this.isConnecting) {
+            console.log('🔌 Already connecting, skipping...');
+            return;
+        }
+        this.isConnecting = true;
+        
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        this.socket = new WebSocket(`${protocol}//${host}/ws/stream/`);
+        
+        this.socket.onopen = () => {
+            console.log('WebSocket connected');
+            this.isConnecting = false;
+            this.reconnectAttempts = 0;
+            // Authenticate with session (cookie-based)
+            this.send({ type: 'auth', token: 'session' });
+        };
+        
+        this.socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleMessage(data);
+        };
+        
+        this.socket.onclose = (event) => {
+            console.log('WebSocket disconnected', event.code, event.reason);
+            this.isAuthenticated = false;
+            this.isConnecting = false;
+            this.attemptReconnect();
+        };
+        
+        this.socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    }
+    
+    attemptReconnect() {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+            console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+            setTimeout(() => this.connect(), delay);
+        } else {
+            console.error('Max reconnect attempts reached');
+            window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: { message: 'Connection lost. Please refresh the page.', type: 'error' }
+            }));
+        }
+    }
+    
+    send(data) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify(data));
+        } else {
+            console.warn('WebSocket not ready, cannot send:', data.type);
+        }
+    }
+    
+    handleMessage(data) {
+        console.log('WS message:', data.type, data);
+        
+        switch (data.type) {
+            case 'auth.required':
+                // Re-authenticate
+                this.send({ type: 'auth', token: 'session' });
+                break;
+                
+            case 'auth.success':
+                this.isAuthenticated = true;
+                this.onlineUsers = new Set(data.online_users || []);
+                // Update UI for all online users
+                this.onlineUsers.forEach(userId => {
+                    this.updateOnlineStatus(userId, true);
+                });
+                // Resubscribe to rooms
+                this.subscribedRooms.forEach(roomId => {
+                    this.send({ type: 'chat.subscribe', room_id: roomId });
+                });
+                // Refresh presence
+                this.send({ type: 'presence.refresh' });
+                // Start heartbeat
+                this.startHeartbeat();
+                break;
+                
+            case 'auth.failed':
+                console.error('WebSocket auth failed:', data.error);
+                // Redirect to login
+                window.location.href = '/app/login/';
+                break;
+                
+            case 'global.user_online':
+                console.log('🟢 User online:', data.user_id);
+                this.onlineUsers.add(data.user_id);
+                this.updateOnlineStatus(data.user_id, true);
+                break;
+                
+            case 'global.user_offline':
+                console.log('🔴 User offline:', data.user_id);
+                this.onlineUsers.delete(data.user_id);
+                this.updateOnlineStatus(data.user_id, false);
+                break;
+                
+            case 'global.chat_room_created':
+                // Refresh chat list
+                htmx.trigger('#chat-list', 'chatListUpdated');
+                break;
+                
+            case 'chat.subscribed':
+                console.log('Subscribed to room:', data.room_id);
+                break;
+                
+            case 'chat.message':
+                this.handleNewMessage(data);
+                break;
+                
+            case 'chat.message_updated':
+                this.handleMessageEdited(data);
+                break;
+                
+            case 'chat.message_deleted':
+                this.handleMessageDeleted(data);
+                break;
+                
+            case 'chat.typing_status':
+                this.handleTypingIndicator(data);
+                break;
+                
+            case 'chat.presence_update':
+                // Handle room presence update
+                break;
+                
+            case 'chat.collab_state':
+            case 'chat.collab_update':
+                this.handleNoteUpdate(data);
+                break;
+                
+            case 'chat.cursor_state':
+            case 'chat.cursor_update':
+                // Handle cursor tracking
+                break;
+                
+            case 'chat.huddle_participants':
+            case 'huddle.participants':
+                this.handleHuddleParticipants(data);
+                break;
+                
+            case 'huddle.signal':
+                this.handleHuddleSignal(data);
+                break;
+                
+            case 'notification':
+            case 'global.new_message_notification':
+                console.log('🔔 Notification received:', data);
+                this.handleNotification(data);
+                break;
+        }
+    }
+    
+    startHeartbeat() {
+        setInterval(() => {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                this.send({ type: 'ping' });
+                this.send({ type: 'presence.refresh' });
+            }
+        }, 30000); // Every 30 seconds
+    }
+    
+    subscribeToRoom(roomId) {
+        this.subscribedRooms.add(roomId);
+        if (this.isAuthenticated) {
+            this.send({ type: 'chat.subscribe', room_id: roomId });
+        }
+    }
+    
+    unsubscribeFromRoom(roomId) {
+        this.subscribedRooms.delete(roomId);
+        if (this.isAuthenticated) {
+            this.send({ type: 'chat.unsubscribe', room_id: roomId });
+        }
+    }
+    
+    sendMessage(roomId, content, file = null) {
+        const messageData = {
+            type: 'chat.send_message',
+            room_id: roomId,
+            content: content
+        };
+        
+        if (file) {
+            // Handle file upload separately
+            this.uploadFileAndSendMessage(roomId, content, file);
+            return;
+        }
+        
+        this.send(messageData);
+    }
+    
+    async uploadFileAndSendMessage(roomId, content, file) {
+        try {
+            // Try GCS direct upload first
+            const response = await fetch('/api/chat/upload-url/?' + new URLSearchParams({
+                filename: file.name,
+                content_type: file.type
+            }));
+            
+            if (response.ok) {
+                // GCS is available - use direct upload
+                const data = await response.json();
+                
+                // Upload file to GCS
+                await fetch(data.upload_url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type },
+                    body: file
+                });
+                
+                // Send message with attachment via WebSocket
+                this.send({
+                    type: 'chat.send_message',
+                    room_id: roomId,
+                    content: content,
+                    attachment_url: data.file_url
+                });
+            } else {
+                // GCS not available - fallback to regular file upload via HTMX endpoint
+                await this.uploadFileFallback(roomId, content, file);
+            }
+        } catch (error) {
+            console.error('GCS upload failed, trying fallback:', error);
+            // Try fallback on any error
+            try {
+                await this.uploadFileFallback(roomId, content, file);
+            } catch (fallbackError) {
+                console.error('Fallback upload also failed:', fallbackError);
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: 'Failed to upload file', type: 'error' }
+                }));
+            }
+        }
+    }
+    
+    async uploadFileFallback(roomId, content, file) {
+        // Use the HTMX file upload endpoint as fallback
+        const formData = new FormData();
+        formData.append('content', content || '');
+        formData.append('attachment', file);
+        
+        const response = await fetch(`/app/chat/${roomId}/send-message/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.status}`);
+        }
+        
+        // The endpoint handles broadcasting via WebSocket, so we're done
+        const data = await response.json();
+        console.log('File uploaded successfully via fallback:', data);
+    }
+    
+    editMessage(messageId, content, roomId) {
+        this.send({
+            type: 'chat.edit_message',
+            room_id: roomId,
+            message_id: messageId,
+            content: content
+        });
+    }
+    
+    deleteMessage(messageId, roomId) {
+        this.send({
+            type: 'chat.delete_message',
+            room_id: roomId,
+            message_id: messageId
+        });
+    }
+    
+    sendTyping(roomId, isTyping) {
+        this.send({
+            type: 'chat.typing',
+            room_id: roomId,
+            is_typing: isTyping
+        });
+    }
+    
+    updateNote(roomId, content) {
+        this.send({
+            type: 'chat.collab_update',
+            room_id: roomId,
+            content: content
+        });
+    }
+    
+    joinHuddle(roomId) {
+        this.activeHuddleRoom = roomId;
+        this.send({
+            type: 'huddle.join',
+            room_id: roomId
+        });
+    }
+    
+    leaveHuddle(roomId) {
+        // Close all peer connections
+        this.closePeerConnections();
+        this.activeHuddleRoom = null;
+        this.send({
+            type: 'huddle.leave',
+            room_id: roomId
+        });
+    }
+    
+    sendHuddleSignal(targetId, payload) {
+        this.send({
+            type: 'huddle.signal',
+            target_id: targetId,
+            payload: payload
+        });
+    }
+    
+    // WebRTC Peer Connection Management
+    initializePeerConnection(peerId, initiator = false) {
+        if (this.peerConnections.has(peerId)) {
+            return this.peerConnections.get(peerId);
+        }
+        
+        const pc = new RTCPeerConnection({
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        });
+        
+        // Add local stream tracks if we have them
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(track => {
+                pc.addTrack(track, this.localStream);
+            });
+        }
+        
+        // Handle ICE candidates
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                this.sendHuddleSignal(peerId, {
+                    type: 'candidate',
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        // Handle remote stream
+        pc.ontrack = (event) => {
+            console.log('🎵 Received remote track from peer:', peerId);
+            const stream = event.streams[0];
+            this.remoteStreams.set(peerId, stream);
+            this.createAudioElement(peerId, stream);
+            
+            // Notify callback if set
+            if (this.onRemoteStream) {
+                this.onRemoteStream(peerId, stream);
+            }
+        };
+        
+        // Handle connection state
+        pc.onconnectionstatechange = () => {
+            console.log(`📶 Peer ${peerId} connection state:`, pc.connectionState);
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                this.removePeerConnection(peerId);
+            }
+        };
+        
+        this.peerConnections.set(peerId, pc);
+        
+        // If we're the initiator (lower user ID), create and send offer
+        if (initiator) {
+            this.createAndSendOffer(peerId, pc);
+        }
+        
+        return pc;
+    }
+    
+    async createAndSendOffer(peerId, pc) {
+        try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            this.sendHuddleSignal(peerId, {
+                type: 'offer',
+                sdp: offer
+            });
+            console.log('📤 Sent offer to peer:', peerId);
+        } catch (error) {
+            console.error('Error creating offer:', error);
+        }
+    }
+    
+    async handleOffer(peerId, sdp) {
+        const pc = this.initializePeerConnection(peerId, false);
+        try {
+            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            this.sendHuddleSignal(peerId, {
+                type: 'answer',
+                sdp: answer
+            });
+            console.log('📤 Sent answer to peer:', peerId);
+        } catch (error) {
+            console.error('Error handling offer:', error);
+        }
+    }
+    
+    async handleAnswer(peerId, sdp) {
+        const pc = this.peerConnections.get(peerId);
+        if (pc) {
+            try {
+                await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                console.log('✅ Set remote description for peer:', peerId);
+            } catch (error) {
+                console.error('Error handling answer:', error);
+            }
+        }
+    }
+    
+    async handleIceCandidate(peerId, candidate) {
+        const pc = this.peerConnections.get(peerId);
+        if (pc) {
+            try {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (error) {
+                console.error('Error adding ICE candidate:', error);
+            }
+        }
+    }
+    
+    createAudioElement(peerId, stream) {
+        // Remove existing audio element if any
+        const existingAudio = document.getElementById(`huddle-audio-${peerId}`);
+        if (existingAudio) {
+            existingAudio.remove();
+        }
+        
+        // Create hidden audio element for remote stream
+        const audio = document.createElement('audio');
+        audio.id = `huddle-audio-${peerId}`;
+        audio.srcObject = stream;
+        audio.autoplay = true;
+        audio.playsInline = true;
+        audio.style.display = 'none';
+        document.body.appendChild(audio);
+        
+        // Play audio
+        audio.play().catch(err => console.warn('Audio autoplay blocked:', err));
+    }
+    
+    removePeerConnection(peerId) {
+        const pc = this.peerConnections.get(peerId);
+        if (pc) {
+            pc.close();
+            this.peerConnections.delete(peerId);
+        }
+        
+        this.remoteStreams.delete(peerId);
+        
+        // Remove audio element
+        const audio = document.getElementById(`huddle-audio-${peerId}`);
+        if (audio) {
+            audio.remove();
+        }
+    }
+    
+    closePeerConnections() {
+        this.peerConnections.forEach((pc, peerId) => {
+            pc.close();
+            const audio = document.getElementById(`huddle-audio-${peerId}`);
+            if (audio) audio.remove();
+        });
+        this.peerConnections.clear();
+        this.remoteStreams.clear();
+    }
+    
+    setLocalStream(stream) {
+        this.localStream = stream;
+        
+        // Add tracks to existing peer connections
+        this.peerConnections.forEach(pc => {
+            if (stream) {
+                stream.getTracks().forEach(track => {
+                    const senders = pc.getSenders();
+                    const hasTrack = senders.some(s => s.track?.kind === track.kind);
+                    if (!hasTrack) {
+                        pc.addTrack(track, stream);
+                    }
+                });
+            }
+        });
+    }
+    
+    // UI update handlers
+    handleNewMessage(data) {
+        const container = document.getElementById('messages-container');
+        if (!container) return;
+        
+        // data.message contains the message object from the server
+        const message = data.message;
+        if (!message || !message.id) {
+            console.error('Invalid message data:', data);
+            return;
+        }
+        
+        // Fetch the new message HTML via HTMX
+        htmx.ajax('GET', `/app/message/${message.id}/`, {
+            target: '#messages-container',
+            swap: 'beforeend'
+        });
+        
+        // Scroll to bottom
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+        
+        // Mark message as read if from another user (we're viewing the room)
+        if (message.sender && message.sender.id !== window.currentUserId) {
+            fetch(`/app/message/${message.id}/read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                },
+            }).catch(() => {}); // Silently ignore errors
+        }
+        
+        // Refresh chat list to update last message
+        // Trigger on body since chat-list listens for "chatListUpdated from:body"
+        htmx.trigger(document.body, 'chatListUpdated');
+        
+        // Play notification sound for messages from others
+        if (message.sender && message.sender.id !== window.currentUserId) {
+            this.playNotificationSound();
+        }
+    }
+    
+    handleMessageEdited(data) {
+        const message = data.message;
+        if (!message || !message.id) return;
+        
+        const messageEl = document.getElementById(`message-${message.id}`);
+        if (messageEl) {
+            // Refresh the message via HTMX
+            htmx.ajax('GET', `/app/message/${message.id}/`, {
+                target: `#message-${message.id}`,
+                swap: 'outerHTML'
+            });
+        }
+    }
+    
+    handleMessageDeleted(data) {
+        const messageEl = document.getElementById(`message-${data.message_id}`);
+        if (messageEl) {
+            messageEl.remove();
+        }
+    }
+    
+    handleTypingIndicator(data) {
+        const indicator = document.getElementById('typing-indicator');
+        const userName = document.getElementById('typing-user-name');
+        
+        if (!indicator) return;
+        
+        if (data.is_typing && data.user_id !== window.currentUserId) {
+            indicator.classList.remove('hidden');
+            if (userName) {
+                userName.textContent = data.user_name || 'Someone';
+            }
+        } else {
+            indicator.classList.add('hidden');
+        }
+    }
+    
+    handleNoteUpdate(data) {
+        const noteEl = document.getElementById('collaborative-note');
+        if (noteEl && data.user_id !== window.currentUserId) {
+            noteEl.value = data.content;
+        }
+    }
+    
+    handleHuddleParticipants(data) {
+        // Update huddle participants UI
+        console.log('👥 Huddle participants:', data.participants, 'for room:', data.room_id);
+        const participants = data.participants || [];
+        const roomId = data.room_id;
+        
+        // Dispatch custom event for Alpine.js components to listen to
+        window.dispatchEvent(new CustomEvent('huddle-participants-updated', {
+            detail: { participants, roomId }
+        }));
+        
+        // Legacy callback support
+        if (this.onHuddleParticipants) {
+            this.onHuddleParticipants(participants, roomId);
+        }
+        
+        // If we're in the huddle, establish connections with other participants
+        if (this.activeHuddleRoom && this.localStream) {
+            const myId = window.currentUserId;
+            
+            participants.forEach(participant => {
+                if (participant.id !== myId && !this.peerConnections.has(participant.id)) {
+                    // The user with lower ID initiates the connection
+                    const shouldInitiate = myId < participant.id;
+                    console.log(`🔗 ${shouldInitiate ? 'Initiating' : 'Waiting for'} connection with peer:`, participant.id);
+                    this.initializePeerConnection(participant.id, shouldInitiate);
+                }
+            });
+            
+            // Remove connections for participants who left
+            const participantIds = new Set(participants.map(p => p.id));
+            this.peerConnections.forEach((pc, peerId) => {
+                if (!participantIds.has(peerId)) {
+                    console.log('🔌 Removing peer connection for:', peerId);
+                    this.removePeerConnection(peerId);
+                }
+            });
+        }
+    }
+    
+    handleHuddleSignal(data) {
+        // Handle WebRTC signaling
+        const fromId = data.from?.id;
+        const payload = data.payload;
+        
+        if (!fromId || !payload) {
+            console.warn('Invalid huddle signal:', data);
+            return;
+        }
+        
+        console.log('📡 Huddle signal from', fromId, ':', payload.type);
+        
+        switch (payload.type) {
+            case 'offer':
+                this.handleOffer(fromId, payload.sdp);
+                break;
+            case 'answer':
+                this.handleAnswer(fromId, payload.sdp);
+                break;
+            case 'candidate':
+                this.handleIceCandidate(fromId, payload.candidate);
+                break;
+        }
+    }
+    
+    handleNotification(data) {
+        // Show toast notification
+        const message = data.message || (data.sender_name ? `New message from ${data.sender_name}` : 'New notification');
+        window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { message: message, type: 'info' }
+        }));
+        
+        // Update notification badge in sidebar
+        const badge = document.getElementById('notification-badge');
+        if (badge) {
+            badge.classList.remove('hidden');
+            const currentCount = parseInt(badge.textContent) || 0;
+            badge.textContent = currentCount + 1;
+        }
+        
+        // Refresh chat list to update unread counts
+        // Trigger on body since chat-list listens for "chatListUpdated from:body"
+        htmx.trigger(document.body, 'chatListUpdated');
+        
+        // Play notification sound
+        this.playNotificationSound();
+    }
+    
+    updateOnlineStatus(userId, isOnline) {
+        // Update any UI elements showing this user's status
+        const elements = document.querySelectorAll(`[data-user-id="${userId}"]`);
+        console.log(`📍 Updating status for user ${userId} (online: ${isOnline}), found ${elements.length} elements`);
+        elements.forEach(el => {
+            const statusEl = el.querySelector('.online-status');
+            if (statusEl) {
+                if (isOnline) {
+                    statusEl.classList.remove('hidden', 'bg-gray-400');
+                    statusEl.classList.add('bg-green-500');
+                } else {
+                    statusEl.classList.remove('bg-green-500');
+                    statusEl.classList.add('bg-gray-400', 'hidden');
+                }
+            }
+        });
+        
+        // Update online status in chat header if in a 1:1 chat
+        const onlineStatusEl = document.getElementById('online-status');
+        if (onlineStatusEl) {
+            const currentUserId = onlineStatusEl.dataset.userId;
+            if (currentUserId && parseInt(currentUserId) === userId) {
+                if (isOnline) {
+                    onlineStatusEl.innerHTML = '<span class="text-green-500">● Online</span>';
+                } else {
+                    onlineStatusEl.innerHTML = '<span>Offline</span>';
+                }
+            }
+        }
+    }
+    
+    
+    playNotificationSound() {
+        // Simple notification sound
+        try {
+            const audio = new Audio('/static/sounds/notification.mp3');
+            audio.volume = 0.3;
+            audio.play().catch(() => {}); // Ignore autoplay restrictions
+        } catch (e) {
+            // Sound not available
+        }
+    }
+    
+    // Re-apply online status to newly loaded content
+    syncOnlineStatus() {
+        console.log('🔄 Syncing online status for users:', Array.from(this.onlineUsers));
+        this.onlineUsers.forEach(userId => {
+            this.updateOnlineStatus(userId, true);
+        });
+    }
+    
+    // Check if connection is alive
+    isConnected() {
+        return this.socket && this.socket.readyState === WebSocket.OPEN;
+    }
+    
+    // Ensure connection is alive, reconnect if needed
+    ensureConnected() {
+        if (!this.isConnected() && !this.isConnecting) {
+            console.log('🔌 WebSocket not connected, reconnecting...');
+            this.reconnectAttempts = 0; // Reset attempts for manual reconnect
+            this.connect();
+        }
+    }
+}
+
+// Initialize WebSocket connection (singleton pattern)
+function initWebSocket() {
+    // Only create if doesn't exist or is disconnected
+    if (!window.chatSocket) {
+        console.log('🔌 Creating new WebSocket instance');
+        window.chatSocket = new ChatWebSocket();
+        window.chatSocket.connect();
+    } else if (!window.chatSocket.isConnected()) {
+        console.log('🔌 Reconnecting existing WebSocket');
+        window.chatSocket.ensureConnected();
+    } else {
+        console.log('🔌 WebSocket already connected');
+    }
+}
+
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWebSocket);
+} else {
+    initWebSocket();
+}
+
+// Re-sync online status after HTMX content swaps
+document.body.addEventListener('htmx:afterSwap', (event) => {
+    // Ensure WebSocket is connected after navigation
+    if (window.chatSocket) {
+        window.chatSocket.ensureConnected();
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+            if (window.chatSocket.isAuthenticated) {
+                window.chatSocket.syncOnlineStatus();
+            }
+        }, 100);
+    }
+});
+
+// Also check connection on page visibility change (user returns to tab)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && window.chatSocket) {
+        window.chatSocket.ensureConnected();
+    }
+});
+
+// Store current user ID for comparison
+window.currentUserId = {{ user.id }};
+</script>
+

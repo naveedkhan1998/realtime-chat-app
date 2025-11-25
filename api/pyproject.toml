@@ -73,4 +73,6 @@ dependencies = [
     "urllib3==2.2.3",
     "uvicorn==0.32.0",
     "zope-interface==7.1.1",
+    "django-htmx>=1.17.0",
+    "django-widget-tweaks>=1.5.0",
 ]

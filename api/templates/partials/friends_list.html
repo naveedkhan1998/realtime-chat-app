@@ -1,0 +1,39 @@
+{% for friendship in friendships %}
+<div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    <div class="flex items-center gap-3">
+        {% with friend=friendship.friend %}
+        {% if friend.avatar %}
+        <img src="{{ friend.avatar.url }}" alt="{{ friend.name }}" class="w-10 h-10 rounded-full object-cover">
+        {% else %}
+        <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+            <span class="text-primary-600 dark:text-primary-400 font-semibold">
+                {{ friend.name|slice:":1"|upper }}
+            </span>
+        </div>
+        {% endif %}
+        <div>
+            <p class="font-medium text-gray-900 dark:text-white">{{ friend.name }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                {% if friend.id in online_users %}
+                <span class="text-green-500">● Online</span>
+                {% else %}
+                Offline
+                {% endif %}
+            </p>
+        </div>
+        {% endwith %}
+    </div>
+    
+    <button hx-post="{% url 'htmx:create_chat' %}"
+            hx-vals='{"user_id": "{{ friendship.friend.id }}"}'
+            hx-swap="none"
+            class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+        <i data-lucide="message-square" class="w-5 h-5 text-primary-600"></i>
+    </button>
+</div>
+{% empty %}
+<div class="px-4 py-6 text-center">
+    <p class="text-gray-500 dark:text-gray-400 text-sm">No friends yet</p>
+    <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Search for users to add friends</p>
+</div>
+{% endfor %}
