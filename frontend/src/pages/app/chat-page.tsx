@@ -1,22 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { useAppSelector } from '@/app/hooks';
 
 import { useGetChatRoomsQuery } from '@/services/chatApi';
-import { WebSocketService } from '@/utils/websocket';
-import {
-  addMessage,
-  replaceMessage,
-  removeMessage,
-  setPresence,
-  updatePresence,
-  updateTypingStatus,
-  setCollaborativeNote,
-  setCursorState,
-  updateCursor,
-  setHuddleParticipants,
-} from '@/features/chatSlice';
+import { useRoomSubscription } from '@/hooks/useUnifiedWebSocket';
 import ChatWindow from '@/components/custom/ChatWindow';
 import { AppShellContext } from '@/layouts/AppShell';
 import { MessageSquareMore, Sparkles } from 'lucide-react';
@@ -26,8 +12,6 @@ export default function ChatPage() {
   const { activeChat, setActiveChat, isMobile } =
     useOutletContext<AppShellContext>();
   const user = useAppSelector(state => state.auth.user);
-  const dispatch = useAppDispatch();
-  const accessToken = useAppSelector(state => state.auth.accessToken);
 
   const { activeRoom } = useGetChatRoomsQuery(undefined, {
     selectFromResult: ({ data }) => ({
@@ -39,116 +23,12 @@ export default function ChatPage() {
     ? `${activeRoom.name || 'Chat'} | MNK Chat`
     : 'Chat | MNK Chat';
 
-  useEffect(() => {
-    if (activeChat && accessToken) {
-      const ws = WebSocketService.getInstance();
-      ws.connect(activeChat, accessToken);
-
-      const handleNewMessage = (event: any) => {
-        dispatch(
-          addMessage({ chatRoomId: activeChat, message: event.message })
-        );
-      };
-      const handleUpdatedMessage = (event: any) => {
-        dispatch(
-          replaceMessage({ chatRoomId: activeChat, message: event.message })
-        );
-      };
-      const handleDeletedMessage = (event: any) => {
-        dispatch(
-          removeMessage({ chatRoomId: activeChat, messageId: event.message_id })
-        );
-      };
-      const handlePresenceState = (event: any) => {
-        const usersList = Array.isArray(event.users) ? event.users : event.users.users;
-        dispatch(setPresence({ chatRoomId: activeChat, users: usersList }));
-      };
-      const handlePresenceUpdate = (event: any) => {
-        dispatch(
-          updatePresence({
-            chatRoomId: activeChat,
-            action: event.action,
-            user: event.user,
-          })
-        );
-      };
-      const handleTyping = (event: any) => {
-        dispatch(
-          updateTypingStatus({
-            chatRoomId: activeChat,
-            userId: event.user_id,
-            isTyping: event.is_typing,
-          })
-        );
-      };
-      const handleCollabState = (event: any) => {
-        dispatch(
-          setCollaborativeNote({
-            chatRoomId: activeChat,
-            content: event.content,
-          })
-        );
-      };
-      const handleCollabUpdate = (event: any) => {
-        dispatch(
-          setCollaborativeNote({
-            chatRoomId: activeChat,
-            content: event.content,
-          })
-        );
-      };
-      const handleCursorState = (event: any) => {
-        dispatch(
-          setCursorState({ chatRoomId: activeChat, cursors: event.cursors })
-        );
-      };
-      const handleCursorUpdate = (event: any) => {
-        dispatch(
-          updateCursor({
-            chatRoomId: activeChat,
-            userId: event.user.id,
-            cursor: event.cursor,
-          })
-        );
-      };
-      const handleHuddleParticipants = (event: any) => {
-        console.log('🎙️ Received huddle_participants event:', event);
-        dispatch(
-          setHuddleParticipants({
-            chatRoomId: activeChat,
-            participants: event.participants,
-          })
-        );
-      };
-
-      ws.on('chat_message', handleNewMessage);
-      ws.on('message_updated', handleUpdatedMessage);
-      ws.on('message_deleted', handleDeletedMessage);
-      ws.on('presence_state', handlePresenceState);
-      ws.on('presence_update', handlePresenceUpdate);
-      ws.on('typing_status', handleTyping);
-      ws.on('collab_state', handleCollabState);
-      ws.on('collab_update', handleCollabUpdate);
-      ws.on('cursor_state', handleCursorState);
-      ws.on('cursor_update', handleCursorUpdate);
-      ws.on('huddle_participants', handleHuddleParticipants);
-
-      return () => {
-        ws.off('chat_message', handleNewMessage);
-        ws.off('message_updated', handleUpdatedMessage);
-        ws.off('message_deleted', handleDeletedMessage);
-        ws.off('presence_state', handlePresenceState);
-        ws.off('presence_update', handlePresenceUpdate);
-        ws.off('typing_status', handleTyping);
-        ws.off('collab_state', handleCollabState);
-        ws.off('collab_update', handleCollabUpdate);
-        ws.off('cursor_state', handleCursorState);
-        ws.off('cursor_update', handleCursorUpdate);
-        ws.off('huddle_participants', handleHuddleParticipants);
-        ws.disconnect();
-      };
-    }
-  }, [activeChat, accessToken, dispatch]);
+  // Subscribe to the active chat room using the unified WebSocket
+  // This hook automatically handles:
+  // - Subscribing/unsubscribing on room change
+  // - All chat events (messages, typing, presence, collab, cursor, huddle)
+  // - Dispatching to Redux unifiedChat slice
+  useRoomSubscription(activeChat ?? null);
 
   if (!user) return null;
 

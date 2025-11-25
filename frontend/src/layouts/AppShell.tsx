@@ -3,8 +3,6 @@ import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/custom/Sidebar';
 import { cn } from '@/lib/utils';
 import { BackgroundBlobs } from '@/components/ui/background-blobs';
-import { useAppSelector } from '@/app/hooks';
-import { GlobalWebSocketService } from '@/utils/websocket';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -31,6 +29,9 @@ const routeMetadata: Record<string, { title: string; description: string }> = {
   },
 };
 
+// Note: WebSocket connection is now handled by AuthInitializer with the unified service.
+// This ensures a single connection for the entire app lifecycle.
+
 export default function AppShell({ isMobile }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,19 +47,8 @@ export default function AppShell({ isMobile }: AppShellProps) {
     description: 'Navigate your real-time collaboration hub.',
   };
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const accessToken = useAppSelector(state => state.auth.accessToken);
 
   const isMobileChatList = isMobile && location.pathname === '/chat';
-
-  useEffect(() => {
-    if (accessToken) {
-      const ws = GlobalWebSocketService.getInstance();
-      ws.connect(accessToken);
-      return () => {
-        ws.disconnect();
-      };
-    }
-  }, [accessToken]);
 
   useEffect(() => {
     if (!isMobile) {

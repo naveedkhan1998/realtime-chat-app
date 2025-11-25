@@ -6,8 +6,8 @@ import { baseApi } from '@/services/baseApi';
 import authReducer from '@/features/authSlice';
 import errorReducer from '@/features/errorSlice';
 import themeReducer from '@/features/themeSlice';
-import chatReducer from '@/features/chatSlice';
 import uiReducer from '@/features/uiSlice';
+import unifiedChatReducer from '@/features/unifiedChatSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,9 +15,8 @@ export const store = configureStore({
     auth: authReducer,
     error: errorReducer,
     theme: themeReducer,
-    chat: chatReducer,
+    unifiedChat: unifiedChatReducer,
     ui: uiReducer,
-    // Add other reducers here
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({ serializableCheck: false }).concat(

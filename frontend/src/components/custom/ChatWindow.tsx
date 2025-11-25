@@ -8,14 +8,19 @@ import {
   useSendMessageMutation,
   useGetUploadUrlMutation,
 } from '@/services/chatApi';
-import { WebSocketService } from '@/utils/websocket';
+import { useRoomActions, useGlobalState } from '@/hooks/useUnifiedWebSocket';
 import { UserProfile } from '@/services/userApi';
 import {
   prependMessages,
   setMessagePagination,
   setMessages,
   addMessage,
-} from '@/features/chatSlice';
+  selectRoomMessages,
+  selectRoomPresence,
+  selectRoomTypingUsers,
+  selectRoomHuddleParticipants,
+  selectRoomPagination,
+} from '@/features/unifiedChatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import ChatHeader from './chat-page/ChatHeader';
 import ChatInput from './chat-page/ChatInput';
@@ -31,10 +36,7 @@ interface ChatWindowProps {
   activeRoom: ChatRoom | undefined;
 }
 
-const emptyMessages: Message[] = [];
 const emptyPresence: UserProfile[] = [];
-const emptyTypingMap: Record<number, boolean> = {};
-const emptyHuddleParticipants: Array<{ id: number; name: string }> = [];
 
 export default function ChatWindow({
   user,
@@ -45,23 +47,28 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const dispatch = useAppDispatch();
   const shouldAutoScrollRef = useRef(true);
+  
+  // Use unified WebSocket hooks for room actions
+  const { deleteMessage, editMessage, sendTyping } = useRoomActions(activeChat);
+  const { isConnected } = useGlobalState();
+  
   const messages = useAppSelector(
-    state => state.chat.messages[activeChat] || emptyMessages
+    state => selectRoomMessages(state, activeChat)
   );
   const presence = useAppSelector(
-    state => state.chat.presence[activeChat] ?? emptyPresence
+    state => selectRoomPresence(state, activeChat)?.users ?? emptyPresence
   );
   const typingMap = useAppSelector(
-    state => state.chat.typingStatuses[activeChat] ?? emptyTypingMap
+    state => selectRoomTypingUsers(state, activeChat)
   );
   const huddleParticipants = useAppSelector(
-    state =>
-      state.chat.huddleParticipants[activeChat] ?? emptyHuddleParticipants
+    state => selectRoomHuddleParticipants(state, activeChat)
   );
   const existingMessagesRef = useRef(messages);
-  const nextCursor = useAppSelector(
-    state => state.chat.pagination[activeChat]?.nextCursor ?? null
+  const pagination = useAppSelector(
+    state => selectRoomPagination(state, activeChat)
   );
+  const nextCursor = pagination.nextCursor;
   const { register, handleSubmit, reset, setValue, watch } = useForm<{
     message: string;
   }>();
@@ -115,10 +122,10 @@ export default function ChatWindow({
       }).unwrap();
       const ordered = [...response.results].reverse();
       const merged = mergeMessages(existingMessagesRef.current, ordered);
-      dispatch(setMessages({ chatRoomId: activeChat, messages: merged }));
+      dispatch(setMessages({ roomId: activeChat, messages: merged }));
       dispatch(
         setMessagePagination({
-          chatRoomId: activeChat,
+          roomId: activeChat,
           nextCursor: extractCursor(response.next),
         })
       );
@@ -127,9 +134,9 @@ export default function ChatWindow({
     } catch (error) {
       console.error('Failed to load messages', error);
 
-      dispatch(setMessages({ chatRoomId: activeChat, messages: [] }));
+      dispatch(setMessages({ roomId: activeChat, messages: [] }));
       dispatch(
-        setMessagePagination({ chatRoomId: activeChat, nextCursor: null })
+        setMessagePagination({ roomId: activeChat, nextCursor: null })
       );
     } finally {
       setInitialLoading(false);
@@ -147,10 +154,10 @@ export default function ChatWindow({
       }).unwrap();
       const ordered = [...response.results].reverse();
       shouldAutoScrollRef.current = false;
-      dispatch(prependMessages({ chatRoomId: activeChat, messages: ordered }));
+      dispatch(prependMessages({ roomId: activeChat, messages: ordered }));
       dispatch(
         setMessagePagination({
-          chatRoomId: activeChat,
+          roomId: activeChat,
           nextCursor: extractCursor(response.next),
         })
       );
@@ -181,13 +188,12 @@ export default function ChatWindow({
 
   const confirmDeleteMessage = useCallback(() => {
     if (!messageToDelete) return;
-    const ws = WebSocketService.getInstance();
-    ws.sendDeleteMessage(messageToDelete.id);
+    deleteMessage(messageToDelete.id);
     if (editingMessage?.id === messageToDelete.id) {
       cancelEditing();
     }
     setMessageToDelete(null);
-  }, [messageToDelete, editingMessage, cancelEditing]);
+  }, [messageToDelete, editingMessage, cancelEditing, deleteMessage]);
 
   useEffect(() => {
     fetchInitialMessages();
@@ -211,39 +217,37 @@ export default function ChatWindow({
   const messageValue = watch('message');
 
   useEffect(() => {
-    const ws = WebSocketService.getInstance();
-    if (!ws.isConnected()) return;
+    if (!isConnected) return;
     if (!messageValue) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
-      ws.sendTypingStatus(false);
+      sendTyping(false);
       return;
     }
-    ws.sendTypingStatus(true);
+    sendTyping(true);
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     typingTimeoutRef.current = setTimeout(() => {
-      ws.sendTypingStatus(false);
+      sendTyping(false);
       typingTimeoutRef.current = null;
     }, 2000);
-  }, [messageValue]);
+  }, [messageValue, isConnected, sendTyping]);
 
   useEffect(() => {
     const noteTimeout = noteUpdateTimeoutRef.current;
     const typingTimeout = typingTimeoutRef.current;
     return () => {
-      const ws = WebSocketService.getInstance();
-      if (ws.isConnected()) {
-        ws.sendTypingStatus(false);
-        // Removed ws.sendHuddleLeave() to persist huddle
+      // Clean up typing status on unmount
+      if (isConnected) {
+        sendTyping(false);
       }
       if (noteTimeout) clearTimeout(noteTimeout);
       if (typingTimeout) clearTimeout(typingTimeout);
     };
-  }, []);
+  }, [isConnected, sendTyping]);
 
   useEffect(() => {
     if (
@@ -273,11 +277,10 @@ export default function ChatWindow({
   const handleSendMessage = async (message: string, file?: File) => {
     const trimmed = message.trim();
     if (!trimmed && !file) return;
-    const ws = WebSocketService.getInstance();
 
     if (editingMessage) {
       if (trimmed !== editingMessage.content.trim()) {
-        ws.sendEditMessage(editingMessage.id, trimmed);
+        editMessage(editingMessage.id, trimmed);
       }
       cancelEditing();
       shouldAutoScrollRef.current = true;
@@ -310,7 +313,7 @@ export default function ChatWindow({
     };
 
     dispatch(
-      addMessage({ chatRoomId: activeChat, message: optimisticMessage })
+      addMessage({ roomId: activeChat, message: optimisticMessage })
     );
     shouldAutoScrollRef.current = true;
 
