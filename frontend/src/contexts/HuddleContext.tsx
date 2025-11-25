@@ -99,16 +99,24 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     };
   }, [huddleChatId, dispatch]);
 
+  const prevStatsRef = useRef<Map<number, { bytesSent: number; bytesReceived: number; timestamp: number }>>(new Map());
+
   const checkConnectionStats = useCallback(
     async (pc: RTCPeerConnection, peerId: number) => {
       try {
         const stats = await pc.getStats();
         let activePair: any = null;
         const candidatePairs: any[] = [];
+        let audioInbound: any = null;
+        let audioOutbound: any = null;
+        let transportStats: any = null;
 
         stats.forEach(report => {
-          if (report.type === 'transport' && report.selectedCandidatePairId) {
-            activePair = stats.get(report.selectedCandidatePairId);
+          if (report.type === 'transport') {
+            transportStats = report;
+            if (report.selectedCandidatePairId) {
+              activePair = stats.get(report.selectedCandidatePairId);
+            }
           }
           if (report.type === 'candidate-pair') {
             const local = stats.get(report.localCandidateId);
@@ -117,12 +125,20 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
               id: report.id,
               state: report.state,
               selected: report.selected,
+              nominated: report.nominated,
+              priority: report.priority,
+              bytesSent: report.bytesSent,
+              bytesReceived: report.bytesReceived,
+              currentRoundTripTime: report.currentRoundTripTime,
+              availableOutgoingBitrate: report.availableOutgoingBitrate,
               local: local
                 ? {
                     type: local.candidateType,
                     protocol: local.protocol,
                     address: `${local.address || local.ip}:${local.port}`,
                     url: local.url,
+                    networkType: local.networkType,
+                    priority: local.priority,
                   }
                 : null,
               remote: remote
@@ -130,10 +146,29 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
                     type: remote.candidateType,
                     protocol: remote.protocol,
                     address: `${remote.address || remote.ip}:${remote.port}`,
-                    type_preference: remote.priority,
+                    priority: remote.priority,
                   }
                 : null,
             });
+          }
+          if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+            audioInbound = {
+              packetsReceived: report.packetsReceived,
+              packetsLost: report.packetsLost,
+              jitter: report.jitter,
+              bytesReceived: report.bytesReceived,
+              codec: report.codecId ? stats.get(report.codecId) : null,
+              timestamp: report.timestamp,
+            };
+          }
+          if (report.type === 'outbound-rtp' && report.kind === 'audio') {
+            audioOutbound = {
+              packetsSent: report.packetsSent,
+              bytesSent: report.bytesSent,
+              targetBitrate: report.targetBitrate,
+              codec: report.codecId ? stats.get(report.codecId) : null,
+              timestamp: report.timestamp,
+            };
           }
         });
 
@@ -145,29 +180,58 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           });
         }
 
+        // Calculate bitrates
+        const prevStats = prevStatsRef.current.get(peerId);
+        const now = Date.now();
+        let bitrateIn = 0;
+        let bitrateOut = 0;
+        
+        if (activePair && prevStats) {
+          const timeDiff = (now - prevStats.timestamp) / 1000;
+          if (timeDiff > 0) {
+            bitrateIn = ((activePair.bytesReceived - prevStats.bytesReceived) * 8) / timeDiff / 1000; // kbps
+            bitrateOut = ((activePair.bytesSent - prevStats.bytesSent) * 8) / timeDiff / 1000; // kbps
+          }
+        }
+        
+        if (activePair) {
+          prevStatsRef.current.set(peerId, {
+            bytesSent: activePair.bytesSent || 0,
+            bytesReceived: activePair.bytesReceived || 0,
+            timestamp: now,
+          });
+        }
+
         if (activePair) {
           const localCandidate = stats.get(activePair.localCandidateId);
           const remoteCandidate = stats.get(activePair.remoteCandidateId);
           let type = 'Unknown';
+          let connectionPath = 'unknown';
 
           const localType = localCandidate?.candidateType;
           const remoteType = remoteCandidate?.candidateType;
 
           if (localType === 'relay' || remoteType === 'relay') {
-            type = 'Twilio TURN';
+            type = 'TURN Relay';
+            connectionPath = 'relay';
+            if (localCandidate?.url?.includes('twilio') || remoteCandidate?.url?.includes('twilio')) {
+              type = 'Twilio TURN';
+            }
           } else if (localType === 'host' && remoteType === 'host') {
             type = 'Direct (LAN)';
+            connectionPath = 'direct';
           } else if (
             localType === 'srflx' ||
             remoteType === 'srflx' ||
             localType === 'prflx' ||
             remoteType === 'prflx'
           ) {
+            connectionPath = 'stun';
             if (localCandidate?.url) {
               if (localCandidate.url.includes('google')) type = 'Google STUN';
               else if (localCandidate.url.includes('twilio'))
                 type = 'Twilio STUN';
-              else type = 'STUN';
+              else type = 'STUN NAT Traversal';
             } else {
               type = 'NAT Traversal (P2P)';
             }
@@ -175,15 +239,46 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
             type = `${localType} ↔ ${remoteType}`;
           }
 
+          // Calculate packet loss percentage
+          const packetLossPercent = audioInbound && audioInbound.packetsReceived > 0
+            ? ((audioInbound.packetsLost || 0) / (audioInbound.packetsReceived + (audioInbound.packetsLost || 0))) * 100
+            : 0;
+
+          // Determine connection quality
+          const rtt = activePair.currentRoundTripTime ? activePair.currentRoundTripTime * 1000 : null;
+          let quality: 'excellent' | 'good' | 'fair' | 'poor' = 'excellent';
+          if (rtt !== null) {
+            if (rtt > 300 || packetLossPercent > 5) quality = 'poor';
+            else if (rtt > 150 || packetLossPercent > 2) quality = 'fair';
+            else if (rtt > 50 || packetLossPercent > 0.5) quality = 'good';
+          }
+
           setConnectionDetails(prev => ({
             ...prev,
             [peerId]: {
               type,
+              connectionPath,
+              quality,
               activePair: {
                 local: localCandidate,
                 remote: remoteCandidate,
+                rtt,
+                bytesSent: activePair.bytesSent,
+                bytesReceived: activePair.bytesReceived,
+                availableOutgoingBitrate: activePair.availableOutgoingBitrate,
               },
+              audio: {
+                inbound: audioInbound,
+                outbound: audioOutbound,
+                packetLossPercent,
+              },
+              bitrate: {
+                in: Math.round(bitrateIn * 10) / 10,
+                out: Math.round(bitrateOut * 10) / 10,
+              },
+              transport: transportStats,
               candidatePairs,
+              timestamp: now,
             },
           }));
         }
@@ -194,7 +289,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  // Poll for stats updates
+  // Poll for stats updates (1 second for smooth real-time display)
   useEffect(() => {
     if (!isHuddleActive) return;
     const interval = setInterval(() => {
@@ -203,7 +298,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           checkConnectionStats(pc, peerId);
         }
       });
-    }, 2000);
+    }, 1000);
     return () => clearInterval(interval);
   }, [isHuddleActive, checkConnectionStats]);
 

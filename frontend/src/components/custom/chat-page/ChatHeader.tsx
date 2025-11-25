@@ -1,4 +1,4 @@
-import { ArrowLeft, MoreVertical, Phone, Video, Activity } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Phone, Video, Activity, Radio } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,8 +30,8 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/drawer';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
+import WebRTCStats from '@/components/custom/WebRTCStats';
 
 interface ChatHeaderProps {
   activeRoom: ChatRoom | undefined;
@@ -66,156 +66,6 @@ export default function ChatHeader({
     p => connectionDetails && connectionDetails[p.id]
   );
   const hasActiveConnection = connectedPeers.length > 0;
-
-  const renderDetailsContent = (scrollable = true) => {
-    if (!hasActiveConnection)
-      return (
-        <p className="text-sm text-muted-foreground">
-          No active connection details available.
-        </p>
-      );
-
-    const content = (
-      <div className="space-y-8">
-        {connectedPeers.map(peer => {
-          const details = connectionDetails![peer.id];
-          return (
-            <div key={peer.id} className="space-y-4">
-              {connectedPeers.length > 1 && (
-                <div className="flex items-center gap-2 pb-2 border-b">
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={getAvatarUrl(peer.avatar)} />
-                    <AvatarFallback className="text-[10px]">
-                      {peer.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h3 className="text-sm font-semibold">{peer.name}</h3>
-                </div>
-              )}
-
-              <div className="p-3 rounded-lg bg-muted/50">
-                <h4 className="mb-2 text-sm font-medium">
-                  Active Connection
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-muted-foreground">Type:</div>
-                  <div className="font-medium text-primary">
-                    {details.type}
-                  </div>
-                  <div className="text-muted-foreground">Local Protocol:</div>
-                  <div>
-                    {details.activePair?.local?.protocol?.toUpperCase() ||
-                      'N/A'}
-                  </div>
-                  <div className="text-muted-foreground">Local Type:</div>
-                  <div>
-                    {details.activePair?.local?.candidateType || 'N/A'}
-                  </div>
-                  <div className="text-muted-foreground">Remote Type:</div>
-                  <div>
-                    {details.activePair?.remote?.candidateType || 'N/A'}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="mb-2 text-sm font-medium">
-                  Candidate Pairs Tried
-                </h4>
-                <div className="space-y-2">
-                  {details.candidatePairs
-                    ?.filter(
-                      (pair: any) =>
-                        pair.state === 'succeeded' ||
-                        pair.state === 'failed' ||
-                        pair.selected
-                    )
-                    .sort((a: any, b: any) => {
-                      // 1. Active/Selected always first
-                      if (a.selected && !b.selected) return -1;
-                      if (!a.selected && b.selected) return 1;
-                      // 2. Succeeded state second
-                      if (a.state === 'succeeded' && b.state !== 'succeeded')
-                        return -1;
-                      if (a.state !== 'succeeded' && b.state === 'succeeded')
-                        return 1;
-                      // 3. In-progress state third
-                      if (
-                        a.state === 'in-progress' &&
-                        b.state !== 'in-progress'
-                      )
-                        return -1;
-                      if (
-                        a.state !== 'in-progress' &&
-                        b.state === 'in-progress'
-                      )
-                        return 1;
-                      return 0;
-                    })
-                    .map((pair: any) => (
-                      <div
-                        key={pair.id}
-                        className={cn(
-                          'p-2 text-xs rounded border',
-                          pair.selected
-                            ? 'bg-primary/10 border-primary/20'
-                            : 'bg-background border-border'
-                        )}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span
-                            className={cn(
-                              'font-medium',
-                              pair.state === 'succeeded'
-                                ? 'text-green-500'
-                                : pair.state === 'failed'
-                                  ? 'text-red-500'
-                                  : 'text-yellow-500'
-                            )}
-                          >
-                            {pair.state.toUpperCase()}
-                          </span>
-                          {pair.selected && (
-                            <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center text-[10px] text-muted-foreground">
-                          <div
-                            className="truncate"
-                            title={pair.local?.address}
-                          >
-                            L: {pair.local?.type} ({pair.local?.protocol})
-                          </div>
-                          <div>↔</div>
-                          <div
-                            className="text-right truncate"
-                            title={pair.remote?.address}
-                          >
-                            R: {pair.remote?.type} ({pair.remote?.protocol})
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-
-    if (scrollable) {
-      return (
-        <ScrollArea className="max-h-[60vh] pr-4">
-          {content}
-        </ScrollArea>
-      );
-    }
-
-    return content;
-  };
 
   return (
     <>
@@ -361,12 +211,21 @@ export default function ChatHeader({
         >
           <DrawerContent>
             <DrawerHeader>
-              <DrawerTitle>Connection Details</DrawerTitle>
+              <DrawerTitle className="flex items-center gap-2">
+                <Radio className="w-5 h-5 text-primary animate-pulse" />
+                WebRTC Live Stats
+              </DrawerTitle>
               <DrawerDescription>
-                WebRTC stats for active huddle
+                Real-time peer-to-peer connection metrics
               </DrawerDescription>
             </DrawerHeader>
-            <div className="p-4 overflow-y-auto max-h-[60vh]">{renderDetailsContent(false)}</div>
+            <div className="p-4 overflow-y-auto max-h-[70vh]">
+              <WebRTCStats
+                connectionDetails={connectionDetails || {}}
+                connectedPeers={connectedPeers}
+                scrollable={false}
+              />
+            </div>
           </DrawerContent>
         </Drawer>
       ) : (
@@ -374,14 +233,21 @@ export default function ChatHeader({
           open={showConnectionDetails}
           onOpenChange={setShowConnectionDetails}
         >
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Connection Details</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Radio className="w-5 h-5 text-primary animate-pulse" />
+                WebRTC Live Stats
+              </DialogTitle>
               <DialogDescription>
-                WebRTC stats for active huddle
+                Real-time peer-to-peer connection metrics
               </DialogDescription>
             </DialogHeader>
-            {renderDetailsContent(true)}
+            <WebRTCStats
+              connectionDetails={connectionDetails || {}}
+              connectedPeers={connectedPeers}
+              scrollable={true}
+            />
           </DialogContent>
         </Dialog>
       )}
