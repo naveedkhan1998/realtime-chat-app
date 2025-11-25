@@ -9,10 +9,14 @@
  * - Access connection state
  */
 
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getUnifiedWebSocket, ConnectionState, UnifiedWebSocketEvent } from '@/utils/unifiedWebSocket';
-import type { 
+import {
+  getUnifiedWebSocket,
+  ConnectionState,
+  UnifiedWebSocketEvent,
+} from '@/utils/unifiedWebSocket';
+import type {
   ChatMessageEvent,
   ChatMessageUpdatedEvent,
   ChatMessageDeletedEvent,
@@ -72,7 +76,8 @@ import type { RootState, AppDispatch } from '@/app/store';
 export function useUnifiedWebSocket(token: string | null) {
   const dispatch = useDispatch<AppDispatch>();
   const ws = useRef(getUnifiedWebSocket());
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const [connectionState, setConnectionState] =
+    useState<ConnectionState>('disconnected');
 
   useEffect(() => {
     if (!token) {
@@ -86,9 +91,15 @@ export function useUnifiedWebSocket(token: string | null) {
     ws.current.connect(token);
 
     // Listen for connection state changes
-    const unsubscribeState = ws.current.onConnectionStateChange((state) => {
+    const unsubscribeState = ws.current.onConnectionStateChange(state => {
       setConnectionState(state);
-      dispatch(setConnected(state === 'connected' || state === 'authenticating' || state === 'authenticated'));
+      dispatch(
+        setConnected(
+          state === 'connected' ||
+            state === 'authenticating' ||
+            state === 'authenticated'
+        )
+      );
       dispatch(setAuthenticated(state === 'authenticated'));
     });
 
@@ -117,13 +128,16 @@ export function useUnifiedWebSocket(token: string | null) {
 
     // New message notifications (for rooms not currently subscribed)
     unsubscribers.push(
-      ws.current.on('global.new_message_notification', (event: GlobalNewMessageNotificationEvent) => {
-        dispatch(setUnreadNotification(event.chat_room_id));
-      })
+      ws.current.on(
+        'global.new_message_notification',
+        (event: GlobalNewMessageNotificationEvent) => {
+          dispatch(setUnreadNotification(event.chat_room_id));
+        }
+      )
     );
 
     return () => {
-      unsubscribers.forEach((unsub) => unsub());
+      unsubscribers.forEach(unsub => unsub());
       unsubscribeState();
     };
   }, [token, dispatch]);
@@ -161,7 +175,9 @@ export function useRoomSubscription(roomId: number | null) {
     unsubscribers.push(
       ws.current.on('chat.subscribed', (event: ChatSubscribedEvent) => {
         if (event.room_id === roomId) {
-          dispatch(initializeRoom({ roomId: event.room_id, presence: event.presence }));
+          dispatch(
+            initializeRoom({ roomId: event.room_id, presence: event.presence })
+          );
           dispatch(clearUnreadNotification(roomId));
           setIsSubscribed(true);
         }
@@ -172,25 +188,40 @@ export function useRoomSubscription(roomId: number | null) {
     unsubscribers.push(
       ws.current.on('chat.message', (event: ChatMessageEvent) => {
         if (event.room_id === roomId) {
-          dispatch(addMessage({ roomId: event.room_id, message: event.message }));
+          dispatch(
+            addMessage({ roomId: event.room_id, message: event.message })
+          );
         }
       })
     );
 
     unsubscribers.push(
-      ws.current.on('chat.message_updated', (event: ChatMessageUpdatedEvent) => {
-        if (event.room_id === roomId) {
-          dispatch(updateMessage({ roomId: event.room_id, message: event.message }));
+      ws.current.on(
+        'chat.message_updated',
+        (event: ChatMessageUpdatedEvent) => {
+          if (event.room_id === roomId) {
+            dispatch(
+              updateMessage({ roomId: event.room_id, message: event.message })
+            );
+          }
         }
-      })
+      )
     );
 
     unsubscribers.push(
-      ws.current.on('chat.message_deleted', (event: ChatMessageDeletedEvent) => {
-        if (event.room_id === roomId) {
-          dispatch(removeMessage({ roomId: event.room_id, messageId: event.message_id }));
+      ws.current.on(
+        'chat.message_deleted',
+        (event: ChatMessageDeletedEvent) => {
+          if (event.room_id === roomId) {
+            dispatch(
+              removeMessage({
+                roomId: event.room_id,
+                messageId: event.message_id,
+              })
+            );
+          }
         }
-      })
+      )
     );
 
     // Typing status
@@ -210,24 +241,32 @@ export function useRoomSubscription(roomId: number | null) {
 
     // Presence updates
     unsubscribers.push(
-      ws.current.on('chat.presence_update', (event: ChatPresenceUpdateEvent) => {
-        if (event.room_id === roomId) {
-          dispatch(
-            updatePresence({
-              roomId: event.room_id,
-              action: event.action,
-              user: event.user,
-            })
-          );
+      ws.current.on(
+        'chat.presence_update',
+        (event: ChatPresenceUpdateEvent) => {
+          if (event.room_id === roomId) {
+            dispatch(
+              updatePresence({
+                roomId: event.room_id,
+                action: event.action,
+                user: event.user,
+              })
+            );
+          }
         }
-      })
+      )
     );
 
     // Collaborative note
     unsubscribers.push(
       ws.current.on('chat.collab_state', (event: ChatCollabStateEvent) => {
         if (event.room_id === roomId) {
-          dispatch(setCollaborativeNote({ roomId: event.room_id, content: event.content }));
+          dispatch(
+            setCollaborativeNote({
+              roomId: event.room_id,
+              content: event.content,
+            })
+          );
         }
       })
     );
@@ -235,7 +274,12 @@ export function useRoomSubscription(roomId: number | null) {
     unsubscribers.push(
       ws.current.on('chat.collab_update', (event: ChatCollabUpdateEvent) => {
         if (event.room_id === roomId) {
-          dispatch(setCollaborativeNote({ roomId: event.room_id, content: event.content }));
+          dispatch(
+            setCollaborativeNote({
+              roomId: event.room_id,
+              content: event.content,
+            })
+          );
         }
       })
     );
@@ -244,7 +288,9 @@ export function useRoomSubscription(roomId: number | null) {
     unsubscribers.push(
       ws.current.on('chat.cursor_state', (event: ChatCursorStateEvent) => {
         if (event.room_id === roomId) {
-          dispatch(setCursorState({ roomId: event.room_id, cursors: event.cursors }));
+          dispatch(
+            setCursorState({ roomId: event.room_id, cursors: event.cursors })
+          );
         }
       })
     );
@@ -265,16 +311,19 @@ export function useRoomSubscription(roomId: number | null) {
 
     // Huddle participants
     unsubscribers.push(
-      ws.current.on('chat.huddle_participants', (event: ChatHuddleParticipantsEvent) => {
-        if (event.room_id === roomId) {
-          dispatch(
-            setHuddleParticipants({
-              roomId: event.room_id,
-              participants: event.participants,
-            })
-          );
+      ws.current.on(
+        'chat.huddle_participants',
+        (event: ChatHuddleParticipantsEvent) => {
+          if (event.room_id === roomId) {
+            dispatch(
+              setHuddleParticipants({
+                roomId: event.room_id,
+                participants: event.participants,
+              })
+            );
+          }
         }
-      })
+      )
     );
 
     return () => {
@@ -282,7 +331,7 @@ export function useRoomSubscription(roomId: number | null) {
       if (roomId) {
         ws.current.unsubscribeFromRoom(roomId);
       }
-      unsubscribers.forEach((unsub) => unsub());
+      unsubscribers.forEach(unsub => unsub());
       setIsSubscribed(false);
     };
   }, [roomId, dispatch]);
@@ -357,9 +406,12 @@ export function useRoomActions(roomId: number) {
  */
 export function useHuddle(roomId: number) {
   const ws = useRef(getUnifiedWebSocket());
-  const participants = useSelector((state: RootState) =>
-    selectRoomHuddleParticipants(state, roomId)
+
+  const selectHuddleParticipants = useMemo(
+    () => (state: RootState) => selectRoomHuddleParticipants(state, roomId),
+    [roomId]
   );
+  const participants = useSelector(selectHuddleParticipants);
   const [isInHuddle, setIsInHuddle] = useState(false);
 
   const joinHuddle = useCallback(() => {
@@ -401,19 +453,46 @@ export function useHuddle(roomId: number) {
 
 /**
  * Hook providing all room state selectors.
+ * Uses useMemo to create stable selector references.
  */
 export function useRoomState(roomId: number) {
-  const messages = useSelector((state: RootState) => selectRoomMessages(state, roomId));
-  const typingUsers = useSelector((state: RootState) => selectRoomTypingUsers(state, roomId));
-  const presence = useSelector((state: RootState) => selectRoomPresence(state, roomId));
-  const collaborativeNote = useSelector((state: RootState) =>
-    selectRoomCollaborativeNote(state, roomId)
+  // Create stable selector references
+  const selectMessagesForRoom = useMemo(
+    () => (state: RootState) => selectRoomMessages(state, roomId),
+    [roomId]
   );
-  const cursors = useSelector((state: RootState) => selectRoomCursors(state, roomId));
-  const huddleParticipants = useSelector((state: RootState) =>
-    selectRoomHuddleParticipants(state, roomId)
+  const selectTypingForRoom = useMemo(
+    () => (state: RootState) => selectRoomTypingUsers(state, roomId),
+    [roomId]
   );
-  const hasUnread = useSelector((state: RootState) => selectHasUnreadNotification(state, roomId));
+  const selectPresenceForRoom = useMemo(
+    () => (state: RootState) => selectRoomPresence(state, roomId),
+    [roomId]
+  );
+  const selectNoteForRoom = useMemo(
+    () => (state: RootState) => selectRoomCollaborativeNote(state, roomId),
+    [roomId]
+  );
+  const selectCursorsForRoom = useMemo(
+    () => (state: RootState) => selectRoomCursors(state, roomId),
+    [roomId]
+  );
+  const selectHuddleForRoom = useMemo(
+    () => (state: RootState) => selectRoomHuddleParticipants(state, roomId),
+    [roomId]
+  );
+  const selectUnreadForRoom = useMemo(
+    () => (state: RootState) => selectHasUnreadNotification(state, roomId),
+    [roomId]
+  );
+
+  const messages = useSelector(selectMessagesForRoom);
+  const typingUsers = useSelector(selectTypingForRoom);
+  const presence = useSelector(selectPresenceForRoom);
+  const collaborativeNote = useSelector(selectNoteForRoom);
+  const cursors = useSelector(selectCursorsForRoom);
+  const huddleParticipants = useSelector(selectHuddleForRoom);
+  const hasUnread = useSelector(selectUnreadForRoom);
 
   return {
     messages,
@@ -470,7 +549,10 @@ export function useWebSocketEvent<T extends UnifiedWebSocketEvent['type']>(
   const ws = useRef(getUnifiedWebSocket());
 
   useEffect(() => {
-    const unsubscribe = ws.current.on(eventType, callback as (event: UnifiedWebSocketEvent) => void);
+    const unsubscribe = ws.current.on(
+      eventType,
+      callback as (event: UnifiedWebSocketEvent) => void
+    );
     return unsubscribe;
   }, [eventType, callback]);
 }

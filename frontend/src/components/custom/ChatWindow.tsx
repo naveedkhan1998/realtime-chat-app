@@ -22,6 +22,7 @@ import {
   selectRoomPagination,
 } from '@/features/unifiedChatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import type { RootState } from '@/app/store';
 import ChatHeader from './chat-page/ChatHeader';
 import ChatInput from './chat-page/ChatInput';
 import MessageList from './chat-page/MessageList';
@@ -36,8 +37,6 @@ interface ChatWindowProps {
   activeRoom: ChatRoom | undefined;
 }
 
-const emptyPresence: UserProfile[] = [];
-
 export default function ChatWindow({
   user,
   activeChat,
@@ -47,28 +46,29 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const dispatch = useAppDispatch();
   const shouldAutoScrollRef = useRef(true);
-  
+
   // Use unified WebSocket hooks for room actions
   const { deleteMessage, editMessage, sendTyping } = useRoomActions(activeChat);
   const { isConnected } = useGlobalState();
-  
-  const messages = useAppSelector(
-    state => selectRoomMessages(state, activeChat)
+
+  // Selectors - direct usage, messages fetched fresh on chat change
+  const messages = useAppSelector((state: RootState) =>
+    selectRoomMessages(state, activeChat)
   );
   const presence = useAppSelector(
-    state => selectRoomPresence(state, activeChat)?.users ?? emptyPresence
+    (state: RootState) => selectRoomPresence(state, activeChat)?.users ?? []
   );
-  const typingMap = useAppSelector(
-    state => selectRoomTypingUsers(state, activeChat)
+  const typingMap = useAppSelector((state: RootState) =>
+    selectRoomTypingUsers(state, activeChat)
   );
-  const huddleParticipants = useAppSelector(
-    state => selectRoomHuddleParticipants(state, activeChat)
+  const huddleParticipants = useAppSelector((state: RootState) =>
+    selectRoomHuddleParticipants(state, activeChat)
   );
-  const existingMessagesRef = useRef(messages);
-  const pagination = useAppSelector(
-    state => selectRoomPagination(state, activeChat)
+  const pagination = useAppSelector((state: RootState) =>
+    selectRoomPagination(state, activeChat)
   );
   const nextCursor = pagination.nextCursor;
+
   const { register, handleSubmit, reset, setValue, watch } = useForm<{
     message: string;
   }>();
@@ -84,9 +84,10 @@ export default function ChatWindow({
     connectionDetails,
   } = useHuddle();
 
-  const [initialLoading, setInitialLoading] = useState(false);
+  // Simple loading state
+  const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const initialScrollDoneRef = useRef(false);
+  const activeChatRef = useRef(activeChat);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const noteUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -111,36 +112,48 @@ export default function ChatWindow({
     }
   }, []);
 
-  const fetchInitialMessages = useCallback(async () => {
+  // Fetch messages when activeChat changes - always fetch fresh
+  useEffect(() => {
+    activeChatRef.current = activeChat;
     if (!activeChat) return;
+
+    // Clear previous messages and start loading immediately
+    dispatch(setMessages({ roomId: activeChat, messages: [] }));
     setInitialLoading(true);
+    shouldAutoScrollRef.current = true;
 
-    try {
-      const response = await fetchMessagesPage({
-        chat_room_id: activeChat,
-        limit: 30,
-      }).unwrap();
-      const ordered = [...response.results].reverse();
-      const merged = mergeMessages(existingMessagesRef.current, ordered);
-      dispatch(setMessages({ roomId: activeChat, messages: merged }));
-      dispatch(
-        setMessagePagination({
-          roomId: activeChat,
-          nextCursor: extractCursor(response.next),
-        })
-      );
-      shouldAutoScrollRef.current = true;
-      initialScrollDoneRef.current = true;
-    } catch (error) {
-      console.error('Failed to load messages', error);
+    const chatIdToFetch = activeChat;
 
-      dispatch(setMessages({ roomId: activeChat, messages: [] }));
-      dispatch(
-        setMessagePagination({ roomId: activeChat, nextCursor: null })
-      );
-    } finally {
-      setInitialLoading(false);
-    }
+    fetchMessagesPage({
+      chat_room_id: chatIdToFetch,
+      limit: 30,
+    })
+      .unwrap()
+      .then(response => {
+        // Only update if still the active chat
+        if (chatIdToFetch !== activeChatRef.current) return;
+
+        const ordered = [...response.results].reverse();
+        dispatch(setMessages({ roomId: chatIdToFetch, messages: ordered }));
+        dispatch(
+          setMessagePagination({
+            roomId: chatIdToFetch,
+            nextCursor: extractCursor(response.next),
+          })
+        );
+        shouldAutoScrollRef.current = true;
+        setInitialLoading(false);
+      })
+      .catch(error => {
+        if (chatIdToFetch !== activeChatRef.current) return;
+
+        console.error('Failed to load messages', error);
+        dispatch(setMessages({ roomId: chatIdToFetch, messages: [] }));
+        dispatch(
+          setMessagePagination({ roomId: chatIdToFetch, nextCursor: null })
+        );
+        setInitialLoading(false);
+      });
   }, [activeChat, dispatch, extractCursor, fetchMessagesPage]);
 
   const handleLoadMore = useCallback(async () => {
@@ -194,25 +207,6 @@ export default function ChatWindow({
     }
     setMessageToDelete(null);
   }, [messageToDelete, editingMessage, cancelEditing, deleteMessage]);
-
-  useEffect(() => {
-    fetchInitialMessages();
-  }, [fetchInitialMessages]);
-
-  useEffect(() => {
-    initialScrollDoneRef.current = false;
-    shouldAutoScrollRef.current = true;
-  }, [activeChat]);
-
-  useEffect(() => {
-    if (messages.length === 0) return;
-    // Virtuoso handles scroll
-    initialScrollDoneRef.current = true;
-  }, [messages]);
-
-  useEffect(() => {
-    existingMessagesRef.current = messages;
-  }, [messages]);
 
   const messageValue = watch('message');
 
@@ -312,9 +306,7 @@ export default function ChatWindow({
       client_id: clientId,
     };
 
-    dispatch(
-      addMessage({ roomId: activeChat, message: optimisticMessage })
-    );
+    dispatch(addMessage({ roomId: activeChat, message: optimisticMessage }));
     shouldAutoScrollRef.current = true;
 
     if (file) {
@@ -441,13 +433,5 @@ export default function ChatWindow({
         />
       </div>
     </>
-  );
-}
-
-function mergeMessages(current: Message[], incoming: Message[]): Message[] {
-  const seen = new Set(current.map(m => m.id));
-  const uniqueIncoming = incoming.filter(m => !seen.has(m.id));
-  return [...uniqueIncoming, ...current].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 }
