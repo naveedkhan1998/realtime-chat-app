@@ -11,21 +11,23 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click="sidebarOpen = false"
-         class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
          x-cloak>
     </div>
     
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-           class="fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out flex flex-col h-dvh">
-        {% include "components/sidebar.html" %}
+           class="fixed lg:static inset-y-0 left-0 z-50 w-[320px] transform transition-transform duration-300 ease-out flex flex-col h-dvh lg:p-3">
+        <div class="flex flex-col w-full h-full overflow-hidden border-r lg:border lg:rounded-3xl bg-background/80 backdrop-blur-2xl border-border shadow-2xl">
+            {% include "components/sidebar.html" %}
+        </div>
     </aside>
     
     <!-- Main content -->
     <main class="flex-1 flex flex-col h-dvh lg:min-w-0 overflow-hidden">
         <!-- Mobile header -->
-        <header class="lg:hidden flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-4">
-            <button @click="sidebarOpen = true" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+        <header class="lg:hidden flex-shrink-0 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-4">
+            <button @click="sidebarOpen = true" class="p-2 hover:bg-muted rounded-xl transition-colors">
                 <i data-lucide="menu" class="w-5 h-5"></i>
             </button>
             <h1 class="font-semibold text-lg">{% block mobile_title %}Chat{% endblock %}</h1>

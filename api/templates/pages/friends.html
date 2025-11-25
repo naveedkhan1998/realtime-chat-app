@@ -4,56 +4,56 @@
 {% block mobile_title %}Friends{% endblock %}
 
 {% block main_content %}
-<div id="main-content" class="flex-1 flex flex-col bg-white dark:bg-gray-800" x-data="{ activeTab: 'friends' }">
+<div id="main-content" class="flex-1 flex flex-col bg-background" x-data="{ activeTab: 'friends' }">
     <!-- Header -->
-    <header class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 class="font-semibold text-lg">Friends</h1>
+    <header class="px-6 py-5 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <h1 class="font-semibold text-xl text-foreground">Friends</h1>
     </header>
     
     <!-- Tabs -->
-    <div class="flex border-b border-gray-200 dark:border-gray-700">
+    <div class="flex bg-muted/30">
         <button @click="activeTab = 'friends'"
-                :class="activeTab === 'friends' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                class="flex-1 py-3 text-center font-medium border-b-2 transition-colors">
+                :class="activeTab === 'friends' ? 'bg-background shadow-sm text-primary border-t-2 border-primary' : 'text-muted-foreground hover:text-foreground'"
+                class="flex-1 py-4 text-center font-semibold transition-all duration-200">
             Friends
         </button>
         <button @click="activeTab = 'requests'"
-                :class="activeTab === 'requests' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                class="flex-1 py-3 text-center font-medium border-b-2 transition-colors relative">
+                :class="activeTab === 'requests' ? 'bg-background shadow-sm text-primary border-t-2 border-primary' : 'text-muted-foreground hover:text-foreground'"
+                class="flex-1 py-4 text-center font-semibold transition-all duration-200 relative">
             Requests
             {% if pending_requests_count > 0 %}
-            <span class="absolute top-2 right-4 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            <span class="absolute top-2.5 right-1/4 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
                 {{ pending_requests_count }}
             </span>
             {% endif %}
         </button>
         <button @click="activeTab = 'add'"
-                :class="activeTab === 'add' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                class="flex-1 py-3 text-center font-medium border-b-2 transition-colors">
+                :class="activeTab === 'add' ? 'bg-background shadow-sm text-primary border-t-2 border-primary' : 'text-muted-foreground hover:text-foreground'"
+                class="flex-1 py-4 text-center font-semibold transition-all duration-200">
             Add Friend
         </button>
     </div>
     
     <!-- Friends List -->
-    <div x-show="activeTab === 'friends'" class="flex-1 overflow-y-auto scrollbar-thin">
+    <div x-show="activeTab === 'friends'" class="flex-1 overflow-y-auto scrollbar-thin p-3">
         <div id="friends-content"
              hx-get="{% url 'htmx:friends_full' %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div class="flex items-center justify-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div class="flex items-center justify-center py-12">
+                <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
         </div>
     </div>
     
     <!-- Friend Requests -->
-    <div x-show="activeTab === 'requests'" class="flex-1 overflow-y-auto scrollbar-thin" x-cloak>
+    <div x-show="activeTab === 'requests'" class="flex-1 overflow-y-auto scrollbar-thin p-3" x-cloak>
         <div id="requests-content"
              hx-get="{% url 'htmx:friend_requests' %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div class="flex items-center justify-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div class="flex items-center justify-center py-12">
+                <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
         </div>
     </div>
@@ -61,9 +61,9 @@
     <!-- Add Friend -->
     <div x-show="activeTab === 'add'" class="flex-1 flex flex-col" x-cloak>
         <!-- Search -->
-        <div class="p-4">
+        <div class="p-5">
             <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-muted-foreground">
                     <i data-lucide="search" class="w-5 h-5"></i>
                 </span>
                 <input type="text"
@@ -73,16 +73,17 @@
                        hx-get="{% url 'htmx:search_users_for_friend' %}"
                        hx-trigger="keyup changed delay:300ms"
                        hx-target="#add-friend-results"
-                       class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors">
+                       class="w-full pl-12 pr-4 py-3.5 border border-border/50 rounded-2xl bg-muted/30 backdrop-blur-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:bg-background transition-all duration-200">
             </div>
         </div>
         
-        <div id="add-friend-results" class="flex-1 overflow-y-auto scrollbar-thin">
-            <div class="flex flex-col items-center justify-center py-12 text-center">
-                <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                    <i data-lucide="user-plus" class="w-8 h-8 text-gray-400"></i>
+        <div id="add-friend-results" class="flex-1 overflow-y-auto scrollbar-thin px-3">
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+                <div class="w-20 h-20 bg-muted/50 rounded-3xl flex items-center justify-center mb-5 ring-1 ring-border/50">
+                    <i data-lucide="user-plus" class="w-10 h-10 text-muted-foreground/60"></i>
                 </div>
-                <p class="text-gray-500 dark:text-gray-400">Search for users to send friend requests</p>
+                <p class="text-muted-foreground font-medium">Search for users to send friend requests</p>
+                <p class="text-sm text-muted-foreground/60 mt-1">Enter a name or email address above</p>
             </div>
         </div>
     </div>

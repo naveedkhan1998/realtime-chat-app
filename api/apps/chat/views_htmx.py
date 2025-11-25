@@ -814,7 +814,11 @@ def mark_notification_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
     notification.is_read = True
     notification.save()
-    return HttpResponse("")
+    
+    # Return the updated notification item (now marked as read)
+    return HttpResponse(render_to_string("partials/notification_item.html", {
+        "notification": notification
+    }, request=request))
 
 
 @login_required
@@ -822,9 +826,13 @@ def mark_notification_read(request, notification_id):
 def mark_all_notifications_read(request):
     """Mark all notifications as read"""
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-    response = HttpResponse()
-    response["HX-Trigger"] = "notificationsUpdated"
-    return response
+    
+    # Re-render the entire notifications container
+    notifications = Notification.objects.filter(user=request.user).order_by("-created_at")[:50]
+    return HttpResponse(render_to_string("partials/notifications_container.html", {
+        "notifications": notifications,
+        "unread_count": 0
+    }, request=request))
 
 
 # =============================================================================

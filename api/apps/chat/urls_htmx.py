@@ -12,6 +12,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     
     # Authentication
+    path("app/auth/", views.login_page, name="auth"),  # Unified auth page with tabs
     path("app/login/", views.login_page, name="login"),
     path("app/register/", views.register_page, name="register"),
     path("app/logout/", views.logout_view, name="logout"),

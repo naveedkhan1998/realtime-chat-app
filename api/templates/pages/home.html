@@ -1,34 +1,48 @@
 {% extends "layouts/public.html" %}
 
-{% block title %}Chat App - Real-time Communication{% endblock %}
+{% block title %}MNK Chat - Real-time Communication{% endblock %}
 
 {% block main_content %}
 <!-- Hero Section -->
-<section class="py-20 px-4">
-    <div class="container mx-auto text-center">
-        <h1 class="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Connect with Anyone,
-            <span class="text-primary-600">Anywhere</span>
+<section class="relative py-24 px-4 overflow-hidden">
+    <!-- Background Effects -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-[600px] h-[600px] bg-primary/20 blur-[100px]"></div>
+        <div class="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 rounded-full w-[500px] h-[500px] bg-secondary/20 blur-[100px]"></div>
+    </div>
+    
+    <div class="container mx-auto text-center relative z-10">
+        <!-- Logo Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            Portfolio Demo Project
+        </div>
+        
+        <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
+            Real-time Chat <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent">
+                Portfolio Demo.
+            </span>
         </h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Experience seamless real-time communication with our modern chat application. 
-            Fast, secure, and designed for the way you work.
+        <p class="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            Explore this full-stack showcase featuring Django Channels, Redis,
+            and HTMX. Built to demonstrate scalable real-time architecture.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             {% if user.is_authenticated %}
             <a href="{% url 'htmx:chat_list' %}" 
-               class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2">
+               class="px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                 <i data-lucide="message-square" class="w-5 h-5"></i>
                 Open Chat
             </a>
             {% else %}
-            <a href="{% url 'htmx:register' %}" 
-               class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2">
+            <a href="{% url 'htmx:auth' %}" 
+               class="px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                 <i data-lucide="rocket" class="w-5 h-5"></i>
                 Get Started Free
             </a>
-            <a href="{% url 'htmx:login' %}" 
-               class="px-8 py-3 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2">
+            <a href="{% url 'htmx:auth' %}" 
+               class="px-8 py-4 border border-border hover:bg-muted/50 font-semibold rounded-2xl transition-all duration-300 inline-flex items-center justify-center gap-2 text-foreground">
                 <i data-lucide="log-in" class="w-5 h-5"></i>
                 Sign In
             </a>
@@ -38,74 +52,79 @@
 </section>
 
 <!-- Features Section -->
-<section id="features" class="py-20 bg-white dark:bg-gray-800">
+<section id="features" class="py-24 bg-card/30">
     <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            Everything You Need to Stay Connected
-        </h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Everything You Need to Stay Connected
+            </h2>
+            <p class="text-muted-foreground text-lg max-w-2xl mx-auto">
+                A modern chat experience with all the features you'd expect from a professional messaging platform.
+            </p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Feature 1 -->
-            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mb-4">
-                    <i data-lucide="zap" class="w-6 h-6 text-primary-600"></i>
+            <div class="p-6 glass-card rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 group">
+                <div class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                    <i data-lucide="zap" class="w-7 h-7 text-primary"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Real-time Messaging</h3>
-                <p class="text-gray-600 dark:text-gray-300">
+                <h3 class="text-xl font-semibold text-foreground mb-3">Real-time Messaging</h3>
+                <p class="text-muted-foreground leading-relaxed">
                     Instant message delivery with typing indicators and read receipts. Stay connected in real-time.
                 </p>
             </div>
             
             <!-- Feature 2 -->
-            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
-                    <i data-lucide="mic" class="w-6 h-6 text-green-600"></i>
+            <div class="p-6 glass-card rounded-2xl border border-border hover:border-secondary/30 transition-all duration-300 group">
+                <div class="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-secondary/20 transition-colors">
+                    <i data-lucide="mic" class="w-7 h-7 text-secondary"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Voice Huddles</h3>
-                <p class="text-gray-600 dark:text-gray-300">
+                <h3 class="text-xl font-semibold text-foreground mb-3">Voice Huddles</h3>
+                <p class="text-muted-foreground leading-relaxed">
                     Jump into quick voice conversations with WebRTC-powered audio. No scheduling needed.
                 </p>
             </div>
             
             <!-- Feature 3 -->
-            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
-                    <i data-lucide="users" class="w-6 h-6 text-purple-600"></i>
+            <div class="p-6 glass-card rounded-2xl border border-border hover:border-accent/30 transition-all duration-300 group">
+                <div class="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-accent/20 transition-colors">
+                    <i data-lucide="users" class="w-7 h-7 text-accent"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Group Chats</h3>
-                <p class="text-gray-600 dark:text-gray-300">
+                <h3 class="text-xl font-semibold text-foreground mb-3">Group Chats</h3>
+                <p class="text-muted-foreground leading-relaxed">
                     Create group conversations for teams, friends, or communities. Collaborate efficiently.
                 </p>
             </div>
             
             <!-- Feature 4 -->
-            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mb-4">
-                    <i data-lucide="file-text" class="w-6 h-6 text-yellow-600"></i>
+            <div class="p-6 glass-card rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 group">
+                <div class="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-yellow-500/20 transition-colors">
+                    <i data-lucide="file-text" class="w-7 h-7 text-yellow-500"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Collaborative Notes</h3>
-                <p class="text-gray-600 dark:text-gray-300">
-                    Share and edit notes together in real-time. Perfect for brainstorming and meeting notes.
+                <h3 class="text-xl font-semibold text-foreground mb-3">File Sharing</h3>
+                <p class="text-muted-foreground leading-relaxed">
+                    Share images, documents, and files directly in your conversations. Easy and secure.
                 </p>
             </div>
             
             <!-- Feature 5 -->
-            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center mb-4">
-                    <i data-lucide="shield-check" class="w-6 h-6 text-red-600"></i>
+            <div class="p-6 glass-card rounded-2xl border border-border hover:border-secondary/30 transition-all duration-300 group">
+                <div class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-red-500/20 transition-colors">
+                    <i data-lucide="shield-check" class="w-7 h-7 text-red-500"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Secure & Private</h3>
-                <p class="text-gray-600 dark:text-gray-300">
+                <h3 class="text-xl font-semibold text-foreground mb-3">Secure & Private</h3>
+                <p class="text-muted-foreground leading-relaxed">
                     Your conversations are protected with modern security practices. Your privacy matters.
                 </p>
             </div>
             
             <!-- Feature 6 -->
-            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
-                    <i data-lucide="smartphone" class="w-6 h-6 text-blue-600"></i>
+            <div class="p-6 glass-card rounded-2xl border border-border hover:border-accent/30 transition-all duration-300 group">
+                <div class="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-blue-500/20 transition-colors">
+                    <i data-lucide="smartphone" class="w-7 h-7 text-blue-500"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Works Everywhere</h3>
-                <p class="text-gray-600 dark:text-gray-300">
+                <h3 class="text-xl font-semibold text-foreground mb-3">Works Everywhere</h3>
+                <p class="text-muted-foreground leading-relaxed">
                     Responsive design that works on any device. Chat from your phone, tablet, or desktop.
                 </p>
             </div>
@@ -113,33 +132,65 @@
     </div>
 </section>
 
-<!-- About Section -->
-<section id="about" class="py-20">
+<!-- Tech Stack Section -->
+<section id="about" class="py-24">
     <div class="container mx-auto px-4">
-        <div class="max-w-3xl mx-auto text-center">
-            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                Built for Modern Communication
-            </h2>
-            <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
-                Our chat application is built with cutting-edge technology including Django Channels for 
-                real-time WebSocket communication, HTMX for seamless interactions, and a modern UI 
-                powered by Tailwind CSS and Alpine.js.
-            </p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                    Built with Modern Technology
+                </h2>
+                <p class="text-lg text-muted-foreground">
+                    A full-stack application showcasing real-time WebSocket communication,
+                    modern server-side rendering, and a beautiful UI.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="p-6 glass-card rounded-2xl border border-border text-center">
+                    <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="server" class="w-8 h-8 text-primary"></i>
+                    </div>
+                    <h3 class="font-semibold text-foreground mb-2">Backend</h3>
+                    <p class="text-sm text-muted-foreground">Django, Channels, Redis, PostgreSQL</p>
+                </div>
+                <div class="p-6 glass-card rounded-2xl border border-border text-center">
+                    <div class="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="layout" class="w-8 h-8 text-secondary"></i>
+                    </div>
+                    <h3 class="font-semibold text-foreground mb-2">Frontend</h3>
+                    <p class="text-sm text-muted-foreground">HTMX, Alpine.js, Tailwind CSS</p>
+                </div>
+                <div class="p-6 glass-card rounded-2xl border border-border text-center">
+                    <div class="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="cloud" class="w-8 h-8 text-accent"></i>
+                    </div>
+                    <h3 class="font-semibold text-foreground mb-2">Infrastructure</h3>
+                    <p class="text-sm text-muted-foreground">Docker, WebSockets, GCP</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap justify-center gap-3">
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
                     Django
                 </span>
-                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
                     HTMX
                 </span>
-                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
                     Alpine.js
                 </span>
-                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
                     WebSockets
                 </span>
-                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium">
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
                     Tailwind CSS
+                </span>
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
+                    Redis
+                </span>
+                <span class="px-4 py-2 bg-muted/50 rounded-full text-sm font-medium text-foreground border border-border">
+                    PostgreSQL
                 </span>
             </div>
         </div>
@@ -147,18 +198,28 @@
 </section>
 
 <!-- CTA Section -->
-<section class="py-20 bg-primary-600">
-    <div class="container mx-auto px-4 text-center">
-        <h2 class="text-3xl font-bold text-white mb-4">
+<section class="py-24 relative overflow-hidden">
+    <!-- Background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/20"></div>
+    <div class="absolute inset-0 backdrop-blur-3xl"></div>
+    
+    <div class="container mx-auto px-4 text-center relative z-10">
+        <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Ready to Get Started?
         </h2>
-        <p class="text-xl text-primary-100 mb-8">
-            Join thousands of users who are already chatting.
+        <p class="text-xl text-muted-foreground mb-8 max-w-xl mx-auto">
+            Create an account and explore all the real-time features this demo has to offer.
         </p>
         {% if not user.is_authenticated %}
-        <a href="{% url 'htmx:register' %}" 
-           class="px-8 py-3 bg-white hover:bg-gray-100 text-primary-600 font-semibold rounded-lg transition-colors inline-flex items-center gap-2">
+        <a href="{% url 'htmx:auth' %}" 
+           class="px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all duration-300 inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
             Create Your Account
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+        {% else %}
+        <a href="{% url 'htmx:chat_list' %}" 
+           class="px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all duration-300 inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+            Go to Chat
             <i data-lucide="arrow-right" class="w-5 h-5"></i>
         </a>
         {% endif %}

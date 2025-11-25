@@ -1,0 +1,37 @@
+<div id="notification-{{ notification.id }}"
+     class="flex items-start gap-4 px-6 py-4 border-b border-border/30 hover:bg-muted/20 transition-colors {% if not notification.is_read %}bg-primary/5{% endif %}">
+    
+    <!-- Icon -->
+    <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
+        {% if notification.chat_room %}bg-secondary/10{% else %}bg-accent/10{% endif %}">
+        {% if notification.chat_room %}
+        <i data-lucide="message-circle" class="w-5 h-5 text-secondary"></i>
+        {% else %}
+        <i data-lucide="bell" class="w-5 h-5 text-accent"></i>
+        {% endif %}
+    </div>
+    
+    <div class="flex-1 min-w-0">
+        <p class="text-foreground {% if not notification.is_read %}font-medium{% endif %}">
+            {{ notification.content }}
+        </p>
+        <p class="text-sm text-muted-foreground mt-1">
+            {{ notification.created_at|timesince }} ago
+        </p>
+    </div>
+    
+    {% if not notification.is_read %}
+    <button hx-post="{% url 'htmx:mark_notification_read' notification.id %}"
+            hx-target="#notification-{{ notification.id }}"
+            hx-swap="outerHTML"
+            class="p-2 hover:bg-muted/50 rounded-lg transition-colors group"
+            title="Mark as read">
+        <i data-lucide="check" class="w-4 h-4 text-muted-foreground group-hover:text-primary"></i>
+    </button>
+    {% else %}
+    <div class="p-2">
+        <i data-lucide="check-check" class="w-4 h-4 text-primary/50"></i>
+    </div>
+    {% endif %}
+</div>
+<script>lucide.createIcons();</script>

@@ -4,37 +4,40 @@
 {% block mobile_title %}Settings{% endblock %}
 
 {% block main_content %}
-<div id="main-content" class="flex-1 bg-white dark:bg-gray-800 overflow-y-auto">
-    <div class="max-w-2xl mx-auto p-6">
+<div id="main-content" class="flex-1 bg-background overflow-y-auto">
+    <div class="max-w-2xl mx-auto p-8">
         <!-- Header -->
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
+        <h1 class="text-3xl font-bold text-foreground mb-8">Settings</h1>
         
         <!-- Appearance -->
-        <section class="mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appearance</h2>
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                <i data-lucide="palette" class="w-5 h-5 text-primary"></i>
+                Appearance
+            </h2>
             
-            <div class="space-y-4">
+            <div class="glass-card rounded-2xl border border-border/50 overflow-hidden">
                 <!-- Theme -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="palette" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                <div class="flex items-center justify-between p-5">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="sun-moon" class="w-6 h-6 text-muted-foreground"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Theme</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Choose your preferred theme</p>
+                            <p class="font-semibold text-foreground">Theme</p>
+                            <p class="text-sm text-muted-foreground">Choose your preferred theme</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-center gap-2" x-data>
+                    <div class="flex items-center gap-1 p-1 bg-muted/50 rounded-xl" x-data>
                         <button @click="darkMode = false; localStorage.setItem('darkMode', 'false')"
-                                :class="!darkMode ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'"
-                                class="px-3 py-1 rounded-lg text-sm font-medium transition-colors">
+                                :class="!darkMode ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
                             Light
                         </button>
                         <button @click="darkMode = true; localStorage.setItem('darkMode', 'true')"
-                                :class="darkMode ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'"
-                                class="px-3 py-1 rounded-lg text-sm font-medium transition-colors">
+                                :class="darkMode ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
                             Dark
                         </button>
                     </div>
@@ -43,130 +46,139 @@
         </section>
         
         <!-- Notifications -->
-        <section class="mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notifications</h2>
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                <i data-lucide="bell" class="w-5 h-5 text-primary"></i>
+                Notifications
+            </h2>
             
-            <div class="space-y-4">
+            <div class="glass-card rounded-2xl border border-border/50 overflow-hidden divide-y divide-border/30">
                 <!-- Sound -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                <div class="flex items-center justify-between p-5"
                      x-data="{ enabled: localStorage.getItem('notificationSound') !== 'false' }">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="volume-2" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="volume-2" class="w-6 h-6 text-muted-foreground"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Notification Sound</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Play a sound for new messages</p>
+                            <p class="font-semibold text-foreground">Notification Sound</p>
+                            <p class="text-sm text-muted-foreground">Play a sound for new messages</p>
                         </div>
                     </div>
                     
                     <button @click="enabled = !enabled; localStorage.setItem('notificationSound', enabled)"
-                            :class="enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
+                            :class="enabled ? 'bg-primary' : 'bg-muted'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
                         <span :class="enabled ? 'translate-x-5' : 'translate-x-0'"
-                              class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                              class="pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                 </div>
                 
                 <!-- Desktop Notifications -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                <div class="flex items-center justify-between p-5"
                      x-data="{ enabled: Notification.permission === 'granted' }">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="bell" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="bell-ring" class="w-6 h-6 text-muted-foreground"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Desktop Notifications</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Get notified even when the app is in background</p>
+                            <p class="font-semibold text-foreground">Desktop Notifications</p>
+                            <p class="text-sm text-muted-foreground">Get notified even when the app is in background</p>
                         </div>
                     </div>
                     
                     <button @click="if (Notification.permission === 'default') { Notification.requestPermission().then(p => enabled = p === 'granted'); } else { enabled = !enabled; }"
-                            :class="enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
+                            :class="enabled ? 'bg-primary' : 'bg-muted'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
                         <span :class="enabled ? 'translate-x-5' : 'translate-x-0'"
-                              class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                              class="pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                 </div>
             </div>
         </section>
         
         <!-- Privacy -->
-        <section class="mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Privacy</h2>
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                <i data-lucide="shield" class="w-5 h-5 text-primary"></i>
+                Privacy
+            </h2>
             
-            <div class="space-y-4">
+            <div class="glass-card rounded-2xl border border-border/50 overflow-hidden divide-y divide-border/30">
                 <!-- Online Status -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                <div class="flex items-center justify-between p-5"
                      x-data="{ enabled: localStorage.getItem('showOnlineStatus') !== 'false' }">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="eye" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="eye" class="w-6 h-6 text-muted-foreground"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Show Online Status</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Let others see when you're online</p>
+                            <p class="font-semibold text-foreground">Show Online Status</p>
+                            <p class="text-sm text-muted-foreground">Let others see when you're online</p>
                         </div>
                     </div>
                     
                     <button @click="enabled = !enabled; localStorage.setItem('showOnlineStatus', enabled)"
-                            :class="enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
+                            :class="enabled ? 'bg-primary' : 'bg-muted'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
                         <span :class="enabled ? 'translate-x-5' : 'translate-x-0'"
-                              class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                              class="pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                 </div>
                 
                 <!-- Read Receipts -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                <div class="flex items-center justify-between p-5"
                      x-data="{ enabled: localStorage.getItem('showReadReceipts') !== 'false' }">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="check-check" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center">
+                            <i data-lucide="check-check" class="w-6 h-6 text-muted-foreground"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Read Receipts</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Let others know when you've read their messages</p>
+                            <p class="font-semibold text-foreground">Read Receipts</p>
+                            <p class="text-sm text-muted-foreground">Let others know when you've read their messages</p>
                         </div>
                     </div>
                     
                     <button @click="enabled = !enabled; localStorage.setItem('showReadReceipts', enabled)"
-                            :class="enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
+                            :class="enabled ? 'bg-primary' : 'bg-muted'"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
                         <span :class="enabled ? 'translate-x-5' : 'translate-x-0'"
-                              class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                              class="pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                 </div>
             </div>
         </section>
         
         <!-- Account -->
-        <section class="mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account</h2>
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                <i data-lucide="user" class="w-5 h-5 text-primary"></i>
+                Account
+            </h2>
             
-            <div class="space-y-4">
-                <a href="{% url 'htmx:profile' %}" class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-                            <i data-lucide="user" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+            <div class="space-y-3">
+                <a href="{% url 'htmx:profile' %}" class="flex items-center justify-between p-5 glass-card rounded-2xl border border-border/50 hover:bg-muted/30 transition-all duration-200 group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-muted/50 rounded-xl flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                            <i data-lucide="user-cog" class="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-900 dark:text-white">Edit Profile</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Change your name and avatar</p>
+                            <p class="font-semibold text-foreground">Edit Profile</p>
+                            <p class="text-sm text-muted-foreground">Change your name and avatar</p>
                         </div>
                     </div>
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors"></i>
                 </a>
                 
-                <button class="w-full flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-left"
+                <button class="w-full flex items-center justify-between p-5 bg-destructive/5 rounded-2xl border border-destructive/20 hover:bg-destructive/10 transition-all duration-200 text-left"
                         onclick="confirm('Are you sure you want to delete your account? This action cannot be undone.')">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                            <i data-lucide="trash-2" class="w-5 h-5 text-red-600"></i>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center">
+                            <i data-lucide="trash-2" class="w-6 h-6 text-destructive"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-red-600">Delete Account</p>
-                            <p class="text-sm text-red-500">Permanently delete your account and all data</p>
+                            <p class="font-semibold text-destructive">Delete Account</p>
+                            <p class="text-sm text-destructive/70">Permanently delete your account and all data</p>
                         </div>
                     </div>
                 </button>
@@ -175,11 +187,22 @@
         
         <!-- About -->
         <section>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h2>
+            <h2 class="text-xl font-semibold text-foreground mb-5 flex items-center gap-2">
+                <i data-lucide="info" class="w-5 h-5 text-primary"></i>
+                About
+            </h2>
             
-            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Chat App v1.0.0<br>
+            <div class="p-5 glass-card rounded-2xl border border-border/50">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                        <i data-lucide="message-circle" class="w-7 h-7 text-white"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-foreground text-lg">Chat App</p>
+                        <p class="text-sm text-muted-foreground">Version 1.0.0</p>
+                    </div>
+                </div>
+                <p class="text-sm text-muted-foreground">
                     Built with Django, HTMX, and Alpine.js<br>
                     &copy; 2024 Chat App. All rights reserved.
                 </p>

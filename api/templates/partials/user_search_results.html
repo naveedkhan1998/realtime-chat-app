@@ -1,32 +1,34 @@
 {% for user_item in users %}
-<div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<div class="flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 rounded-xl transition-all duration-200 mx-1 group">
     <div class="flex items-center gap-3">
         {% if user_item.avatar %}
-        <img src="{{ user_item.avatar.url }}" alt="{{ user_item.name }}" class="w-10 h-10 rounded-full object-cover">
+        <img src="{{ user_item.avatar.url }}" alt="{{ user_item.name }}" class="w-11 h-11 rounded-xl object-cover ring-2 ring-border/50 group-hover:ring-primary/30 transition-all">
         {% else %}
-        <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-            <span class="text-primary-600 dark:text-primary-400 font-semibold">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-border/50 group-hover:ring-primary/30 transition-all">
+            <span class="text-primary font-semibold">
                 {{ user_item.name|slice:":1"|upper }}
             </span>
         </div>
         {% endif %}
         <div>
-            <p class="font-medium text-gray-900 dark:text-white">{{ user_item.name }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ user_item.email }}</p>
+            <p class="font-medium text-foreground">{{ user_item.name }}</p>
+            <p class="text-sm text-muted-foreground">{{ user_item.email }}</p>
         </div>
     </div>
     
     <button hx-post="{% url 'htmx:create_chat' %}"
             hx-vals='{"user_id": "{{ user_item.id }}"}'
             hx-swap="none"
-            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+            class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-xl shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 transition-all duration-200">
         Chat
     </button>
 </div>
 {% empty %}
-<div class="flex flex-col items-center justify-center py-8 text-center">
-    <i data-lucide="search-x" class="w-12 h-12 text-gray-300 mb-3"></i>
-    <p class="text-gray-500 dark:text-gray-400">No users found</p>
-    <p class="text-sm text-gray-400 dark:text-gray-500">Try a different search term</p>
+<div class="flex flex-col items-center justify-center py-12 text-center">
+    <div class="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4 ring-1 ring-border/30">
+        <i data-lucide="search-x" class="w-8 h-8 text-muted-foreground/50"></i>
+    </div>
+    <p class="text-muted-foreground font-medium">No users found</p>
+    <p class="text-sm text-muted-foreground/60 mt-1">Try a different search term</p>
 </div>
 {% endfor %}

@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Chat App{% endblock %}</title>
     
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -13,20 +18,49 @@
             darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
                     colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
                         primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    }
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))',
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))',
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(var(--destructive))',
+                            foreground: 'hsl(var(--destructive-foreground))',
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))',
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))',
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(var(--popover))',
+                            foreground: 'hsl(var(--popover-foreground))',
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))',
+                        },
+                    },
+                    borderRadius: {
+                        lg: 'var(--radius)',
+                        md: 'calc(var(--radius) - 2px)',
+                        sm: 'calc(var(--radius) - 4px)',
+                    },
                 }
             }
         }
@@ -44,22 +78,93 @@
     
     <!-- Custom Styles -->
     <style>
+        :root {
+            /* Modern Aurora - Light Theme */
+            --background: 220 30% 96%;
+            --foreground: 230 40% 15%;
+            --card: 0 0% 100%;
+            --card-foreground: 230 40% 15%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 230 40% 15%;
+            --primary: 265 80% 50%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 190 80% 95%;
+            --secondary-foreground: 190 100% 25%;
+            --muted: 220 20% 92%;
+            --muted-foreground: 220 25% 40%;
+            --accent: 330 80% 96%;
+            --accent-foreground: 330 80% 40%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 220 20% 85%;
+            --input: 220 20% 85%;
+            --ring: 265 80% 50%;
+            --radius: 1rem;
+        }
+        
+        .dark {
+            /* Modern Aurora - Dark Theme */
+            --background: 240 25% 8%;
+            --foreground: 220 20% 98%;
+            --card: 240 25% 14%;
+            --card-foreground: 220 20% 98%;
+            --popover: 240 25% 14%;
+            --popover-foreground: 220 20% 98%;
+            --primary: 265 90% 70%;
+            --primary-foreground: 220 20% 10%;
+            --secondary: 190 50% 15%;
+            --secondary-foreground: 190 90% 80%;
+            --muted: 240 20% 15%;
+            --muted-foreground: 240 10% 75%;
+            --accent: 330 50% 15%;
+            --accent-foreground: 330 90% 80%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 240 20% 20%;
+            --input: 240 20% 20%;
+            --ring: 265 90% 70%;
+        }
+        
         [x-cloak] { display: none !important; }
         
+        * {
+            border-color: hsl(var(--border));
+        }
+        
+        body {
+            font-feature-settings: 'rlig' 1, 'calt' 1;
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: hsl(var(--background) / 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid hsl(var(--border) / 0.5);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-card {
+            background: hsl(var(--card) / 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid hsl(var(--border) / 0.5);
+        }
+        
         /* Scrollbar Styles */
-        .scrollbar-thin::-webkit-scrollbar {
+        ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
-        .scrollbar-thin::-webkit-scrollbar-track {
+        ::-webkit-scrollbar-track {
             background: transparent;
         }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background-color: rgba(155, 155, 155, 0.5);
+        ::-webkit-scrollbar-thumb {
+            background-color: hsl(var(--muted-foreground) / 0.2);
             border-radius: 20px;
         }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(155, 155, 155, 0.7);
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: hsl(var(--muted-foreground) / 0.4);
         }
         
         /* Message animations */
@@ -88,6 +193,28 @@
             40% { transform: scale(1); }
         }
         
+        /* Blob animation for backgrounds */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+        
+        /* Pulse slow for subtle animations */
+        .animate-pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
         /* HTMX loading indicator */
         .htmx-request .htmx-indicator {
             display: inline-flex;
@@ -95,11 +222,59 @@
         .htmx-indicator {
             display: none;
         }
+        
+        /* Custom input focus styles */
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+        
+        /* Button base styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+        }
+        .btn:disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .btn-primary:hover {
+            background: hsl(var(--primary) / 0.9);
+        }
+        
+        .btn-ghost {
+            background: transparent;
+        }
+        .btn-ghost:hover {
+            background: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+        
+        .btn-destructive {
+            background: hsl(var(--destructive));
+            color: hsl(var(--destructive-foreground));
+        }
+        .btn-destructive:hover {
+            background: hsl(var(--destructive) / 0.9);
+        }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+<body class="bg-background text-foreground min-h-screen antialiased">
     <!-- CSRF Token for HTMX -->
     <script>
         document.body.addEventListener('htmx:configRequest', function(evt) {
@@ -124,11 +299,11 @@
                  x-transition:leave-end="translate-y-2 opacity-0"
                  :class="{
                      'bg-green-500': toast.type === 'success',
-                     'bg-red-500': toast.type === 'error',
-                     'bg-blue-500': toast.type === 'info',
+                     'bg-destructive': toast.type === 'error',
+                     'bg-primary': toast.type === 'info',
                      'bg-yellow-500': toast.type === 'warning'
                  }"
-                 class="px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 min-w-[300px]">
+                 class="px-4 py-3 rounded-xl shadow-lg text-white flex items-center gap-2 min-w-[300px] backdrop-blur-sm">
                 <span x-text="toast.message"></span>
                 <button @click="removeToast(toast.id)" class="ml-auto hover:opacity-70">
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -163,6 +338,9 @@
                 }
             }
         }
+        
+        // Current user ID for WebSocket handlers
+        window.currentUserId = {{ user.id|default:'null' }};
         
         // Initialize Lucide icons after page load and after HTMX swaps
         document.addEventListener('DOMContentLoaded', () => lucide.createIcons());

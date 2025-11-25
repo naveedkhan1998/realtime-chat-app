@@ -97,6 +97,7 @@ class ChatWebSocket {
                     this.updateOnlineStatus(userId, true);
                 });
                 // Resubscribe to rooms
+                console.log('🔐 Auth success, resubscribing to rooms:', Array.from(this.subscribedRooms));
                 this.subscribedRooms.forEach(roomId => {
                     this.send({ type: 'chat.subscribe', room_id: roomId });
                 });
@@ -104,6 +105,8 @@ class ChatWebSocket {
                 this.send({ type: 'presence.refresh' });
                 // Start heartbeat
                 this.startHeartbeat();
+                // Dispatch event for components waiting for auth
+                window.dispatchEvent(new CustomEvent('websocket-authenticated'));
                 break;
                 
             case 'auth.failed':

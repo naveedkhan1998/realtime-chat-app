@@ -4,14 +4,14 @@
      hx-trigger="intersect once"
      hx-swap="outerHTML"
      class="flex items-center justify-center py-4">
-    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
 </div>
 {% endif %}
 
 <!-- Date Separator (if applicable) -->
 {% if show_date_separator %}
 <div class="flex items-center justify-center py-4">
-    <div class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs text-gray-600 dark:text-gray-400">
+    <div class="px-4 py-1.5 bg-muted/50 backdrop-blur-sm rounded-full text-xs font-medium text-muted-foreground">
         {{ date_separator }}
     </div>
 </div>
@@ -25,12 +25,12 @@
 {% include "components/message_bubble.html" with message=message is_own_message=False is_group=room.is_group_chat %}
 {% endif %}
 {% empty %}
-<div class="flex flex-col items-center justify-center py-12 text-center">
-    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-        <i data-lucide="message-circle" class="w-8 h-8 text-gray-400"></i>
+<div class="flex flex-col items-center justify-center py-16 text-center">
+    <div class="w-20 h-20 bg-muted/30 rounded-2xl flex items-center justify-center mb-4">
+        <i data-lucide="message-circle" class="w-10 h-10 text-muted-foreground"></i>
     </div>
-    <p class="text-gray-500 dark:text-gray-400">No messages yet</p>
-    <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Send a message to start the conversation</p>
+    <p class="text-foreground font-medium mb-1">No messages yet</p>
+    <p class="text-sm text-muted-foreground">Send a message to start the conversation</p>
 </div>
 {% endfor %}
 
