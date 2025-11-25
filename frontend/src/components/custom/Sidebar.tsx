@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   MessageSquareMore,
@@ -9,6 +9,7 @@ import {
   X,
   Sparkles,
   UserPlus,
+  Headphones,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,9 @@ import { logOut } from '@/features/authSlice';
 import {
   setUnreadNotification,
   clearUnreadNotification,
-} from '@/features/chatSlice';
+  selectGlobalOnlineUsers,
+  selectHasUnreadNotification,
+} from '@/features/unifiedChatSlice';
 import {
   useGetChatRoomsQuery,
   ChatRoom,
@@ -30,10 +33,15 @@ import {
 import { useSearchUsersQuery } from '@/services/userApi';
 import { baseApi } from '@/services/baseApi';
 import {
-  GlobalWebSocketService,
-  NewMessageNotificationEvent,
-} from '@/utils/websocket';
+  useOnChatRoomCreated,
+  useWebSocketEvent,
+} from '@/hooks/useUnifiedWebSocket';
+import type {
+  GlobalChatRoomCreatedEvent,
+  GlobalNewMessageNotificationEvent,
+} from '@/utils/unifiedWebSocket';
 import { useDebounce } from '@/utils/hooks';
+import { useHuddle } from '@/contexts/HuddleContext';
 import ThemeSwitch from './ThemeSwitch';
 import { cn, getAvatarUrl } from '@/lib/utils';
 
@@ -63,11 +71,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   showCloseButton = true,
 }) => {
   const user = useAppSelector(state => state.auth.user);
-  const globalOnlineUsers = useAppSelector(
-    state => state.chat.globalOnlineUsers
-  );
+  const globalOnlineUsers = useAppSelector(selectGlobalOnlineUsers);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { isHuddleActive, huddleChatId } = useHuddle();
   
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -98,9 +105,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [notifications, dispatch]);
 
-  useEffect(() => {
-    const ws = GlobalWebSocketService.getInstance();
-    const handleChatRoomCreated = (event: any) => {
+  // Handle chat room creation events via unified WebSocket
+  const handleChatRoomCreated = useCallback(
+    (event: GlobalChatRoomCreatedEvent) => {
       dispatch(
         chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
           // Check if room already exists to avoid duplicates
@@ -109,22 +116,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           }
         })
       );
-    };
+    },
+    [dispatch]
+  );
+  useOnChatRoomCreated(handleChatRoomCreated);
 
-    const handleNewMessageNotification = (event: NewMessageNotificationEvent) => {
+  // Handle new message notifications via unified WebSocket
+  const handleNewMessageNotification = useCallback(
+    (event: GlobalNewMessageNotificationEvent) => {
       if (event.chat_room_id !== activeChat) {
         dispatch(setUnreadNotification(event.chat_room_id));
       }
-    };
-
-    ws.on('chat_room_created', handleChatRoomCreated);
-    ws.on('new_message_notification', handleNewMessageNotification);
-
-    return () => {
-      ws.off('chat_room_created', handleChatRoomCreated);
-      ws.off('new_message_notification', handleNewMessageNotification);
-    };
-  }, [dispatch, activeChat]);
+    },
+    [dispatch, activeChat]
+  );
+  useWebSocketEvent('global.new_message_notification', handleNewMessageNotification);
 
   if (!user) return null;
 
@@ -349,6 +355,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         active={activeChat === room.id}
                         currentUserId={user.id}
                         onlineUsers={globalOnlineUsers}
+                        huddleChatId={isHuddleActive ? huddleChatId : null}
                         onSelect={() => {
                           setActiveChat(room.id);
                           dispatch(clearUnreadNotification(room.id));
@@ -377,9 +384,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <button
                         key={u.id}
                         onClick={() => handleCreateChat(u.id)}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left hover:bg-secondary/40 border border-transparent group"
+                        className="flex items-center w-full gap-3 p-3 text-left transition-all duration-200 border border-transparent rounded-xl hover:bg-secondary/40 group"
                       >
-                        <Avatar className="h-11 w-11 border-2 border-transparent group-hover:border-primary/30 transition-all">
+                        <Avatar className="transition-all border-2 border-transparent h-11 w-11 group-hover:border-primary/30">
                           <AvatarImage src={getAvatarUrl(u.avatar)} alt={u.name} />
                           <AvatarFallback className="text-xs font-bold bg-secondary text-muted-foreground">
                             {u.name.charAt(0)}
@@ -387,11 +394,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </Avatar>
                         <div className="flex-1 min-w-0 ml-1">
                           <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-sm font-semibold text-foreground truncate">
+                            <span className="text-sm font-semibold truncate text-foreground">
                               {u.name}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground opacity-80 truncate flex items-center gap-1">
+                          <p className="flex items-center gap-1 text-xs truncate text-muted-foreground opacity-80">
                             <UserPlus className="w-3 h-3" />
                             Start new chat
                           </p>
@@ -440,12 +447,14 @@ function ConversationRow({
   active,
   currentUserId,
   onlineUsers,
+  huddleChatId,
   onSelect,
 }: {
   room: ChatRoom;
   active: boolean;
   currentUserId: number;
   onlineUsers: number[];
+  huddleChatId: number | null;
   onSelect: () => void;
 }) {
   const counterpart = room.is_group_chat
@@ -458,8 +467,9 @@ function ConversationRow({
 
   const isOnline = counterpart ? onlineUsers.includes(counterpart.id) : false;
   const hasUnread = useAppSelector(
-    state => state.chat.unreadNotifications[room.id]
+    state => selectHasUnreadNotification(state, room.id)
   );
+  const hasActiveHuddle = huddleChatId === room.id;
 
   return (
     <button
@@ -468,6 +478,8 @@ function ConversationRow({
         'w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left group relative overflow-hidden',
         active
           ? 'bg-primary/10 shadow-sm border border-primary/10'
+          : hasActiveHuddle
+          ? 'bg-green-500/10 border border-green-500/20'
           : 'hover:bg-secondary/40 border border-transparent'
       )}
     >
@@ -496,8 +508,13 @@ function ConversationRow({
             {title?.charAt(0)}
           </AvatarFallback>
         </Avatar>
-        {isOnline && (
+        {isOnline && !hasActiveHuddle && (
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 rounded-full border-background ring-1 ring-green-500/20" />
+        )}
+        {hasActiveHuddle && (
+          <span className="absolute bottom-0 right-0 flex items-center justify-center w-4 h-4 bg-green-500 border-2 rounded-full border-background animate-pulse">
+            <Headphones className="w-2.5 h-2.5 text-white" />
+          </span>
         )}
       </div>
       <div className="flex-1 min-w-0 ml-1">
@@ -510,7 +527,13 @@ function ConversationRow({
           >
             {title}
           </span>
-          {hasUnread && (
+          {hasActiveHuddle && (
+            <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold text-white bg-green-500 rounded-full animate-pulse">
+              <Headphones className="w-3 h-3" />
+              Live
+            </span>
+          )}
+          {hasUnread && !hasActiveHuddle && (
             <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full animate-in fade-in zoom-in duration-300">
               New
             </span>
@@ -521,10 +544,13 @@ function ConversationRow({
           className={cn(
             'text-xs truncate transition-colors',
             active ? 'text-primary/70' : 'text-muted-foreground opacity-80',
-            hasUnread && 'font-medium text-foreground'
+            hasUnread && 'font-medium text-foreground',
+            hasActiveHuddle && 'text-green-600 font-medium'
           )}
         >
-          {hasUnread
+          {hasActiveHuddle
+            ? 'Huddle in progress'
+            : hasUnread
             ? 'New message'
             : room.is_group_chat
             ? `${room.participants.length} members`

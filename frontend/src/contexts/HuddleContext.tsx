@@ -8,13 +8,13 @@ import {
   ReactNode,
 } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import {
-  HuddleWebSocketService,
+import { getUnifiedWebSocket } from '@/utils/unifiedWebSocket';
+import type {
   HuddleSignalEvent,
-  HuddleParticipantsEvent,
-} from '@/utils/websocket';
+  ChatHuddleParticipantsEvent,
+} from '@/utils/unifiedWebSocket';
 import { useGetIceServersQuery } from '@/services/chatApi';
-import { setHuddleParticipants } from '@/features/chatSlice';
+import { setHuddleParticipants, selectRoomHuddleParticipants } from '@/features/unifiedChatSlice';
 
 interface HuddleContextType {
   isHuddleActive: boolean;
@@ -54,7 +54,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
 
   // We need to access the participants of the *huddle chat*, not necessarily the active chat.
   const huddleParticipants = useAppSelector(state =>
-    huddleChatId ? (state.chat.huddleParticipants[huddleChatId] ?? []) : []
+    huddleChatId ? selectRoomHuddleParticipants(state, huddleChatId) : []
   );
 
   const { data: iceServers } = useGetIceServersQuery();
@@ -79,21 +79,23 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  // Listen for huddle participants from unified WebSocket
   useEffect(() => {
-    const ws = HuddleWebSocketService.getInstance();
-    const handleParticipants = (event: HuddleParticipantsEvent) => {
-      if (huddleChatId) {
+    const ws = getUnifiedWebSocket();
+    const handleParticipants = (event: ChatHuddleParticipantsEvent) => {
+      // Only process events for the active huddle room
+      if (huddleChatId && event.room_id === huddleChatId) {
         dispatch(
           setHuddleParticipants({
-            chatRoomId: huddleChatId,
+            roomId: huddleChatId,
             participants: event.participants,
           })
         );
       }
     };
-    ws.on('huddle_participants', handleParticipants);
+    const unsubscribe = ws.on('chat.huddle_participants', handleParticipants);
     return () => {
-      ws.off('huddle_participants', handleParticipants);
+      unsubscribe();
     };
   }, [huddleChatId, dispatch]);
 
@@ -215,9 +217,11 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
       });
       peersRef.current.set(peerId, pc);
 
+      const ws = getUnifiedWebSocket();
+
       pc.onicecandidate = event => {
         if (event.candidate) {
-          HuddleWebSocketService.getInstance().sendHuddleSignal(peerId, {
+          ws.sendHuddleSignal(peerId, {
             type: 'candidate',
             candidate: event.candidate,
           });
@@ -256,7 +260,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         (async () => {
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-          HuddleWebSocketService.getInstance().sendHuddleSignal(peerId, {
+          ws.sendHuddleSignal(peerId, {
             type: 'offer',
             sdp: offer,
           });
@@ -282,9 +286,9 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           localAudioRef.current.srcObject = stream;
         }
 
-        // Connect the Huddle WebSocket
-        const ws = HuddleWebSocketService.getInstance();
-        ws.connect(chatId, accessToken);
+        // Join huddle via unified WebSocket (no separate connection needed)
+        const ws = getUnifiedWebSocket();
+        ws.joinHuddle(chatId);
 
         setIsHuddleActive(true);
         setHuddleChatId(chatId);
@@ -299,8 +303,8 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
 
   const stopHuddle = useCallback(() => {
     if (isHuddleActive) {
-      HuddleWebSocketService.getInstance().sendHuddleLeave();
-      HuddleWebSocketService.getInstance().disconnect();
+      const ws = getUnifiedWebSocket();
+      ws.leaveHuddle();
     }
     peersRef.current.forEach(pc => pc.close());
     peersRef.current.clear();
@@ -328,7 +332,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         await pc.setRemoteDescription(payload.sdp);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        HuddleWebSocketService.getInstance().sendHuddleSignal(from.id, {
+        getUnifiedWebSocket().sendHuddleSignal(from.id, {
           type: 'answer',
           sdp: answer,
         });
@@ -345,12 +349,12 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     [ensurePeerConnection, isHuddleActive, user]
   );
 
+  // Listen for huddle signals from unified WebSocket
   useEffect(() => {
-    const ws = HuddleWebSocketService.getInstance();
-    const handler = (event: HuddleSignalEvent) => handleHuddleSignal(event);
-    ws.on('huddle_signal', handler);
+    const ws = getUnifiedWebSocket();
+    const unsubscribe = ws.on('huddle.signal', handleHuddleSignal);
     return () => {
-      ws.off('huddle_signal', handler);
+      unsubscribe();
     };
   }, [handleHuddleSignal]);
 

@@ -6,8 +6,10 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Count
+from django.utils import timezone
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django_redis import get_redis_connection
 import os
 from twilio.rest import Client
 from django.conf import settings
@@ -342,11 +344,14 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         self._broadcast_message_event(
             message.chat_room_id,
-            "chat_message",
+            "broadcast_chat_message",
             {
                 "payload": data
             },
         )
+        
+        # Send notifications to participants not in the room
+        self._notify_participants(chat_room, message)
 
     def perform_update(self, serializer):
         instance = self.get_object()
@@ -358,7 +363,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         updated_message = serializer.save()
         self._broadcast_message_event(
             updated_message.chat_room_id,
-            "message_updated",
+            "broadcast_message_updated",
             {
                 "message": MessageSerializer(
                     updated_message, context=self.get_serializer_context()
@@ -374,7 +379,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         super().perform_destroy(instance)
         self._broadcast_message_event(
             chat_room_id,
-            "message_deleted",
+            "broadcast_message_deleted",
             {"message_id": message_id},
         )
 
@@ -386,8 +391,55 @@ class MessageViewSet(viewsets.ModelViewSet):
             return
         async_to_sync(channel_layer.group_send)(
             f"chat_{chat_room_id}",
-            {"type": event_type, **payload},
+            {"type": event_type, "room_id": chat_room_id, **payload},
         )
+
+    def _notify_participants(self, chat_room: ChatRoom, message: Message):
+        """Send notifications to participants who are not currently in the chat room."""
+        channel_layer = get_channel_layer()
+        if not channel_layer:
+            return
+
+        sender = self.request.user
+        redis_conn = get_redis_connection("default")
+        presence_key = f"chat:presence:{chat_room.id}"
+
+        # Get all participants except the sender
+        participant_ids = list(
+            chat_room.participants.exclude(id=sender.id).values_list("id", flat=True)
+        )
+
+        for participant_id in participant_ids:
+            # Check if user is in the room (has presence)
+            is_in_room = redis_conn.hexists(presence_key, participant_id)
+            if is_in_room:
+                continue
+
+            # Check if user is online globally
+            is_online = redis_conn.sismember("global:online_users", participant_id)
+
+            if is_online:
+                # Send ephemeral notification via WebSocket
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{participant_id}",
+                    {
+                        "type": "new_message_notification",
+                        "chat_room_id": chat_room.id,
+                        "sender_id": sender.id,
+                        "sender_name": sender.name,
+                    }
+                )
+            else:
+                # Create persistent notification for offline user
+                Notification.objects.update_or_create(
+                    user_id=participant_id,
+                    chat_room_id=chat_room.id,
+                    is_read=False,
+                    defaults={
+                        "content": f"New message from {sender.name}",
+                        "created_at": timezone.now(),
+                    },
+                )
 
 
 ### Message Read Receipt Views ###
