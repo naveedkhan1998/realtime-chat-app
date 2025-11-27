@@ -181,13 +181,17 @@ class UserListView(generics.ListAPIView):
         return queryset
 
 
-class UserProfileView(generics.RetrieveAPIView):
+class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+    
+    def perform_update(self, serializer):
+        serializer.save()
+        cache.delete("all_users")  # Clear cache on profile update
 
 
 class UserChangePasswordView(generics.UpdateAPIView):

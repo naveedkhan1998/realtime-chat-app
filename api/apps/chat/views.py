@@ -297,6 +297,20 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         ChatRoomParticipant.objects.get_or_create(chat_room=chat_room, user=user)
         return Response({"status": "participant added"})
 
+    def destroy(self, request, *args, **kwargs):
+        """Delete/leave a chat room."""
+        chat_room = self.get_object()
+        user = request.user
+        
+        if chat_room.is_group_chat:
+            # For group chats, just leave (remove participant)
+            ChatRoomParticipant.objects.filter(chat_room=chat_room, user=user).delete()
+            return Response({"status": "left group"}, status=status.HTTP_200_OK)
+        else:
+            # For 1:1 chats, delete the entire chat room
+            chat_room.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 ### Message Views ###
 
@@ -419,7 +433,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             is_online = redis_conn.sismember("global:online_users", participant_id)
 
             if is_online:
-                # Send ephemeral notification via WebSocket
+                # Send ephemeral notification via WebSocket with message preview
                 async_to_sync(channel_layer.group_send)(
                     f"user_{participant_id}",
                     {
@@ -427,6 +441,8 @@ class MessageViewSet(viewsets.ModelViewSet):
                         "chat_room_id": chat_room.id,
                         "sender_id": sender.id,
                         "sender_name": sender.name,
+                        "message_content": message.content[:100] if message.content else None,
+                        "has_attachment": bool(message.attachment),
                     }
                 )
             else:

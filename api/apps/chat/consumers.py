@@ -791,6 +791,8 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             "chat_room_id": event["chat_room_id"],
             "sender_id": event["sender_id"],
             "sender_name": event.get("sender_name"),
+            "message_content": event.get("message_content"),
+            "has_attachment": event.get("has_attachment", False),
         }))
 
     # ==================== DATABASE OPERATIONS ====================
@@ -873,6 +875,10 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Notify participants about new message."""
         participant_ids = await self._get_participant_ids(chat_room)
         
+        # Extract message content and attachment info from message_data
+        msg_content = message_data.get("content", "")
+        msg_attachment = message_data.get("attachment")
+        
         for participant_id in participant_ids:
             is_in_room = await self._is_user_in_room(room_id, participant_id)
             if is_in_room:
@@ -881,7 +887,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             is_online = await self._is_user_online(participant_id)
             
             if is_online:
-                # Send ephemeral notification
+                # Send ephemeral notification with message preview
                 await self.channel_layer.group_send(
                     f"user_{participant_id}",
                     {
@@ -889,6 +895,8 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                         "chat_room_id": room_id,
                         "sender_id": self.user.id,
                         "sender_name": self.user.name,
+                        "message_content": msg_content[:100] if msg_content else None,  # Truncate for preview
+                        "has_attachment": bool(msg_attachment),
                     }
                 )
             else:

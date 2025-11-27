@@ -28,7 +28,7 @@
         </div>
         {% endif %}
         <h4 class="font-bold text-lg text-foreground">{{ other.name }}</h4>
-        <p class="text-sm text-muted-foreground mt-1">{{ other.email }}</p>
+        <p class="text-sm text-muted-foreground mt-1">{% if other.id in online_users %}<span class="text-green-500">● Online</span>{% else %}Offline{% endif %}</p>
         {% endwith %}
         {% endif %}
     </div>

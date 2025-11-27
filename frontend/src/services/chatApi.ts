@@ -21,11 +21,22 @@ export interface Friendship {
   created_at: string;
 }
 
+export interface LastMessage {
+  id: number;
+  sender: User;
+  content: string;
+  attachment?: string;
+  attachment_type?: 'image' | 'video' | 'audio' | 'file';
+  timestamp: string;
+}
+
 export interface ChatRoom {
   id: number;
   name?: string;
   is_group_chat: boolean;
   participants: User[];
+  last_message?: LastMessage;
+  unread_count?: number;
   created_at: string;
 }
 
@@ -124,6 +135,23 @@ export const chatApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: ['ChatRooms'],
+    }),
+    deleteChatRoom: builder.mutation<void, { id: number }>({
+      query: ({ id }) => ({
+        url: `chat/chat-rooms/${id}/`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['ChatRooms'],
+    }),
+    getSharedMedia: builder.query<Message[], { chat_room_id: number }>({
+      query: ({ chat_room_id }) => `chat/messages/?chat_room=${chat_room_id}&has_attachment=true`,
+      transformResponse: (response: PaginatedResponse<Message> | Message[]) => {
+        // Handle both paginated and non-paginated responses
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return response.results || [];
+      },
     }),
 
     // Messages
@@ -236,6 +264,8 @@ export const {
   useGetFriendshipsQuery,
   useGetChatRoomsQuery,
   useCreateChatRoomMutation,
+  useDeleteChatRoomMutation,
+  useGetSharedMediaQuery,
   useGetMessagesPageQuery,
   useLazyGetMessagesPageQuery,
   useSendMessageMutation,

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
@@ -9,25 +10,25 @@
         <div class="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-secondary/20 to-accent/20 blur-3xl animate-blob animation-delay-4000 opacity-40"></div>
     </div>
     
-    <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center relative z-10">
+    <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
         <!-- Left Side - Visuals (hidden on mobile) -->
-        <div class="hidden lg:flex flex-col justify-between h-full min-h-[600px] rounded-[2.5rem] glass-card border border-border p-10 relative overflow-hidden">
+        <div class="hidden lg:flex flex-col justify-between h-full min-h-[600px] rounded-[2.5rem] bg-card/30 border border-border p-12 relative overflow-hidden backdrop-blur-3xl">
             <!-- Background effects -->
-            <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\" width=\"32\" height=\"32\" fill=\"none\" stroke=\"currentColor\"><path d=\"M0 .5H31.5V32\"/></svg>'); background-size: 32px 32px;"></div>
+            <div class="absolute inset-0 bg-[url('/static/grid.svg')] opacity-20 mix-blend-overlay"></div>
             <div class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-96 h-96 bg-primary/20 blur-[100px]"></div>
             <div class="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 rounded-full w-80 h-80 bg-secondary/20 blur-[100px]"></div>
 
             <div class="relative z-10">
                 <!-- Logo -->
-                <div class="flex items-center gap-3 mb-10">
-                    <div class="flex items-center justify-center w-12 h-12 text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
-                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                <div class="flex items-center gap-3 mb-12">
+                    <div class="flex items-center justify-center w-12 h-12 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
+                        <img src="{% static 'apple-touch-icon.png' %}" alt="Logo" class="object-cover w-full h-full">
                     </div>
                     <span class="text-2xl font-bold tracking-tight text-foreground">MNK Chat</span>
                 </div>
 
                 <!-- Title -->
-                <h1 class="text-4xl font-bold leading-tight text-foreground mb-5">
+                <h1 class="text-5xl font-bold leading-tight text-foreground mb-6">
                     Real-time Chat <br>
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-500">
                         Portfolio Demo.
@@ -40,8 +41,8 @@
             </div>
 
             <!-- Features -->
-            <div class="relative z-10 grid gap-4 mt-10">
-                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/30 transition-colors">
+            <div class="relative z-10 grid gap-6 mt-12">
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/50 transition-colors">
                     <div class="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
                         <i data-lucide="zap" class="w-5 h-5"></i>
                     </div>
@@ -50,28 +51,28 @@
                         <p class="text-sm text-muted-foreground">Instant messaging using Django Channels & Redis</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/30 transition-colors">
-                    <div class="p-2 mt-1 rounded-lg bg-secondary/10 text-secondary">
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/50 transition-colors">
+                    <div class="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
                         <i data-lucide="code-2" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-foreground">Modern Stack</h3>
+                        <h3 class="font-semibold text-foreground">Modern Frontend</h3>
                         <p class="text-sm text-muted-foreground">Django, HTMX, Alpine.js, and Tailwind CSS</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/30 transition-colors">
-                    <div class="p-2 mt-1 rounded-lg bg-accent/10 text-accent">
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/50 transition-colors">
+                    <div class="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
                         <i data-lucide="database" class="w-5 h-5"></i>
                     </div>
                     <div>
                         <h3 class="font-semibold text-foreground">Full Stack</h3>
-                        <p class="text-sm text-muted-foreground">PostgreSQL database with Django REST API</p>
+                        <p class="text-sm text-muted-foreground">PostgreSQL database with DRF API</p>
                     </div>
                 </div>
             </div>
 
             <!-- Footer quote -->
-            <div class="relative z-10 pt-6 mt-10 border-t border-border">
+            <div class="relative z-10 pt-8 mt-12 border-t border-border">
                 <p class="text-sm text-muted-foreground">
                     "Feel free to create an account and test the real-time capabilities.
                     This is a personal learning project."
@@ -81,38 +82,29 @@
 
         <!-- Right Side - Form -->
         <div class="flex flex-col justify-center w-full max-w-md mx-auto">
-            <!-- Mobile header -->
+            <!-- Mobile header (shows on small screens) -->
             <div class="mb-8 text-center lg:hidden">
                 <div class="flex items-center justify-center gap-3 mb-4">
-                    <div class="flex items-center justify-center w-12 h-12 text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
-                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    <div class="flex items-center justify-center w-12 h-12 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
+                        <img src="{% static 'apple-touch-icon.png' %}" alt="Logo" class="object-cover w-full h-full">
                     </div>
                     <span class="text-2xl font-bold tracking-tight text-foreground">MNK Chat</span>
                 </div>
             </div>
             
-            <div class="mb-6 text-center lg:text-left">
+            <div class="mb-8 text-center lg:text-left">
                 <h2 class="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
                 <p class="text-muted-foreground">Sign in or register to start chatting.</p>
             </div>
 
-            <div class="p-6 md:p-8 glass-card border border-border shadow-2xl shadow-primary/5 rounded-3xl">
+            <div class="p-6 md:p-8 bg-card/80 backdrop-blur-xl border border-border shadow-2xl shadow-primary/5 rounded-3xl">
                 {% block auth_content %}{% endblock %}
             </div>
 
-            <p class="mt-6 text-sm text-center text-muted-foreground">
+            <p class="mt-8 text-sm text-center text-muted-foreground">
                 This is a demo environment. Data may be reset periodically.
             </p>
         </div>
     </div>
 </div>
-
-<style>
-    .animation-delay-2000 {
-        animation-delay: 2s;
-    }
-    .animation-delay-4000 {
-        animation-delay: 4s;
-    }
-</style>
 {% endblock %}

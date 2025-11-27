@@ -3,8 +3,30 @@
 <html lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Chat App{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>{% block title %}MNK Chat - Realtime Messaging & Voice Huddles{% endblock %}</title>
+    <meta name="description" content="Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications. Built with React, Django Channels, and WebRTC.">
+    <meta name="keywords" content="realtime chat, open source, free chat app, django channels, react, webrtc, voice chat, websocket, redis">
+    
+    <!-- Favicons & App Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <meta name="theme-color" content="#8b5cf6">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://chat.mnaveedk.com/">
+    <meta property="og:title" content="MNK Chat - Realtime Messaging & Voice Huddles">
+    <meta property="og:description" content="Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications. Built with React, Django Channels, and WebRTC.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://chat.mnaveedk.com/">
+    <meta property="twitter:title" content="MNK Chat - Realtime Messaging & Voice Huddles">
+    <meta property="twitter:description" content="Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications. Built with React, Django Channels, and WebRTC.">
     
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

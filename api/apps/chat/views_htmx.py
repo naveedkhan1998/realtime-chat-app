@@ -268,6 +268,16 @@ def chat_list_partial(request):
     # Get online users from cache/Redis
     online_users = cache.get("online_users", set())
     
+    # Sort rooms by online status (rooms with online users first)
+    def get_online_count(room):
+        if room.is_group_chat:
+            return sum(1 for p in room.chatroomparticipant_set.all() if p.user_id != request.user.id and p.user_id in online_users)
+        elif room.other_participant:
+            return 1 if room.other_participant.id in online_users else 0
+        return 0
+    
+    rooms = sorted(rooms, key=get_online_count, reverse=True)
+    
     return render(request, "partials/chat_list.html", {
         "rooms": rooms,
         "online_users": online_users,
@@ -462,6 +472,8 @@ def send_message_with_attachment(request, room_id):
                 "chat_room_id": room_id,
                 "sender_id": request.user.id,
                 "sender_name": request.user.name,
+                "message_content": content[:100] if content else None,
+                "has_attachment": bool(attachment),
             }
         )
     

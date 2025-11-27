@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { setThemeRedux } from '@/features/themeSlice';
+import { setTheme as setThemeAction } from '@/features/themeSlice';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -36,7 +36,7 @@ export function useTheme() {
     }
 
     // Apply theme to Redux and DOM
-    dispatch(setThemeRedux(effectiveTheme));
+    dispatch(setThemeAction(effectiveTheme));
     applyTheme(effectiveTheme);
   }, [dispatch]);
 
@@ -49,7 +49,7 @@ export function useTheme() {
 
       const handleChange = (e: MediaQueryListEvent) => {
         const newTheme = e.matches ? 'dark' : 'light';
-        dispatch(setThemeRedux(newTheme));
+        dispatch(setThemeAction(newTheme));
         applyTheme(newTheme);
       };
 
@@ -81,7 +81,7 @@ export function useTheme() {
       localStorage.setItem(THEME_STORAGE_KEY, newTheme);
     }
 
-    dispatch(setThemeRedux(effectiveTheme));
+    dispatch(setThemeAction(effectiveTheme));
     applyTheme(effectiveTheme);
   };
 

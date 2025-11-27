@@ -79,6 +79,15 @@ class ChatRoomParticipantSerializer(serializers.ModelSerializer):
         fields = ["user", "joined_at", "last_read_message"]
 
 
+class LastMessageSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for last message in chat room list."""
+    sender = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ["id", "sender", "content", "attachment", "attachment_type", "timestamp"]
+
+
 class SimpleChatRoomSerializer(serializers.ModelSerializer):
     """
     Lightweight serializer for list views to prevent N+1 queries.
@@ -86,6 +95,8 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
     participants = serializers.SerializerMethodField()
     is_group_chat = serializers.BooleanField(default=False)
     name = serializers.CharField(required=False, allow_blank=True)
+    last_message = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
@@ -94,6 +105,8 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
             "name",
             "is_group_chat",
             "participants",
+            "last_message",
+            "unread_count",
             "created_at",
         ]
 
@@ -110,6 +123,27 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
         # If it's a direct chat, we need the other user.
         # If it's a group chat, maybe just the first 3.
         return UserSerializer(participants[:4], many=True).data
+
+    def get_last_message(self, obj):
+        """Get the most recent message in this chat room."""
+        last_message = obj.messages.order_by("-timestamp").first()
+        if last_message:
+            return LastMessageSerializer(last_message).data
+        return None
+
+    def get_unread_count(self, obj):
+        """Count unread messages (not sent by user, and not in read receipts)."""
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return 0
+        
+        return Message.objects.filter(
+            chat_room=obj
+        ).exclude(
+            sender=request.user
+        ).exclude(
+            read_receipts__user=request.user
+        ).count()
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):

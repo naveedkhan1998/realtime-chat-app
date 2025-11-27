@@ -230,6 +230,11 @@ else:
         },
     }
 
+# Additional directories where Django will look for static files (used by collectstatic)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static_src"),
+]
+
 # GCS-specific settings
 GS_DEFAULT_ACL = None
 GS_FILE_OVERWRITE = False

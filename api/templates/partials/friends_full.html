@@ -18,7 +18,7 @@
         </div>
         <div>
             <p class="font-semibold text-foreground">{{ friend.name }}</p>
-            <p class="text-sm text-muted-foreground">{{ friend.email }}</p>
+            <p class="text-sm text-muted-foreground">{% if friend.id in online_users %}<span class="text-green-500">Online</span>{% else %}Offline{% endif %}</p>
         </div>
         {% endwith %}
     </div>

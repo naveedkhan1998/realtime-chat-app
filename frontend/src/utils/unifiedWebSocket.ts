@@ -59,6 +59,8 @@ export interface GlobalNewMessageNotificationEvent {
   chat_room_id: number;
   sender_id: number;
   sender_name?: string;
+  message_content?: string;
+  has_attachment?: boolean;
 }
 
 export interface ChatSubscribedEvent {
