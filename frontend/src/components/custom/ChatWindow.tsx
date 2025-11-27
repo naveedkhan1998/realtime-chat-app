@@ -20,6 +20,7 @@ import {
   selectRoomTypingUsers,
   selectRoomHuddleParticipants,
   selectRoomPagination,
+  selectGlobalOnlineUsers,
 } from '@/features/unifiedChatSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { RootState } from '@/app/store';
@@ -27,6 +28,7 @@ import ChatHeader from './chat-page/ChatHeader';
 import ChatInput from './chat-page/ChatInput';
 import MessageList from './chat-page/MessageList';
 import { DeleteMessageDialog } from './chat-page/DeleteMessageDialog';
+import ChatInfoPanel from './chat-page/ChatInfoPanel';
 import { useHuddle } from '@/contexts/HuddleContext';
 
 interface ChatWindowProps {
@@ -67,6 +69,7 @@ export default function ChatWindow({
   const pagination = useAppSelector((state: RootState) =>
     selectRoomPagination(state, activeChat)
   );
+  const globalOnlineUsers = useAppSelector(selectGlobalOnlineUsers);
   const nextCursor = pagination.nextCursor;
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<{
@@ -92,6 +95,7 @@ export default function ChatWindow({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const noteUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
 
   const scrollToBottom = useCallback(() => {
     // Handled by Virtuoso or passed down if needed
@@ -385,52 +389,65 @@ export default function ChatWindow({
 
   return (
     <>
-      <div className="relative flex flex-col w-full h-full bg-background/30">
-        <ChatHeader
-          activeRoom={activeRoom}
-          otherParticipant={otherParticipant}
-          presence={presence as any}
-          user={user}
-          isMobile={isMobile}
-          setActiveChat={setActiveChat}
-          huddleUsers={huddleUsers as any}
-          isHuddleActive={isHuddleActiveInThisChat}
-          startHuddle={() => startHuddle(activeChat)}
-          stopHuddle={stopHuddle}
-          connectionDetails={connectionDetails}
-        />
-
-        <div className="flex-1 pt-24 pb-20 overflow-hidden">
-          <MessageList
-            messages={messages}
-            user={user}
+      <div className="relative flex w-full h-full bg-background/30">
+        <div className="relative flex flex-col flex-1 h-full">
+          <ChatHeader
             activeRoom={activeRoom}
-            startEditing={startEditing}
-            handleDeleteMessage={handleDeleteMessage}
-            handleLoadMore={handleLoadMore}
-            loadingMore={loadingMore}
-            initialLoading={initialLoading}
-            editingMessageId={editingMessage?.id}
-            scrollToBottom={scrollToBottom}
+            otherParticipant={otherParticipant}
+            presence={presence as any}
+            user={user}
+            isMobile={isMobile}
+            setActiveChat={setActiveChat}
+            huddleUsers={huddleUsers as any}
+            isHuddleActive={isHuddleActiveInThisChat}
+            startHuddle={() => startHuddle(activeChat)}
+            stopHuddle={stopHuddle}
+            connectionDetails={connectionDetails}
+            onInfoClick={() => setShowInfoPanel(!showInfoPanel)}
+          />
+
+          <div className="flex-1 pt-24 pb-20 overflow-hidden">
+            <MessageList
+              messages={messages}
+              user={user}
+              activeRoom={activeRoom}
+              startEditing={startEditing}
+              handleDeleteMessage={handleDeleteMessage}
+              handleLoadMore={handleLoadMore}
+              loadingMore={loadingMore}
+              initialLoading={initialLoading}
+              editingMessageId={editingMessage?.id}
+              scrollToBottom={scrollToBottom}
+            />
+          </div>
+
+          <ChatInput
+            register={register}
+            onSubmit={handleSubmit(() => {})}
+            watch={watch}
+            setValue={setValue}
+            editingMessage={editingMessage}
+            typingUsers={typingUsers as any}
+            onSendMessage={handleSendMessage}
+          />
+
+          <DeleteMessageDialog
+            isOpen={!!messageToDelete}
+            onClose={() => setMessageToDelete(null)}
+            onConfirm={confirmDeleteMessage}
+            isMobile={isMobile}
           />
         </div>
 
-        <ChatInput
-          register={register}
-          onSubmit={handleSubmit(() => {})}
-          watch={watch}
-          setValue={setValue}
-          editingMessage={editingMessage}
-          typingUsers={typingUsers as any}
-          onSendMessage={handleSendMessage}
-        />
-
-        <DeleteMessageDialog
-          isOpen={!!messageToDelete}
-          onClose={() => setMessageToDelete(null)}
-          onConfirm={confirmDeleteMessage}
-          isMobile={isMobile}
-        />
+        {/* Chat Info Panel */}
+        {showInfoPanel && activeRoom && (
+          <ChatInfoPanel
+            room={activeRoom}
+            user={user}
+            onlineUsers={globalOnlineUsers}
+            onClose={() => setShowInfoPanel(false)}
+          />
+        )}
       </div>
     </>
   );

@@ -1,0 +1,44 @@
+{% for friendship in friendships %}
+<div class="flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors rounded-xl group">
+    <div class="flex items-center gap-3">
+        {% with friend=friendship.friend %}
+        <div class="relative">
+            {% if friend.avatar %}
+            <img src="{{ friend.avatar.url }}" alt="{{ friend.name }}" class="w-11 h-11 rounded-full object-cover ring-2 ring-border/50">
+            {% else %}
+            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center ring-2 ring-border/50">
+                <span class="text-white font-semibold text-sm">
+                    {{ friend.name|slice:":1"|upper }}
+                </span>
+            </div>
+            {% endif %}
+            {% if friend.id in online_users %}
+            <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-secondary border-2 border-background rounded-full"></span>
+            {% endif %}
+        </div>
+        <div>
+            <p class="font-medium text-foreground">{{ friend.name }}</p>
+            <p class="text-sm text-muted-foreground">
+                {% if friend.id in online_users %}
+                <span class="text-secondary font-medium">Online</span>
+                {% else %}
+                Offline
+                {% endif %}
+            </p>
+        </div>
+        {% endwith %}
+    </div>
+    
+    <button hx-post="{% url 'htmx:create_chat' %}"
+            hx-vals='{"user_id": "{{ friendship.friend.id }}"}'
+            hx-swap="none"
+            class="p-2 hover:bg-primary/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+        <i data-lucide="message-square" class="w-5 h-5 text-primary"></i>
+    </button>
+</div>
+{% empty %}
+<div class="px-4 py-8 text-center">
+    <p class="text-muted-foreground text-sm mb-1">No friends yet</p>
+    <p class="text-muted-foreground/70 text-xs">Search for users to add friends</p>
+</div>
+{% endfor %}

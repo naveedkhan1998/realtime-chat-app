@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
+    <!-- Animated Background Blobs -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-1/2 -left-1/4 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-primary/30 to-secondary/20 blur-3xl animate-blob opacity-50"></div>
+        <div class="absolute -bottom-1/4 -right-1/4 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-accent/30 to-primary/20 blur-3xl animate-blob animation-delay-2000 opacity-50"></div>
+        <div class="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-secondary/20 to-accent/20 blur-3xl animate-blob animation-delay-4000 opacity-40"></div>
+    </div>
+    
+    <div class="w-full max-w-6xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
+        <!-- Left Side - Visuals (hidden on mobile) -->
+        <div class="hidden lg:flex flex-col justify-between h-full min-h-[600px] rounded-[2.5rem] bg-card/30 border border-border p-12 relative overflow-hidden backdrop-blur-3xl">
+            <!-- Background effects -->
+            <div class="absolute inset-0 bg-[url('/static/grid.svg')] opacity-20 mix-blend-overlay"></div>
+            <div class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-96 h-96 bg-primary/20 blur-[100px]"></div>
+            <div class="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 rounded-full w-80 h-80 bg-secondary/20 blur-[100px]"></div>
+
+            <div class="relative z-10">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 mb-12">
+                    <div class="flex items-center justify-center w-12 h-12 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
+                        <img src="{% static 'apple-touch-icon.png' %}" alt="Logo" class="object-cover w-full h-full">
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight text-foreground">MNK Chat</span>
+                </div>
+
+                <!-- Title -->
+                <h1 class="text-5xl font-bold leading-tight text-foreground mb-6">
+                    Real-time Chat <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-500">
+                        Portfolio Demo.
+                    </span>
+                </h1>
+                <p class="max-w-md text-lg text-muted-foreground">
+                    Explore this full-stack showcase featuring Django Channels, Redis,
+                    and HTMX. Built to demonstrate scalable real-time architecture.
+                </p>
+            </div>
+
+            <!-- Features -->
+            <div class="relative z-10 grid gap-6 mt-12">
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/50 transition-colors">
+                    <div class="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-foreground">WebSocket Powered</h3>
+                        <p class="text-sm text-muted-foreground">Instant messaging using Django Channels & Redis</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/50 transition-colors">
+                    <div class="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="code-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-foreground">Modern Frontend</h3>
+                        <p class="text-sm text-muted-foreground">Django, HTMX, Alpine.js, and Tailwind CSS</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-card/50 border border-border backdrop-blur-md hover:bg-accent/50 transition-colors">
+                    <div class="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-foreground">Full Stack</h3>
+                        <p class="text-sm text-muted-foreground">PostgreSQL database with DRF API</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer quote -->
+            <div class="relative z-10 pt-8 mt-12 border-t border-border">
+                <p class="text-sm text-muted-foreground">
+                    "Feel free to create an account and test the real-time capabilities.
+                    This is a personal learning project."
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Side - Form -->
+        <div class="flex flex-col justify-center w-full max-w-md mx-auto">
+            <!-- Mobile header (shows on small screens) -->
+            <div class="mb-8 text-center lg:hidden">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <div class="flex items-center justify-center w-12 h-12 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
+                        <img src="{% static 'apple-touch-icon.png' %}" alt="Logo" class="object-cover w-full h-full">
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight text-foreground">MNK Chat</span>
+                </div>
+            </div>
+            
+            <div class="mb-8 text-center lg:text-left">
+                <h2 class="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
+                <p class="text-muted-foreground">Sign in or register to start chatting.</p>
+            </div>
+
+            <div class="p-6 md:p-8 bg-card/80 backdrop-blur-xl border border-border shadow-2xl shadow-primary/5 rounded-3xl">
+                {% block auth_content %}{% endblock %}
+            </div>
+
+            <p class="mt-8 text-sm text-center text-muted-foreground">
+                This is a demo environment. Data may be reset periodically.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

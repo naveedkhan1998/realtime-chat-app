@@ -1,0 +1,587 @@
+{% load static %}
+
+<!-- Chat Room Content (Partial for HTMX requests) -->
+<div class="flex-1 flex overflow-hidden h-full" 
+     x-data="chatRoom({{ room.id }})"
+     @edit-message.window="startEdit($event.detail.id, $event.detail.content)">
+    
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col min-w-0 h-full bg-background">
+        <!-- Chat Header - Glassmorphism style -->
+        <header class="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-xl border-b border-border/50">
+            <div class="flex items-center gap-4">
+                <!-- Back button (mobile) -->
+                <a href="{% url 'htmx:chat_list' %}" 
+                   class="lg:hidden p-2 hover:bg-muted rounded-xl transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-foreground"></i>
+                </a>
+                
+                {% if room.is_group_chat %}
+                <div class="relative">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center shadow-lg">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background"></span>
+                </div>
+                {% else %}
+                {% with other_user=room.other_participant %}
+                <div class="relative">
+                    {% if other_user.avatar %}
+                    <img src="{{ other_user.avatar.url }}" alt="{{ other_user.name }}" class="w-12 h-12 rounded-2xl object-cover ring-2 ring-border shadow-sm">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-border">
+                        <span class="text-primary font-bold text-lg">
+                            {{ other_user.name|slice:":1"|upper }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    <span id="user-status-dot" 
+                          class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background {% if other_user.id in online_users %}bg-green-500{% else %}bg-muted-foreground/50{% endif %}"></span>
+                </div>
+                {% endwith %}
+                {% endif %}
+                
+                <div class="flex flex-col">
+                    <h2 class="font-semibold text-foreground text-lg">{{ room_name }}</h2>
+                    <p id="typing-status" class="text-sm text-muted-foreground">
+                        <span id="online-status" {% if not room.is_group_chat and room.other_participant %}data-user-id="{{ room.other_participant.id }}"{% endif %}>
+                            {% if not room.is_group_chat and room.other_participant.id in online_users %}
+                            <span class="flex items-center gap-1.5 text-green-500">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                Online
+                            </span>
+                            {% else %}
+                            <span class="text-muted-foreground/70">Offline</span>
+                            {% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1">
+                <!-- Huddle Participants -->
+                <div id="huddle-participants" class="flex items-center -space-x-2 mr-3" x-show="huddleParticipants.length > 0" x-cloak>
+                    <template x-for="participant in huddleParticipants" :key="participant.id">
+                        <div class="relative group" :title="participant.name">
+                            <template x-if="participant.avatar">
+                                <img :src="participant.avatar" 
+                                     :alt="participant.name"
+                                     class="w-8 h-8 rounded-xl border-2 border-green-500 object-cover shadow-sm transition-transform group-hover:scale-105">
+                            </template>
+                            <template x-if="!participant.avatar">
+                                <div class="w-8 h-8 rounded-xl border-2 border-green-500 bg-primary/10 flex items-center justify-center shadow-sm">
+                                    <span class="text-primary font-semibold text-xs"
+                                          x-text="participant.name ? participant.name.charAt(0).toUpperCase() : '?'"></span>
+                                </div>
+                            </template>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background animate-pulse"></span>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Voice Huddle Button -->
+                <button @click="toggleHuddle()"
+                        :class="inHuddle ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/25' : 'hover:bg-muted text-muted-foreground hover:text-foreground'"
+                        class="p-2.5 rounded-xl transition-all duration-200"
+                        :title="inHuddle ? 'Leave Huddle' : 'Start Huddle'">
+                    <i data-lucide="phone" class="w-5 h-5"></i>
+                </button>
+                
+                <!-- Info Panel Toggle -->
+                <button @click="showInfo = !showInfo"
+                        :class="showInfo ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground hover:text-foreground'"
+                        class="p-2.5 rounded-xl transition-all duration-200"
+                        title="Chat Info">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Messages Area -->
+        <div id="messages-container" 
+             class="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-1 min-h-0"
+             style="background: linear-gradient(180deg, hsl(var(--muted) / 0.3) 0%, hsl(var(--background)) 100%);"
+             hx-get="{% url 'htmx:messages_partial' room.id %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             @scroll="handleScroll($event)">
+            <!-- Messages will be loaded here -->
+            <div class="flex items-center justify-center py-8">
+                <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+        
+        <!-- Typing Indicator -->
+        <div id="typing-indicator" class="hidden flex-shrink-0 px-6 py-2.5 bg-background/80 backdrop-blur-sm border-t border-border/30">
+            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <div class="flex gap-1">
+                    <span class="w-2 h-2 bg-primary/60 rounded-full typing-dot"></span>
+                    <span class="w-2 h-2 bg-primary/60 rounded-full typing-dot"></span>
+                    <span class="w-2 h-2 bg-primary/60 rounded-full typing-dot"></span>
+                </div>
+                <span><span id="typing-user-name" class="font-medium text-foreground/80">Someone</span> is typing...</span>
+            </div>
+        </div>
+        
+        <!-- Edit Message Bar -->
+        <div x-show="editingMessage" 
+             x-transition
+             class="flex-shrink-0 px-6 py-3 bg-accent/10 border-t border-accent/30 flex items-center justify-between"
+             x-cloak>
+            <div class="flex items-center gap-3 text-sm text-accent-foreground">
+                <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="pencil" class="w-4 h-4 text-accent"></i>
+                </div>
+                <span class="font-medium">Editing message</span>
+            </div>
+            <button @click="cancelEdit()" class="p-2 hover:bg-accent/20 rounded-lg transition-colors text-accent-foreground">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        
+        <!-- Message Input - Glassmorphism style -->
+        <div class="flex-shrink-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50">
+            <!-- File Preview -->
+            <div x-show="selectedFile" 
+                 x-transition
+                 class="mb-3 p-4 bg-muted/50 backdrop-blur-sm rounded-2xl border border-border/50"
+                 x-cloak>
+                <div class="flex items-center gap-4">
+                    <!-- Image Preview -->
+                    <template x-if="filePreviewUrl && selectedFile?.type?.startsWith('image/')">
+                        <img :src="filePreviewUrl" alt="Preview" class="w-16 h-16 rounded-xl object-cover ring-2 ring-border shadow-sm">
+                    </template>
+                    
+                    <!-- Video Preview -->
+                    <template x-if="selectedFile?.type?.startsWith('video/')">
+                        <div class="w-16 h-16 rounded-xl bg-muted flex items-center justify-center ring-2 ring-border">
+                            <i data-lucide="video" class="w-7 h-7 text-muted-foreground"></i>
+                        </div>
+                    </template>
+                    
+                    <!-- Document Icon -->
+                    <template x-if="selectedFile && !selectedFile?.type?.startsWith('image/') && !selectedFile?.type?.startsWith('video/')">
+                        <div class="w-16 h-16 rounded-xl bg-muted flex items-center justify-center ring-2 ring-border">
+                            <i data-lucide="file-text" class="w-7 h-7 text-muted-foreground"></i>
+                        </div>
+                    </template>
+                    
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-foreground truncate" x-text="selectedFile?.name"></p>
+                        <p class="text-sm text-muted-foreground" x-text="formatFileSize(selectedFile?.size)"></p>
+                    </div>
+                    
+                    <button type="button" 
+                            @click="clearFile()" 
+                            class="p-2 hover:bg-muted rounded-xl transition-colors">
+                        <i data-lucide="x" class="w-5 h-5 text-muted-foreground"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form @submit.prevent="sendMessage()" class="flex items-end gap-3">
+                <!-- Attachment Dropdown -->
+                <div class="relative" x-data="{ showAttachMenu: false }">
+                    <button type="button"
+                            @click="showAttachMenu = !showAttachMenu"
+                            class="p-3 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-all duration-200">
+                        <i data-lucide="paperclip" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div x-show="showAttachMenu"
+                         @click.away="showAttachMenu = false"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute bottom-full left-0 mb-2 w-52 bg-background/95 backdrop-blur-xl rounded-2xl shadow-xl border border-border/50 py-2 z-10"
+                         x-cloak>
+                        <button type="button"
+                                @click="$refs.mediaInput.click(); showAttachMenu = false"
+                                class="flex items-center gap-3 w-full px-4 py-3 hover:bg-muted/50 transition-colors">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                                <i data-lucide="image" class="w-5 h-5 text-primary"></i>
+                            </div>
+                            <span class="text-sm font-medium text-foreground">Photos & Videos</span>
+                        </button>
+                        <button type="button"
+                                @click="$refs.docInput.click(); showAttachMenu = false"
+                                class="flex items-center gap-3 w-full px-4 py-3 hover:bg-muted/50 transition-colors">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                                <i data-lucide="file-text" class="w-5 h-5 text-secondary"></i>
+                            </div>
+                            <span class="text-sm font-medium text-foreground">Document</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Hidden File Inputs -->
+                    <input type="file" 
+                           x-ref="mediaInput"
+                           @change="handleFileSelect($event)"
+                           class="hidden"
+                           accept="image/*,video/*">
+                    <input type="file" 
+                           x-ref="docInput"
+                           @change="handleFileSelect($event)"
+                           class="hidden"
+                           accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.zip,.rar">
+                </div>
+                
+                <!-- Message Input -->
+                <div class="flex-1 relative">
+                    <textarea x-model="messageContent"
+                              x-ref="messageInput"
+                              @input="handleTyping()"
+                              @keydown.enter.prevent="if (!$event.shiftKey) sendMessage()"
+                              @paste="handlePaste($event)"
+                              rows="1"
+                              placeholder="Type a message..."
+                              class="w-full px-5 py-3 border border-border/50 rounded-2xl bg-muted/30 backdrop-blur-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:bg-background resize-none max-h-32 transition-all duration-200"
+                              style="min-height: 48px;"></textarea>
+                </div>
+                
+                <!-- Emoji Button -->
+                <button type="button" 
+                        class="p-3 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
+                        title="Emoji">
+                    <i data-lucide="smile" class="w-5 h-5"></i>
+                </button>
+                
+                <!-- Send Button -->
+                <button type="submit"
+                        :disabled="!messageContent.trim() && !selectedFile"
+                        class="p-3 bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Info Panel - Glassmorphism style -->
+    <aside x-show="showInfo"
+           x-transition:enter="transform transition-transform duration-300"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transform transition-transform duration-300"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full"
+           class="w-80 bg-background/80 backdrop-blur-xl border-l border-border/50 flex flex-col overflow-y-auto flex-shrink-0"
+           x-cloak>
+        {% include "partials/chat_info_panel.html" %}
+    </aside>
+</div>
+
+<script>
+function chatRoom(roomId) {
+    return {
+        roomId: roomId,
+        messageContent: '',
+        selectedFile: null,
+        filePreviewUrl: null,
+        editingMessage: null,
+        showInfo: false,
+        inHuddle: false,
+        huddleParticipants: [],
+        typingTimeout: null,
+        localStream: null,
+        
+        init() {
+            // Store reference to this component for event handlers
+            const self = this;
+            
+            // Initialize WebSocket connection for this room - with retry logic for page refresh
+            const subscribeToRoom = () => {
+                if (window.chatSocket && window.chatSocket.isAuthenticated) {
+                    window.chatSocket.subscribeToRoom(self.roomId);
+                    console.log('✅ Subscribed to room', self.roomId);
+                    return true;
+                } else if (window.chatSocket) {
+                    // WebSocket exists but not authenticated yet - add to queue
+                    window.chatSocket.subscribedRooms.add(self.roomId);
+                    console.log('⏳ Queued room', self.roomId, 'for subscription after auth');
+                    return false;
+                } else {
+                    // No WebSocket yet, wait for it
+                    console.log('⏳ Waiting for WebSocket to subscribe to room', self.roomId);
+                    setTimeout(subscribeToRoom, 200);
+                    return false;
+                }
+            };
+            
+            // Try to subscribe immediately
+            if (!subscribeToRoom()) {
+                // If not immediately subscribed, listen for auth event
+                const authHandler = () => {
+                    console.log('🔐 WebSocket authenticated, subscribing to room', self.roomId);
+                    if (window.chatSocket) {
+                        window.chatSocket.subscribeToRoom(self.roomId);
+                    }
+                    window.removeEventListener('websocket-authenticated', authHandler);
+                };
+                window.addEventListener('websocket-authenticated', authHandler);
+            }
+            
+            // Listen for huddle participants updates via custom event
+            this.huddleParticipantsHandler = (event) => {
+                const { participants, roomId: eventRoomId } = event.detail;
+                // Only update if it's for our room
+                if (eventRoomId === self.roomId) {
+                    console.log('🎯 Updating huddle participants for room', self.roomId, ':', participants);
+                    self.huddleParticipants = participants;
+                    // Check if we're still in the huddle
+                    const stillIn = participants.some(p => p.id === window.currentUserId);
+                    if (self.inHuddle && !stillIn) {
+                        self.inHuddle = false;
+                        self.stopLocalAudio();
+                    }
+                }
+            };
+            window.addEventListener('huddle-participants-updated', this.huddleParticipantsHandler);
+            
+            // Auto-resize textarea
+            this.$watch('messageContent', () => {
+                const textarea = this.$refs.messageInput;
+                if (textarea) {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+                }
+            });
+            
+            // Re-initialize Lucide icons for dynamically loaded content
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Cleanup on destroy
+            this.$watch('$destroy', () => {
+                if (this.inHuddle) {
+                    this.toggleHuddle();
+                }
+                // Remove event listener
+                if (this.huddleParticipantsHandler) {
+                    window.removeEventListener('huddle-participants-updated', this.huddleParticipantsHandler);
+                }
+            });
+        },
+        
+        sendMessage() {
+            const content = this.messageContent.trim();
+            if (!content && !this.selectedFile) return;
+            
+            if (this.editingMessage) {
+                // Edit existing message
+                if (window.chatSocket) {
+                    window.chatSocket.editMessage(this.editingMessage, content, this.roomId);
+                }
+                this.cancelEdit();
+            } else {
+                // Send new message (with or without file)
+                if (this.selectedFile) {
+                    this.uploadAndSendMessage(content);
+                } else if (window.chatSocket) {
+                    window.chatSocket.sendMessage(this.roomId, content);
+                }
+            }
+            
+            this.messageContent = '';
+            this.clearFile();
+        },
+        
+        async uploadAndSendMessage(content) {
+            const file = this.selectedFile;
+            if (!file) return;
+            
+            try {
+                // Show loading state
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: 'Uploading file...', type: 'info' }
+                }));
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('content', content);
+                formData.append('attachment', file);
+                
+                // Upload via HTMX endpoint
+                const response = await fetch(`/app/chat/${this.roomId}/send-message/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                       document.querySelector('meta[name=csrf-token]')?.content || ''
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+                
+                // The WebSocket will handle showing the new message
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: 'File sent!', type: 'success' }
+                }));
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: 'Failed to upload file', type: 'error' }
+                }));
+            }
+        },
+        
+        handleTyping() {
+            if (window.chatSocket) {
+                window.chatSocket.sendTyping(this.roomId, true);
+            }
+            
+            clearTimeout(this.typingTimeout);
+            this.typingTimeout = setTimeout(() => {
+                if (window.chatSocket) {
+                    window.chatSocket.sendTyping(this.roomId, false);
+                }
+            }, 2000);
+        },
+        
+        handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: 'File size must be less than 10MB', type: 'error' }
+                    }));
+                    return;
+                }
+                
+                this.selectedFile = file;
+                
+                // Create preview URL for images
+                if (file.type.startsWith('image/')) {
+                    this.filePreviewUrl = URL.createObjectURL(file);
+                } else {
+                    this.filePreviewUrl = null;
+                }
+            }
+        },
+        
+        handlePaste(event) {
+            const items = event.clipboardData?.items;
+            if (!items) return;
+            
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        this.selectedFile = file;
+                        this.filePreviewUrl = URL.createObjectURL(file);
+                        event.preventDefault();
+                        break;
+                    }
+                }
+            }
+        },
+        
+        clearFile() {
+            if (this.filePreviewUrl) {
+                URL.revokeObjectURL(this.filePreviewUrl);
+            }
+            this.selectedFile = null;
+            this.filePreviewUrl = null;
+            if (this.$refs.mediaInput) this.$refs.mediaInput.value = '';
+            if (this.$refs.docInput) this.$refs.docInput.value = '';
+        },
+        
+        formatFileSize(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        },
+        
+        startEdit(messageId, content) {
+            this.editingMessage = messageId;
+            this.messageContent = content;
+            this.$refs.messageInput.focus();
+        },
+        
+        cancelEdit() {
+            this.editingMessage = null;
+            this.messageContent = '';
+        },
+        
+        async toggleHuddle() {
+            if (this.inHuddle) {
+                // Leave huddle
+                if (window.chatSocket) {
+                    window.chatSocket.leaveHuddle(this.roomId);
+                }
+                this.stopLocalAudio();
+                this.inHuddle = false;
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: 'Left huddle', type: 'info' }
+                }));
+            } else {
+                // Join huddle - request microphone access
+                try {
+                    this.localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        }
+                    });
+                    
+                    // Pass the local stream to the WebSocket handler for WebRTC
+                    if (window.chatSocket) {
+                        window.chatSocket.setLocalStream(this.localStream);
+                        window.chatSocket.joinHuddle(this.roomId);
+                    }
+                    
+                    this.inHuddle = true;
+                    
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: 'Joined huddle', type: 'success' }
+                    }));
+                } catch (error) {
+                    console.error('Failed to access microphone:', error);
+                    let message = 'Could not access microphone';
+                    if (error.name === 'NotAllowedError') {
+                        message = 'Microphone permission denied. Please allow access in your browser settings.';
+                    } else if (error.name === 'NotFoundError') {
+                        message = 'No microphone found. Please connect a microphone.';
+                    }
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: message, type: 'error' }
+                    }));
+                }
+            }
+        },
+        
+        stopLocalAudio() {
+            if (this.localStream) {
+                this.localStream.getTracks().forEach(track => track.stop());
+                this.localStream = null;
+            }
+            // Also tell the WebSocket handler to clear peer connections
+            if (window.chatSocket) {
+                window.chatSocket.localStream = null;
+            }
+        },
+        
+        handleScroll(event) {
+            const container = event.target;
+            if (container.scrollTop < 100 && !this.loadingMore) {
+                // Load more messages
+                this.loadMoreMessages();
+            }
+        },
+        
+        loadMoreMessages() {
+            // Handled by HTMX infinite scroll
+        }
+    }
+}
+</script>

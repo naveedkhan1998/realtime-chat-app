@@ -1,0 +1,157 @@
+{% load static %}
+<nav x-data="{ isScrolled: false }" 
+     x-init="window.addEventListener('scroll', () => { isScrolled = window.scrollY > 20 })"
+     class="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+     :class="isScrolled ? 'py-4' : 'py-6'">
+    <div class="container px-4 mx-auto">
+        <div class="mx-auto flex items-center justify-between rounded-full border transition-all duration-300"
+             :class="isScrolled 
+                ? 'bg-background/70 border-border/40 shadow-lg shadow-primary/5 backdrop-blur-xl py-3 px-5 max-w-5xl' 
+                : 'bg-transparent border-transparent py-2 px-2 max-w-7xl'">
+            
+            <!-- Logo -->
+            <a href="{% url 'htmx:home' %}" class="flex items-center gap-2.5 group">
+                <div class="relative flex items-center justify-center w-10 h-10 overflow-hidden transition-transform duration-300 shadow-lg rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-primary/20 group-hover:scale-105 group-hover:shadow-primary/30">
+                    <img src="{% static 'apple-touch-icon.png' %}" alt="Logo" class="object-cover w-full h-full">
+                    <div class="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent group-hover:opacity-100"></div>
+                </div>
+                <span class="text-lg font-bold tracking-tight text-foreground">
+                    MNK<span class="text-primary">Chat</span>
+                </span>
+            </a>
+            
+            <!-- Navigation Links -->
+            <nav class="items-center hidden gap-1 md:flex">
+                <a href="#features" class="px-4 py-2 text-sm font-medium transition-colors rounded-full text-muted-foreground hover:bg-primary/5 hover:text-primary">
+                    Features
+                </a>
+                <a href="#workflow" class="px-4 py-2 text-sm font-medium transition-colors rounded-full text-muted-foreground hover:bg-primary/5 hover:text-primary">
+                    How it works
+                </a>
+                <a href="#stack" class="px-4 py-2 text-sm font-medium transition-colors rounded-full text-muted-foreground hover:bg-primary/5 hover:text-primary">
+                    Tech Stack
+                </a>
+            </nav>
+            
+            <!-- Right Side -->
+            <div class="items-center hidden gap-3 md:flex">
+                <!-- GitHub Link -->
+                <a href="https://github.com/naveedkhan1998/realtime-chat-app" 
+                   target="_blank" 
+                   rel="noreferrer"
+                   class="px-3 py-2 text-sm font-medium rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors inline-flex items-center gap-2">
+                    <i data-lucide="github" class="w-4 h-4"></i>
+                    GitHub
+                </a>
+                
+                <div class="w-px h-6 bg-border/50"></div>
+                
+                {% if user.is_authenticated %}
+                <a href="{% url 'htmx:chat_list' %}" 
+                   class="px-5 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-full transition-all duration-200 font-medium shadow-md shadow-primary/20">
+                    Open Chat
+                </a>
+                {% else %}
+                <a href="{% url 'htmx:auth' %}" 
+                   class="px-3 py-2 text-sm font-medium rounded-full hover:bg-accent/50 transition-colors">
+                    Sign in
+                </a>
+                <a href="{% url 'htmx:auth' %}" 
+                   class="px-5 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-full transition-all duration-200 font-medium shadow-md shadow-primary/20">
+                    Get Started
+                </a>
+                {% endif %}
+                
+                <!-- Theme Toggle -->
+                <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)"
+                        class="p-2 rounded-full hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground">
+                    <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5"></i>
+                    <i x-show="darkMode" data-lucide="sun" class="w-5 h-5" x-cloak></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button x-data x-on:click="$dispatch('open-mobile-menu')" 
+                    class="p-2 rounded-full md:hidden hover:bg-accent/50 transition-colors">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div x-data="{ open: false }" 
+     x-on:open-mobile-menu.window="open = true"
+     x-show="open" 
+     x-cloak
+     class="fixed inset-0 z-50 md:hidden">
+    <!-- Backdrop -->
+    <div x-show="open" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="open = false"
+         class="fixed inset-0 bg-background/80 backdrop-blur-sm"></div>
+    
+    <!-- Menu Panel -->
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="translate-x-full"
+         class="fixed inset-y-0 right-0 w-full max-w-xs p-6 border-l shadow-2xl border-border bg-card">
+        
+        <div class="flex items-center justify-between mb-8">
+            <span class="text-lg font-bold">Menu</span>
+            <button @click="open = false" class="p-2 rounded-full hover:bg-accent/50 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <nav class="flex flex-col gap-4">
+            <a href="#features" @click="open = false" class="text-lg font-medium transition-colors text-muted-foreground hover:text-primary">
+                Features
+            </a>
+            <a href="#workflow" @click="open = false" class="text-lg font-medium transition-colors text-muted-foreground hover:text-primary">
+                How it works
+            </a>
+            <a href="#stack" @click="open = false" class="text-lg font-medium transition-colors text-muted-foreground hover:text-primary">
+                Tech Stack
+            </a>
+            
+            <hr class="my-2 border-border">
+            
+            {% if user.is_authenticated %}
+            <a href="{% url 'htmx:chat_list' %}" 
+               class="w-full px-4 py-3 text-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all font-medium shadow-lg shadow-primary/20">
+                Open Chat
+            </a>
+            {% else %}
+            <a href="{% url 'htmx:auth' %}" 
+               class="w-full px-4 py-3 text-center border border-border hover:bg-accent/50 rounded-xl transition-all font-medium">
+                Sign in
+            </a>
+            <a href="{% url 'htmx:auth' %}" 
+               class="w-full px-4 py-3 text-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all font-medium shadow-lg shadow-primary/20">
+                Get Started
+            </a>
+            {% endif %}
+            
+            <div class="flex items-center justify-between pt-4 border-t border-border">
+                <span class="text-sm font-medium text-muted-foreground">Theme</span>
+                <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)"
+                        class="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-accent/50 transition-colors inline-flex items-center gap-2">
+                    <i x-show="!darkMode" data-lucide="moon" class="w-4 h-4"></i>
+                    <i x-show="darkMode" data-lucide="sun" class="w-4 h-4" x-cloak></i>
+                    <span x-text="darkMode ? 'Light' : 'Dark'"></span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+

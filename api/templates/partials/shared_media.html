@@ -1,0 +1,26 @@
+<!-- Shared Media Grid -->
+{% for message in messages %}
+{% if message.attachment %}
+<a href="{{ message.attachment.url }}" 
+   target="_blank"
+   class="aspect-square bg-muted/30 rounded-xl overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all duration-200 group">
+    {% if message.attachment_type == 'image' %}
+    <img src="{{ message.attachment.url }}" alt="Shared image" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+    {% else %}
+    <div class="w-full h-full flex items-center justify-center bg-muted/50">
+        <i data-lucide="file" class="w-8 h-8 text-muted-foreground"></i>
+    </div>
+    {% endif %}
+</a>
+{% endif %}
+{% empty %}
+<div class="col-span-3 text-center py-8">
+    <p class="text-sm text-muted-foreground">No media shared yet</p>
+</div>
+{% endfor %}
+
+{% if not messages %}
+<div class="col-span-3 text-center py-8">
+    <p class="text-sm text-muted-foreground">No media shared yet</p>
+</div>
+{% endif %}

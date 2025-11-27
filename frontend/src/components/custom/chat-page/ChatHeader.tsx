@@ -1,4 +1,4 @@
-import { ArrowLeft, MoreVertical, Phone, Video, Activity, Radio } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Phone, Video, Activity, Radio, Info } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +45,7 @@ interface ChatHeaderProps {
   startHuddle: () => void;
   stopHuddle: () => void;
   connectionDetails?: Record<number, any>;
+  onInfoClick?: () => void;
 }
 
 export default function ChatHeader({
@@ -59,6 +60,7 @@ export default function ChatHeader({
   startHuddle,
   stopHuddle,
   connectionDetails,
+  onInfoClick,
 }: ChatHeaderProps) {
   const [showConnectionDetails, setShowConnectionDetails] = useState(false);
 
@@ -183,6 +185,23 @@ export default function ChatHeader({
           >
             <Video className="w-4 h-4" />
           </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                  onClick={onInfoClick}
+                >
+                  <Info className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Chat Info</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

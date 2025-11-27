@@ -1,0 +1,338 @@
+{% extends "layouts/public.html" %}
+
+{% block title %}MNK Chat - Realtime Messaging & Voice Huddles{% endblock %}
+
+{% block main_content %}
+<!-- Hero Section -->
+<section class="relative pt-10 lg:pt-20">
+    <div class="container px-4 mx-auto text-center">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm backdrop-blur-sm">
+                <span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                Now with Real-time Huddles
+            </div>
+            
+            <h1 class="text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tight text-foreground">
+                Chat at the speed of <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-indigo-500">
+                    thought.
+                </span>
+            </h1>
+            
+            <p class="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Experience seamless real-time communication. Built to demonstrate
+                the power of Django Channels and HTMX working in perfect harmony.
+            </p>
+            
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                {% if user.is_authenticated %}
+                <a href="{% url 'htmx:chat_list' %}" 
+                   class="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-full transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-primary/40">
+                    Start Chatting
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+                {% else %}
+                <a href="{% url 'htmx:auth' %}" 
+                   class="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-full transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-primary/40">
+                    Start Chatting
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+                {% endif %}
+                <a href="https://github.com/naveedkhan1998/realtime-chat-app" 
+                   target="_blank"
+                   rel="noreferrer"
+                   class="h-12 px-8 border border-border hover:bg-accent/50 font-medium rounded-full transition-all duration-300 inline-flex items-center justify-center gap-2 text-foreground backdrop-blur-sm bg-background/50">
+                    View Source
+                </a>
+            </div>
+        </div>
+        
+        <!-- Hero Preview -->
+        <div class="relative max-w-6xl mx-auto mt-20">
+            <!-- Glass Container -->
+            <div class="relative overflow-hidden border shadow-2xl rounded-xl border-border bg-background/60 shadow-primary/20 backdrop-blur-2xl ring-1 ring-border/50 group">
+                <!-- Gradient Border Effect -->
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none"></div>
+                
+                <!-- Window Controls -->
+                <div class="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-border/50 bg-muted/30 backdrop-blur-md z-20">
+                    <div class="flex gap-1.5">
+                        <div class="w-3 h-3 rounded-full bg-red-500/80 shadow-sm"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/80 shadow-sm"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/80 shadow-sm"></div>
+                    </div>
+                    <div class="w-2/3 h-6 mx-auto rounded-md bg-muted/50 border border-border/20"></div>
+                </div>
+                
+                <!-- Mock Interface Content -->
+                <div class="grid h-[400px] grid-cols-1 sm:grid-cols-[280px_1fr] divide-y sm:divide-y-0 sm:divide-x divide-border/50 sm:h-[600px] relative z-10">
+                    <!-- Sidebar -->
+                    <div class="hidden p-4 bg-muted/30 sm:block backdrop-blur-sm">
+                        <div class="space-y-4 mt-12">
+                            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border/50"></div>
+                                <div class="space-y-1.5">
+                                    <div class="w-24 h-3 rounded bg-muted-foreground/20"></div>
+                                    <div class="w-16 h-2 rounded bg-muted-foreground/10"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border/50"></div>
+                                <div class="space-y-1.5">
+                                    <div class="w-24 h-3 rounded bg-muted-foreground/20"></div>
+                                    <div class="w-16 h-2 rounded bg-muted-foreground/10"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border/50"></div>
+                                <div class="space-y-1.5">
+                                    <div class="w-24 h-3 rounded bg-muted-foreground/20"></div>
+                                    <div class="w-16 h-2 rounded bg-muted-foreground/10"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-default">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-border/50"></div>
+                                <div class="space-y-1.5">
+                                    <div class="w-24 h-3 rounded bg-muted-foreground/20"></div>
+                                    <div class="w-16 h-2 rounded bg-muted-foreground/10"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Area -->
+                    <div class="flex flex-col bg-transparent h-full">
+                        <div class="flex-1 p-6 space-y-6 mt-12 overflow-hidden">
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 rounded-full bg-primary/60 border border-border/50 shrink-0"></div>
+                                <div class="space-y-2 max-w-[85%]">
+                                    <div class="px-4 py-3 text-sm rounded-tl-none rounded-2xl bg-muted/50 border border-border/50 backdrop-blur-sm">
+                                        Hey! Have you checked out the new huddle feature? 🎙️
+                                    </div>
+                                    <span class="text-xs text-muted-foreground">10:42 AM</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-row-reverse gap-4">
+                                <div class="w-10 h-10 rounded-full bg-accent/20 border border-border/50 shrink-0"></div>
+                                <div class="space-y-2 max-w-[85%]">
+                                    <div class="px-4 py-3 text-sm rounded-tr-none shadow-lg rounded-2xl bg-primary text-primary-foreground shadow-primary/20 border border-primary/20">
+                                        Yeah! The audio quality is surprisingly good. And the shared text pad is a game changer for code reviews.
+                                    </div>
+                                    <span class="block text-xs text-right text-muted-foreground">10:44 AM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t border-border/50 bg-muted/30 backdrop-blur-sm">
+                            <div class="w-full h-12 border rounded-full bg-muted/50 border-border/50 flex items-center px-4">
+                                <div class="w-24 h-2 rounded bg-muted-foreground/20"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Decorative Blur -->
+            <div class="absolute -inset-4 -z-10 bg-gradient-to-r from-primary/30 to-accent/30 blur-3xl opacity-40 rounded-[3rem] animate-pulse-slow"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid Section -->
+<section id="features" class="container px-4 mx-auto py-32">
+    <div class="mb-16 text-center">
+        <h2 class="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            Everything you need
+        </h2>
+        <p class="max-w-2xl mx-auto text-muted-foreground">
+            A complete suite of communication tools packed into one seamless interface.
+        </p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Large Feature - Realtime -->
+        <div class="relative md:col-span-2 p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50 min-h-[300px]">
+            <div class="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
+                <i data-lucide="zap" class="w-48 h-48"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full">
+                <div class="flex items-center justify-center w-12 h-12 mb-4 rounded-2xl bg-primary/10 text-primary">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="mb-2 text-2xl font-bold">Instant Delivery</h3>
+                    <p class="max-w-md text-muted-foreground">
+                        Powered by WebSockets and Redis, messages are delivered instantly. No loading spinners, no waiting.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature - Security -->
+        <div class="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50 min-h-[300px]">
+            <div class="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
+                <i data-lucide="shield-check" class="w-32 h-32"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-center w-12 h-12 mb-4 text-green-500 rounded-2xl bg-green-500/10">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <h3 class="mb-2 text-xl font-bold">Secure Auth</h3>
+                <p class="text-sm text-muted-foreground">
+                    JWT based authentication with secure cookie handling.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Feature - Smart Notifications -->
+        <div class="relative p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50 min-h-[300px]">
+            <div class="absolute transition-opacity -bottom-4 -right-4 opacity-10 group-hover:opacity-20">
+                <i data-lucide="bell" class="w-32 h-32"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-center w-12 h-12 mb-4 text-yellow-500 rounded-2xl bg-yellow-500/10">
+                    <i data-lucide="bell" class="w-6 h-6"></i>
+                </div>
+                <h3 class="mb-2 text-xl font-bold">Smart Notifications</h3>
+                <p class="text-sm text-muted-foreground">
+                    Offline-first alerts that sync instantly when you return. Never miss a beat with our intelligent coalescing engine.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Large Feature - Huddles -->
+        <div class="relative md:col-span-2 p-8 overflow-hidden transition-colors border rounded-3xl border-border bg-card/50 backdrop-blur-md group hover:bg-accent/50 min-h-[300px]">
+            <div class="absolute top-0 right-0 p-8 transition-opacity opacity-10 group-hover:opacity-20">
+                <i data-lucide="message-circle" class="w-48 h-48"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full">
+                <div class="flex items-center justify-center w-12 h-12 mb-4 rounded-2xl bg-violet-500/10 text-violet-500">
+                    <i data-lucide="message-circle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="mb-2 text-2xl font-bold">Real-time Voice Huddles</h3>
+                    <p class="max-w-md text-muted-foreground">
+                        Powered by WebRTC for crystal clear, low-latency audio. We leverage a hybrid network of Google and Twilio STUN/TURN servers to guarantee reliable connections through any firewall.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Workflow Section -->
+<section id="workflow" class="container px-4 py-20 mx-auto">
+    <div class="relative rounded-[2.5rem] bg-card/50 border border-border p-12 overflow-hidden backdrop-blur-md">
+        <div class="absolute inset-0 bg-[url('/static/grid.svg')] opacity-20"></div>
+        
+        <div class="relative z-10 mb-16 text-center">
+            <h2 class="mb-4 text-3xl font-bold">How it works</h2>
+            <p class="text-muted-foreground">Simple, fast, and effective.</p>
+        </div>
+        
+        <div class="relative z-10 grid gap-8 md:grid-cols-3">
+            <div class="flex flex-col items-center text-center">
+                <div class="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-border text-primary shadow-primary/10 backdrop-blur-sm">
+                    1
+                </div>
+                <h3 class="mb-2 text-xl font-semibold">Sign Up</h3>
+                <p class="text-muted-foreground">Create your account in seconds.</p>
+            </div>
+            <div class="flex flex-col items-center text-center">
+                <div class="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-border text-primary shadow-primary/10 backdrop-blur-sm">
+                    2
+                </div>
+                <h3 class="mb-2 text-xl font-semibold">Find People</h3>
+                <p class="text-muted-foreground">Search for anyone and start a chat instantly.</p>
+            </div>
+            <div class="flex flex-col items-center text-center">
+                <div class="flex items-center justify-center w-16 h-16 mb-6 text-xl font-bold border-2 rounded-full shadow-lg bg-background border-border text-primary shadow-primary/10 backdrop-blur-sm">
+                    3
+                </div>
+                <h3 class="mb-2 text-xl font-semibold">Start Chatting</h3>
+                <p class="text-muted-foreground">Instant messaging & collaboration.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tech Stack Section -->
+<section id="stack" class="py-16 border-y border-border bg-muted/30 backdrop-blur-sm">
+    <div class="container px-4 mx-auto">
+        <div class="mb-12 text-center">
+            <h2 class="text-2xl font-bold">Powered by modern tech</h2>
+        </div>
+        <div class="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="server" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">Django</span>
+            </div>
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="code-2" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">HTMX</span>
+            </div>
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="mountain" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">Alpine.js</span>
+            </div>
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="smartphone" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">Tailwind</span>
+            </div>
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="database" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">PostgreSQL</span>
+            </div>
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="zap" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">Redis</span>
+            </div>
+            <div class="flex flex-col items-center gap-3 group">
+                <div class="p-4 transition-transform border shadow-sm rounded-2xl bg-card border-border group-hover:scale-110 group-hover:bg-accent/50">
+                    <i data-lucide="radio" class="w-8 h-8"></i>
+                </div>
+                <span class="text-sm font-medium">WebRTC</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="container px-4 py-20 mx-auto">
+    <div class="rounded-[3rem] bg-gradient-to-br from-primary to-violet-600 text-primary-foreground px-8 py-20 text-center relative overflow-hidden shadow-2xl shadow-primary/20">
+        <div class="absolute inset-0 bg-[url('/static/grid.svg')] opacity-10"></div>
+        <div class="absolute w-64 h-64 rounded-full -top-24 -left-24 bg-white/10 blur-3xl"></div>
+        <div class="absolute w-64 h-64 rounded-full -bottom-24 -right-24 bg-white/10 blur-3xl"></div>
+        
+        <div class="relative z-10 max-w-2xl mx-auto space-y-8">
+            <h2 class="text-4xl font-bold sm:text-5xl">Ready to dive in?</h2>
+            <p class="text-lg text-primary-foreground/80">
+                Join the demo environment and experience the realtime capabilities firsthand.
+            </p>
+            {% if user.is_authenticated %}
+            <a href="{% url 'htmx:chat_list' %}" 
+               class="inline-flex items-center justify-center h-14 px-10 text-lg font-medium rounded-full shadow-xl bg-background text-foreground hover:bg-background/90 transition-transform hover:scale-105">
+                Go to Chat
+            </a>
+            {% else %}
+            <a href="{% url 'htmx:auth' %}" 
+               class="inline-flex items-center justify-center h-14 px-10 text-lg font-medium rounded-full shadow-xl bg-background text-foreground hover:bg-background/90 transition-transform hover:scale-105">
+                Get Started Now
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

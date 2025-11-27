@@ -1,0 +1,20 @@
+{% for room in rooms %}
+{% with is_active=active_room_id|default:""|stringformat:"s" %}
+{% with room_str=room.id|stringformat:"s" %}
+{% include "components/chat_room_item.html" with room=room active=is_active|default:"" %}
+{% endwith %}
+{% endwith %}
+{% empty %}
+<div class="px-4 py-12 text-center">
+    <div class="w-20 h-20 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="message-square-plus" class="w-10 h-10 text-muted-foreground"></i>
+    </div>
+    <p class="text-foreground font-medium mb-1">No conversations yet</p>
+    <p class="text-sm text-muted-foreground mb-4">Start chatting with your friends</p>
+    <a href="{% url 'htmx:new_chat' %}" 
+       class="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-primary/20">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Start a new chat
+    </a>
+</div>
+{% endfor %}

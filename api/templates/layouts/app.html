@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="relative min-h-[100dvh] w-full overflow-hidden bg-background/80 selection:bg-primary/60" x-data="appLayout()">
+    <!-- Background Blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 rounded-full w-[600px] h-[600px] bg-primary/10 blur-[120px] animate-blob"></div>
+        <div class="absolute bottom-0 left-0 -translate-x-1/3 translate-y-1/3 rounded-full w-[500px] h-[500px] bg-accent/10 blur-[120px] animate-blob animation-delay-2000"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-[400px] h-[400px] bg-secondary/10 blur-[100px] animate-blob animation-delay-4000"></div>
+    </div>
+
+    <div class="relative z-10 flex h-[100dvh] w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
+    <!-- Mobile sidebar overlay -->
+    <div x-show="sidebarOpen" 
+         x-transition:enter="transition-opacity ease-linear duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="sidebarOpen = false"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+         x-cloak>
+    </div>
+    
+        <!-- Sidebar -->
+        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+               class="fixed lg:relative inset-y-0 left-0 z-50 w-[320px] transform transition-transform duration-300 ease-out flex flex-col h-full">
+            <div class="flex flex-col w-full h-full overflow-hidden lg:rounded-3xl lg:border bg-background/80 backdrop-blur-2xl border-border shadow-2xl">
+                {% include "components/sidebar.html" %}
+            </div>
+        </aside>
+    
+        <!-- Main content -->
+        <main class="relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300 lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl bg-background/40 backdrop-blur-xl">
+            <!-- Mobile header -->
+            <header class="lg:hidden flex-shrink-0 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-4">
+                <button @click="sidebarOpen = true" class="p-2 hover:bg-muted rounded-xl transition-colors">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <h1 class="font-semibold text-lg">{% block mobile_title %}Chat{% endblock %}</h1>
+            </header>
+            
+            <div id="main-content" class="flex-1 h-full overflow-hidden">
+                {% block main_content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    function appLayout() {
+        return {
+            sidebarOpen: false,
+            init() {
+                // Close sidebar on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.sidebarOpen = false;
+                });
+            }
+        }
+    }
+</script>
+
+{% include "partials/websocket_handler.html" %}
+{% endblock %}

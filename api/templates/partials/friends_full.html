@@ -1,0 +1,50 @@
+{% for friendship in friendships %}
+<div class="flex items-center justify-between px-4 py-4 hover:bg-muted/50 rounded-xl transition-all duration-200 mx-1 group">
+    <div class="flex items-center gap-4">
+        {% with friend=friendship.friend %}
+        <div class="relative">
+            {% if friend.avatar %}
+            <img src="{{ friend.avatar.url }}" alt="{{ friend.name }}" class="w-12 h-12 rounded-xl object-cover ring-2 ring-border/50 group-hover:ring-primary/30 transition-all">
+            {% else %}
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-border/50 group-hover:ring-primary/30 transition-all">
+                <span class="text-primary text-lg font-bold">
+                    {{ friend.name|slice:":1"|upper }}
+                </span>
+            </div>
+            {% endif %}
+            {% if friend.id in online_users %}
+            <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background"></span>
+            {% endif %}
+        </div>
+        <div>
+            <p class="font-semibold text-foreground">{{ friend.name }}</p>
+            <p class="text-sm text-muted-foreground">{% if friend.id in online_users %}<span class="text-green-500">Online</span>{% else %}Offline{% endif %}</p>
+        </div>
+        {% endwith %}
+    </div>
+    
+    <div class="flex items-center gap-2">
+        <button hx-post="{% url 'htmx:create_chat' %}"
+                hx-vals='{"user_id": "{{ friendship.friend.id }}"}'
+                hx-swap="none"
+                class="p-2.5 hover:bg-primary/10 rounded-xl transition-colors text-primary"
+                title="Send message">
+            <i data-lucide="message-square" class="w-5 h-5"></i>
+        </button>
+        <button class="p-2.5 hover:bg-muted rounded-xl transition-colors text-muted-foreground hover:text-foreground"
+                title="More options"
+                x-data="{ open: false }"
+                @click="open = !open">
+            <i data-lucide="more-vertical" class="w-5 h-5"></i>
+        </button>
+    </div>
+</div>
+{% empty %}
+<div class="flex flex-col items-center justify-center py-16 text-center">
+    <div class="w-20 h-20 bg-muted/50 rounded-3xl flex items-center justify-center mb-5 ring-1 ring-border/50">
+        <i data-lucide="users" class="w-10 h-10 text-muted-foreground/60"></i>
+    </div>
+    <p class="text-muted-foreground font-medium mb-1">No friends yet</p>
+    <p class="text-sm text-muted-foreground/60">Search for users to add friends</p>
+</div>
+{% endfor %}

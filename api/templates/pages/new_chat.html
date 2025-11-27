@@ -1,0 +1,76 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}New Chat - Chat App{% endblock %}
+{% block mobile_title %}New Chat{% endblock %}
+
+{% block main_content %}
+<div id="main-content" class="flex-1 flex flex-col bg-background">
+    <!-- Header -->
+    <header class="px-6 py-5 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'htmx:chat_list' %}" 
+               class="p-2.5 hover:bg-muted rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="font-semibold text-xl text-foreground">New Chat</h1>
+                <p class="text-sm text-muted-foreground">Search for users to start a conversation</p>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Search -->
+    <div class="p-5 border-b border-border/30">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-muted-foreground">
+                <i data-lucide="search" class="w-5 h-5"></i>
+            </span>
+            <input type="text"
+                   id="user-search"
+                   name="search"
+                   placeholder="Search by name or email..."
+                   autocomplete="off"
+                   hx-get="{% url 'htmx:search_users' %}"
+                   hx-trigger="keyup changed delay:300ms"
+                   hx-target="#search-results"
+                   hx-indicator="#search-spinner"
+                   class="w-full pl-12 pr-12 py-3.5 border border-border/50 rounded-2xl bg-muted/30 backdrop-blur-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:bg-background transition-all duration-200">
+            <span id="search-spinner" class="htmx-indicator absolute inset-y-0 right-0 pr-4 flex items-center">
+                <svg class="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </span>
+        </div>
+    </div>
+    
+    <!-- Search Results -->
+    <div id="search-results" class="flex-1 overflow-y-auto scrollbar-thin p-3">
+        <!-- Initial state -->
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-20 h-20 bg-muted/50 rounded-3xl flex items-center justify-center mb-5 ring-1 ring-border/50">
+                <i data-lucide="users" class="w-10 h-10 text-muted-foreground/60"></i>
+            </div>
+            <p class="text-muted-foreground font-medium">Search for users to start chatting</p>
+            <p class="text-sm text-muted-foreground/60 mt-1">Enter a name or email address above</p>
+        </div>
+    </div>
+    
+    <!-- Friends Section -->
+    <div class="border-t border-border/50 bg-muted/20">
+        <div class="px-5 py-4">
+            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <i data-lucide="heart" class="w-3.5 h-3.5"></i>
+                Your Friends
+            </h3>
+        </div>
+        <div id="friends-list"
+             hx-get="{% url 'htmx:friends_partial' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="max-h-52 overflow-y-auto scrollbar-thin px-3 pb-3">
+            <!-- Friends will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}

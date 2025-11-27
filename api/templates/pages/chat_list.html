@@ -1,0 +1,31 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Chat - Chat App{% endblock %}
+{% block mobile_title %}Chats{% endblock %}
+
+{% block main_content %}
+<div id="main-content" class="flex-1 flex flex-col items-center justify-center bg-background p-8 relative overflow-hidden">
+    <!-- Subtle background pattern -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/10 rounded-full blur-3xl"></div>
+    </div>
+    
+    <div class="text-center max-w-lg relative z-10">
+        <div class="w-28 h-28 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl ring-1 ring-border/50">
+            <i data-lucide="message-square" class="w-14 h-14 text-primary"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-foreground mb-3">
+            Welcome to Chat App
+        </h2>
+        <p class="text-muted-foreground mb-8 text-lg">
+            Select a conversation from the sidebar or start a new chat to begin messaging.
+        </p>
+        <a href="{% url 'htmx:new_chat' %}" 
+           class="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:shadow-primary/30 hover:scale-105">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            Start New Chat
+        </a>
+    </div>
+</div>
+{% endblock %}

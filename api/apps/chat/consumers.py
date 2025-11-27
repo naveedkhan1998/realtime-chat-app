@@ -185,18 +185,24 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Authenticate user via token in message payload."""
         token = data.get("token")
         if not token:
-            await self.send(json.dumps({
-                "type": "auth.error",
-                "message": "Token required"
-            }))
+            try:
+                await self.send(json.dumps({
+                    "type": "auth.error",
+                    "message": "Token required"
+                }))
+            except Exception:
+                pass
             return
 
         user = await self._get_user_from_token(token)
         if not user or isinstance(user, AnonymousUser) or not user.is_authenticated:
-            await self.send(json.dumps({
-                "type": "auth.error",
-                "message": "Invalid or expired token"
-            }))
+            try:
+                await self.send(json.dumps({
+                    "type": "auth.error",
+                    "message": "Invalid or expired token"
+                }))
+            except Exception:
+                pass
             await self.close(code=4001)
             return
 
@@ -232,7 +238,16 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _get_user_from_token(self, token: str):
-        """Validate JWT and return user."""
+        """Validate JWT or session and return user."""
+        # Support session-based auth (for HTMX frontend)
+        if token == "session":
+            # Get user from scope (set by Django Channels middleware)
+            scope_user = self.scope.get("user")
+            if scope_user and scope_user.is_authenticated:
+                return scope_user
+            return AnonymousUser()
+        
+        # JWT token auth (for React frontend)
         cache_key = f"user_token_{token}"
         user = cache.get(cache_key)
         
@@ -776,6 +791,8 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             "chat_room_id": event["chat_room_id"],
             "sender_id": event["sender_id"],
             "sender_name": event.get("sender_name"),
+            "message_content": event.get("message_content"),
+            "has_attachment": event.get("has_attachment", False),
         }))
 
     # ==================== DATABASE OPERATIONS ====================
@@ -858,6 +875,10 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Notify participants about new message."""
         participant_ids = await self._get_participant_ids(chat_room)
         
+        # Extract message content and attachment info from message_data
+        msg_content = message_data.get("content", "")
+        msg_attachment = message_data.get("attachment")
+        
         for participant_id in participant_ids:
             is_in_room = await self._is_user_in_room(room_id, participant_id)
             if is_in_room:
@@ -866,7 +887,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             is_online = await self._is_user_online(participant_id)
             
             if is_online:
-                # Send ephemeral notification
+                # Send ephemeral notification with message preview
                 await self.channel_layer.group_send(
                     f"user_{participant_id}",
                     {
@@ -874,6 +895,8 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                         "chat_room_id": room_id,
                         "sender_id": self.user.id,
                         "sender_name": self.user.name,
+                        "message_content": msg_content[:100] if msg_content else None,  # Truncate for preview
+                        "has_attachment": bool(msg_attachment),
                     }
                 )
             else:
@@ -1025,7 +1048,12 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     def _add_huddle_participant(self, room_id: int) -> List[Dict[str, Any]]:
         conn = get_redis_connection("default")
         key = f"chat:huddle:{room_id}"
-        payload = json.dumps({"id": self.user.id, "name": self.user.name})
+        avatar = getattr(self.user, "avatar", None)
+        payload = json.dumps({
+            "id": self.user.id, 
+            "name": self.user.name,
+            "avatar": avatar.url if avatar else None
+        })
         pipeline = conn.pipeline(True)
         pipeline.hset(key, self.user.id, payload)
         pipeline.expire(key, HUDDLE_TTL)

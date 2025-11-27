@@ -70,6 +70,14 @@ class Message(models.Model):
             models.Index(fields=["chat_room", "timestamp"]),
         ]
 
+    @property
+    def is_edited(self):
+        """Returns True if the message was edited (updated more than 2 seconds after creation)"""
+        if self.updated_at and self.timestamp:
+            time_diff = (self.updated_at - self.timestamp).total_seconds()
+            return time_diff > 2
+        return False
+
     def __str__(self):
         return f"{self.sender.name}: {self.content[:20]}"
 

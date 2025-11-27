@@ -1,0 +1,8 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}{{ room_name }} - Chat App{% endblock %}
+{% block mobile_title %}{{ room_name }}{% endblock %}
+
+{% block main_content %}
+{% include "partials/chat_room_content.html" %}
+{% endblock %}

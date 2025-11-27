@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   MessageSquareMore,
   Plus,
@@ -10,6 +10,10 @@ import {
   Sparkles,
   UserPlus,
   Headphones,
+  Settings,
+  Bell,
+  UsersRound,
+  Paperclip,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -58,7 +62,7 @@ interface SidebarProps {
 
 const navItems = [
   { label: 'Chats', icon: MessageSquareMore, to: '/chat' },
-  // { label: 'Friends', icon: UsersRound, to: '/friends' },
+  { label: 'Friends', icon: UsersRound, to: '/friends' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -124,9 +128,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Handle new message notifications via unified WebSocket
   const handleNewMessageNotification = useCallback(
     (event: GlobalNewMessageNotificationEvent) => {
+      // Update unread notification state for chats not currently active
       if (event.chat_room_id !== activeChat) {
         dispatch(setUnreadNotification(event.chat_room_id));
       }
+      
+      // Update the last_message and unread_count in the chat rooms cache
+      dispatch(
+        chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
+          const roomIndex = draft.findIndex(room => room.id === event.chat_room_id);
+          if (roomIndex !== -1) {
+            const room = draft[roomIndex];
+            // Update last message
+            room.last_message = {
+              id: Date.now(), // Temporary ID
+              sender: { id: event.sender_id, name: event.sender_name || 'Unknown', avatar: undefined },
+              content: event.message_content || '',
+              attachment: event.has_attachment ? 'attachment' : undefined,
+              timestamp: new Date().toISOString(),
+            };
+            // Increment unread count if not the active chat
+            if (event.chat_room_id !== activeChat) {
+              room.unread_count = (room.unread_count || 0) + 1;
+            }
+            // Move room to top of list
+            draft.splice(roomIndex, 1);
+            draft.unshift(room);
+          }
+        })
+      );
     },
     [dispatch, activeChat]
   );
@@ -254,27 +284,52 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* User Profile Card */}
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border">
-            <div className="relative">
-              <Avatar className="w-10 h-10 border-2 shadow-sm border-background">
+            <Link to="/profile" className="relative" onClick={() => isMobile && onClose()}>
+              <Avatar className="w-10 h-10 transition-all border-2 shadow-sm cursor-pointer border-background hover:ring-2 hover:ring-primary/30">
                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
                 <AvatarFallback className="font-bold bg-primary/10 text-primary">
                   {user.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 rounded-full border-background ring-1 ring-green-500/20" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate">{user.name}</p>
+            </Link>
+            <Link to="/profile" className="flex-1 min-w-0" onClick={() => isMobile && onClose()}>
+              <p className="text-sm font-bold truncate transition-colors cursor-pointer hover:text-primary">{user.name}</p>
               <p className="text-xs truncate text-muted-foreground">Online</p>
+            </Link>
+            <div className="flex items-center gap-1">
+              <Link to="/notifications" onClick={() => isMobile && onClose()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <Bell className="w-4 h-4" />
+                  {notifications && notifications.filter(n => !n.is_read).length > 0 && (
+                    <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                      {notifications.filter(n => !n.is_read).length > 9 ? '9+' : notifications.filter(n => !n.is_read).length}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+              <Link to="/settings" onClick={() => isMobile && onClose()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
@@ -359,6 +414,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onSelect={() => {
                           setActiveChat(room.id);
                           dispatch(clearUnreadNotification(room.id));
+                          
+                          // Reset unread count in the cache
+                          dispatch(
+                            chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
+                              const r = draft.find(r => r.id === room.id);
+                              if (r) {
+                                r.unread_count = 0;
+                              }
+                            })
+                          );
                           
                           // Find and mark notification as read
                           const notification = notifications?.find(
@@ -466,10 +531,48 @@ function ConversationRow({
   const avatar = room.is_group_chat ? '' : (counterpart?.avatar ?? '');
 
   const isOnline = counterpart ? onlineUsers.includes(counterpart.id) : false;
-  const hasUnread = useAppSelector(
+  // Use unread_count from API, fall back to notification state
+  const hasUnreadFromApi = (room.unread_count ?? 0) > 0;
+  const hasUnreadFromState = useAppSelector(
     state => selectHasUnreadNotification(state, room.id)
   );
+  const hasUnread = hasUnreadFromApi || hasUnreadFromState;
   const hasActiveHuddle = huddleChatId === room.id;
+
+  // Format last message preview
+  const getLastMessagePreview = () => {
+    if (hasActiveHuddle) return 'Huddle in progress';
+    
+    if (room.last_message) {
+      const isOwnMessage = room.last_message.sender.id === currentUserId;
+      
+      if (room.last_message.attachment) {
+        return (
+          <>
+            {isOwnMessage && <span className="opacity-60">You: </span>}
+            <Paperclip className="inline w-3 h-3 mr-1" />
+            Sent an attachment
+          </>
+        );
+      }
+      
+      const content = room.last_message.content;
+      const truncated = content.length > 35 ? content.substring(0, 35) + '...' : content;
+      
+      return (
+        <>
+          {isOwnMessage && <span className="opacity-60">You: </span>}
+          {truncated}
+        </>
+      );
+    }
+    
+    if (room.is_group_chat) {
+      return `${room.participants.length} members`;
+    }
+    
+    return 'Click to open chat';
+  };
 
   return (
     <button
@@ -534,11 +637,10 @@ function ConversationRow({
             </span>
           )}
           {hasUnread && !hasActiveHuddle && (
-            <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full animate-in fade-in zoom-in duration-300">
+            <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-destructive rounded-full animate-in fade-in zoom-in duration-300">
               New
             </span>
           )}
-          {/* You might want to add a timestamp here if available in the room object */}
         </div>
         <p
           className={cn(
@@ -548,13 +650,7 @@ function ConversationRow({
             hasActiveHuddle && 'text-green-600 font-medium'
           )}
         >
-          {hasActiveHuddle
-            ? 'Huddle in progress'
-            : hasUnread
-            ? 'New message'
-            : room.is_group_chat
-            ? `${room.participants.length} members`
-            : 'Click to open chat'}
+          {getLastMessagePreview()}
         </p>
       </div>
     </button>

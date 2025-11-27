@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt.token_blacklist",
+    # HTMX and template helpers
+    "django_htmx",
+    "widget_tweaks",
     # Custom apps
     "apps.accounts",
     "apps.chat",
@@ -68,6 +71,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 
@@ -148,8 +152,20 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
 }
+
+# Session settings for HTMX frontend
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 days
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+
+# Login URLs for HTMX frontend
+LOGIN_URL = "/app/login/"
+LOGIN_REDIRECT_URL = "/app/"
+LOGOUT_REDIRECT_URL = "/app/login/"
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -213,6 +229,11 @@ else:
             },
         },
     }
+
+# Additional directories where Django will look for static files (used by collectstatic)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static_src"),
+]
 
 # GCS-specific settings
 GS_DEFAULT_ACL = None

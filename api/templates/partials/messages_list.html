@@ -1,0 +1,43 @@
+<!-- Load More Trigger (for infinite scroll) -->
+{% if has_more %}
+<div hx-get="{% url 'htmx:messages_partial' room.id %}?cursor={{ next_cursor }}"
+     hx-trigger="intersect once"
+     hx-swap="outerHTML"
+     class="flex items-center justify-center py-4">
+    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+</div>
+{% endif %}
+
+<!-- Date Separator (if applicable) -->
+{% if show_date_separator %}
+<div class="flex items-center justify-center py-4">
+    <div class="px-4 py-1.5 bg-muted/50 backdrop-blur-sm rounded-full text-xs font-medium text-muted-foreground">
+        {{ date_separator }}
+    </div>
+</div>
+{% endif %}
+
+<!-- Messages -->
+{% for message in messages %}
+{% if message.sender_id == user.id %}
+{% include "components/message_bubble.html" with message=message is_own_message=True is_group=room.is_group_chat %}
+{% else %}
+{% include "components/message_bubble.html" with message=message is_own_message=False is_group=room.is_group_chat %}
+{% endif %}
+{% empty %}
+<div class="flex flex-col items-center justify-center py-16 text-center">
+    <div class="w-20 h-20 bg-muted/30 rounded-2xl flex items-center justify-center mb-4">
+        <i data-lucide="message-circle" class="w-10 h-10 text-muted-foreground"></i>
+    </div>
+    <p class="text-foreground font-medium mb-1">No messages yet</p>
+    <p class="text-sm text-muted-foreground">Send a message to start the conversation</p>
+</div>
+{% endfor %}
+
+<!-- Scroll anchor -->
+<div id="messages-end"></div>
+
+<script>
+// Scroll to bottom on initial load
+document.getElementById('messages-end')?.scrollIntoView();
+</script>

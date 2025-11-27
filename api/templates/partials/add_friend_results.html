@@ -1,0 +1,51 @@
+{% for user_item in users %}
+<div class="flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors rounded-xl">
+    <div class="flex items-center gap-3">
+        {% if user_item.avatar %}
+        <img src="{{ user_item.avatar.url }}" alt="{{ user_item.name }}" class="w-11 h-11 rounded-full object-cover ring-2 ring-border/50">
+        {% else %}
+        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center ring-2 ring-border/50">
+            <span class="text-white font-semibold text-sm">
+                {{ user_item.name|slice:":1"|upper }}
+            </span>
+        </div>
+        {% endif %}
+        <div>
+            <p class="font-medium text-foreground">{{ user_item.name }}</p>
+            <p class="text-sm text-muted-foreground">{% if user_item.id in online_users %}<span class="text-green-500">Online</span>{% else %}Offline{% endif %}</p>
+        </div>
+    </div>
+    
+    <div id="friend-action-{{ user_item.id }}">
+        {% if user_item.relationship == 'friend' %}
+        <span class="px-3 py-1.5 bg-secondary/10 text-secondary text-sm font-medium rounded-lg">
+            Friends
+        </span>
+        {% elif user_item.relationship == 'pending_sent' %}
+        <span class="px-3 py-1.5 bg-accent/10 text-accent text-sm font-medium rounded-lg">
+            Request Sent
+        </span>
+        {% elif user_item.relationship == 'pending_received' %}
+        <span class="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-lg">
+            Accept Request
+        </span>
+        {% else %}
+        <button hx-post="{% url 'htmx:send_friend_request' %}"
+                hx-vals='{"user_id": "{{ user_item.id }}"}'
+                hx-target="#friend-action-{{ user_item.id }}"
+                hx-swap="innerHTML"
+                class="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-primary/20">
+            Add Friend
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="flex flex-col items-center justify-center py-12 text-center">
+    <div class="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mb-4">
+        <i data-lucide="search-x" class="w-8 h-8 text-muted-foreground"></i>
+    </div>
+    <p class="text-foreground font-medium mb-1">No users found</p>
+    <p class="text-sm text-muted-foreground">Try a different search term</p>
+</div>
+{% endfor %}

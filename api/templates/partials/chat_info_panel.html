@@ -1,0 +1,131 @@
+<!-- Chat Info Panel -->
+<div class="p-5">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="font-semibold text-lg text-foreground">Chat Info</h3>
+        <button @click="showInfo = false" class="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground hover:text-foreground">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+    
+    <!-- Room Info Card -->
+    <div class="text-center mb-6 p-5 bg-muted/30 rounded-2xl border border-border/30">
+        {% if room.is_group_chat %}
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/20">
+            <i data-lucide="users" class="w-10 h-10 text-white"></i>
+        </div>
+        <h4 class="font-bold text-lg text-foreground">{{ room.name|default:"Group Chat" }}</h4>
+        <p class="text-sm text-muted-foreground mt-1">{{ room.participants.count }} members</p>
+        {% else %}
+        {% with other=room.other_participant %}
+        {% if other.avatar %}
+        <img src="{{ other.avatar.url }}" alt="{{ other.name }}" class="w-20 h-20 rounded-2xl object-cover mx-auto mb-4 ring-4 ring-primary/20 shadow-lg">
+        {% else %}
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mx-auto mb-4 ring-4 ring-primary/20">
+            <span class="text-primary text-2xl font-bold">
+                {{ other.name|slice:":1"|upper }}
+            </span>
+        </div>
+        {% endif %}
+        <h4 class="font-bold text-lg text-foreground">{{ other.name }}</h4>
+        <p class="text-sm text-muted-foreground mt-1">{% if other.id in online_users %}<span class="text-green-500">● Online</span>{% else %}Offline{% endif %}</p>
+        {% endwith %}
+        {% endif %}
+    </div>
+    
+    <!-- Actions -->
+    <div class="space-y-1 mb-6">
+        <button class="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 rounded-xl transition-colors group">
+            <i data-lucide="bell" class="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors"></i>
+            <span class="text-foreground/90">Notifications</span>
+            <span class="ml-auto text-sm text-muted-foreground">On</span>
+        </button>
+        <button class="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 rounded-xl transition-colors group">
+            <i data-lucide="search" class="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors"></i>
+            <span class="text-foreground/90">Search in conversation</span>
+        </button>
+    </div>
+    
+    <!-- Participants (for group chats) -->
+    {% if room.is_group_chat %}
+    <div class="mb-6">
+        <h5 class="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            Participants
+        </h5>
+        <div class="space-y-1 bg-muted/20 rounded-xl p-2">
+            {% for participant in room.chatroomparticipant_set.all %}
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                {% if participant.user.avatar %}
+                <img src="{{ participant.user.avatar.url }}" alt="{{ participant.user.name }}" class="w-9 h-9 rounded-xl object-cover ring-2 ring-border/50">
+                {% else %}
+                <div class="w-9 h-9 rounded-xl bg-muted flex items-center justify-center ring-2 ring-border/50">
+                    <span class="text-muted-foreground text-sm font-semibold">
+                        {{ participant.user.name|slice:":1"|upper }}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-foreground truncate">
+                        {{ participant.user.name }}
+                        {% if participant.user == user %}
+                        <span class="text-muted-foreground">(you)</span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% if participant.user.id in online_users %}
+                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Collaborative Notes -->
+    <div class="mb-6">
+        <h5 class="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
+            <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
+            Shared Notes
+        </h5>
+        <textarea id="collaborative-note"
+                  x-data="{ content: '' }"
+                  x-init="content = '{{ collaborative_note|default:''|escapejs }}'"
+                  x-model="content"
+                  @input.debounce.500ms="if (window.chatSocket) window.chatSocket.updateNote({{ room.id }}, content)"
+                  rows="4"
+                  placeholder="Add notes here... (shared with all participants)"
+                  class="w-full px-4 py-3 border border-border/50 rounded-xl bg-muted/30 text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:bg-background transition-all placeholder:text-muted-foreground/60"></textarea>
+    </div>
+    
+    <!-- Shared Media -->
+    <div class="mb-6">
+        <h5 class="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
+            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+            Shared Media
+        </h5>
+        <div id="shared-media" 
+             hx-get="{% url 'htmx:shared_media' room.id %}"
+             hx-trigger="load"
+             class="grid grid-cols-3 gap-2">
+            <!-- Media thumbnails will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Danger Zone -->
+    <div class="pt-5 border-t border-border/30">
+        {% if room.is_group_chat %}
+        <button class="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 rounded-xl transition-colors">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <span class="font-medium">Leave Group</span>
+        </button>
+        {% else %}
+        <button class="w-full flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+                hx-delete="{% url 'htmx:delete_chat' room.id %}"
+                hx-confirm="Are you sure you want to delete this conversation? This action cannot be undone.">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+            <span class="font-medium">Delete Conversation</span>
+        </button>
+        {% endif %}
+    </div>
+</div>

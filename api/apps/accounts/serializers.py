@@ -116,7 +116,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    avatar = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+    avatar = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = User
@@ -125,16 +126,29 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "email",
             "name",
             "avatar",
+            "avatar_url",
             "is_admin",
             "auth_provider",
+            "created_at",
         ]
+        read_only_fields = ["id", "email", "is_admin", "auth_provider", "created_at"]
 
-    def get_avatar(self, obj):
+    def get_avatar_url(self, obj):
         request = self.context.get("request")
         if obj.avatar:
             avatar_url = obj.avatar.url
-            return request.build_absolute_uri(avatar_url)
+            if request:
+                return request.build_absolute_uri(avatar_url)
+            return avatar_url
         return None
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Map avatar_url to avatar for consistency with frontend expectations
+        ret['avatar'] = ret.pop('avatar_url', None)
+        # Map created_at to date_joined for frontend compatibility
+        ret['date_joined'] = ret.pop('created_at', None)
+        return ret
 
 
 class UserChangePasswordSerializer(serializers.Serializer):

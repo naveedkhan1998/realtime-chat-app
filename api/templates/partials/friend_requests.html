@@ -1,0 +1,85 @@
+<!-- Received Requests -->
+{% if received_requests %}
+<div class="mb-6">
+    <h4 class="px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+        <i data-lucide="inbox" class="w-3.5 h-3.5"></i>
+        Received Requests
+    </h4>
+    {% for request in received_requests %}
+    <div id="request-{{ request.id }}" class="flex items-center justify-between px-4 py-4 hover:bg-muted/50 rounded-xl transition-all duration-200 mx-1">
+        <div class="flex items-center gap-3">
+            {% if request.from_user.avatar %}
+            <img src="{{ request.from_user.avatar.url }}" alt="{{ request.from_user.name }}" class="w-11 h-11 rounded-xl object-cover ring-2 ring-border/50">
+            {% else %}
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-border/50">
+                <span class="text-primary font-semibold">
+                    {{ request.from_user.name|slice:":1"|upper }}
+                </span>
+            </div>
+            {% endif %}
+            <div>
+                <p class="font-medium text-foreground">{{ request.from_user.name }}</p>
+                <p class="text-sm text-muted-foreground">Wants to connect</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <button hx-post="{% url 'htmx:accept_friend_request' request.id %}"
+                    hx-target="#request-{{ request.id }}"
+                    hx-swap="outerHTML"
+                    class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-xl shadow-sm shadow-primary/20 transition-all duration-200">
+                Accept
+            </button>
+            <button hx-post="{% url 'htmx:decline_friend_request' request.id %}"
+                    hx-target="#request-{{ request.id }}"
+                    hx-swap="outerHTML"
+                    class="px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground text-sm font-medium rounded-xl transition-colors">
+                Decline
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Sent Requests -->
+{% if sent_requests %}
+<div>
+    <h4 class="px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+        Sent Requests
+    </h4>
+    {% for request in sent_requests %}
+    <div class="flex items-center justify-between px-4 py-4 hover:bg-muted/50 rounded-xl transition-all duration-200 mx-1">
+        <div class="flex items-center gap-3">
+            {% if request.to_user.avatar %}
+            <img src="{{ request.to_user.avatar.url }}" alt="{{ request.to_user.name }}" class="w-11 h-11 rounded-xl object-cover ring-2 ring-border/50">
+            {% else %}
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center ring-2 ring-border/50">
+                <span class="text-primary font-semibold">
+                    {{ request.to_user.name|slice:":1"|upper }}
+                </span>
+            </div>
+            {% endif %}
+            <div>
+                <p class="font-medium text-foreground">{{ request.to_user.name }}</p>
+                <p class="text-sm text-muted-foreground">Request pending</p>
+            </div>
+        </div>
+        
+        <span class="px-4 py-1.5 bg-accent/20 text-accent-foreground text-sm font-medium rounded-xl">
+            Pending
+        </span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if not received_requests and not sent_requests %}
+<div class="flex flex-col items-center justify-center py-16 text-center">
+    <div class="w-20 h-20 bg-muted/50 rounded-3xl flex items-center justify-center mb-5 ring-1 ring-border/50">
+        <i data-lucide="inbox" class="w-10 h-10 text-muted-foreground/60"></i>
+    </div>
+    <p class="text-muted-foreground font-medium">No pending requests</p>
+</div>
+{% endif %}
