@@ -19,8 +19,6 @@ import {
   Search,
   Loader2,
   MessageSquarePlus,
-  Sparkles,
-  UserPlus,
   ArrowLeft,
   Heart,
   Users,
@@ -87,7 +85,7 @@ export default function NewChatPage() {
 
       {/* Header */}
       <header className="relative z-10 px-6 py-5 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="flex items-center gap-4 max-w-4xl mx-auto">
+        <div className="flex items-center max-w-4xl gap-4 mx-auto">
           {isMobile && (
             <Button
               variant="ghost"
@@ -99,7 +97,7 @@ export default function NewChatPage() {
             </Button>
           )}
           <div>
-            <h1 className="font-semibold text-xl text-foreground">New Chat</h1>
+            <h1 className="text-xl font-semibold text-foreground">New Chat</h1>
             <p className="text-sm text-muted-foreground">Search for users to start a conversation</p>
           </div>
         </div>
@@ -108,7 +106,7 @@ export default function NewChatPage() {
       {/* Search */}
       <div className="relative z-10 p-5 border-b border-border/30">
         <div className="relative max-w-4xl mx-auto">
-          <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-muted-foreground">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground">
             <Search className="w-5 h-5" />
           </span>
           <Input
@@ -119,15 +117,15 @@ export default function NewChatPage() {
             autoFocus
           />
           {searchLoading && (
-            <span className="absolute inset-y-0 right-0 pr-4 flex items-center">
-              <Loader2 className="animate-spin h-5 w-5 text-primary" />
+            <span className="absolute inset-y-0 right-0 flex items-center pr-4">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
             </span>
           )}
         </div>
       </div>
 
       {/* Search Results */}
-      <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar p-3">
+      <div className="relative z-10 flex-1 p-3 overflow-y-auto custom-scrollbar">
         {searchLoading ? (
           <div className="flex flex-col items-center justify-center gap-4 py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
@@ -136,13 +134,13 @@ export default function NewChatPage() {
             </p>
           </div>
         ) : searchResults && searchResults.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 max-w-4xl mx-auto">
+          <div className="grid max-w-4xl grid-cols-1 gap-2 mx-auto">
             {searchResults
               .filter(candidate => candidate.id !== user?.id)
               .map(candidate => (
                 <div
                   key={candidate.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors rounded-xl group"
+                  className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/20 rounded-xl group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
@@ -160,7 +158,7 @@ export default function NewChatPage() {
                       <p className="font-medium text-foreground">{candidate.name}</p>
                       <p className="text-sm text-muted-foreground">
                         {globalOnlineUsers.includes(candidate.id) ? (
-                          <span className="text-green-500 font-medium">Online</span>
+                          <span className="font-medium text-green-500">Online</span>
                         ) : (
                           'Offline'
                         )}
@@ -170,7 +168,7 @@ export default function NewChatPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="p-2 hover:bg-primary/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-2 transition-colors rounded-lg opacity-0 hover:bg-primary/10 group-hover:opacity-100"
                     onClick={() => handleCreateChat(candidate.id, candidate.name)}
                     disabled={creatingChatRoom}
                   >
@@ -185,21 +183,21 @@ export default function NewChatPage() {
           </div>
         ) : debouncedSearchQuery ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 bg-muted/50 rounded-3xl flex items-center justify-center mb-5 ring-1 ring-border/50">
+            <div className="flex items-center justify-center w-20 h-20 mb-5 bg-muted/50 rounded-3xl ring-1 ring-border/50">
               <Users className="w-10 h-10 text-muted-foreground/60" />
             </div>
-            <p className="text-muted-foreground font-medium">No users found</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">
+            <p className="font-medium text-muted-foreground">No users found</p>
+            <p className="mt-1 text-sm text-muted-foreground/60">
               We couldn't find anyone matching "{searchQuery}"
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 bg-muted/50 rounded-3xl flex items-center justify-center mb-5 ring-1 ring-border/50">
+            <div className="flex items-center justify-center w-20 h-20 mb-5 bg-muted/50 rounded-3xl ring-1 ring-border/50">
               <Users className="w-10 h-10 text-muted-foreground/60" />
             </div>
-            <p className="text-muted-foreground font-medium">Search for users to start chatting</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">Enter a name or email address above</p>
+            <p className="font-medium text-muted-foreground">Search for users to start chatting</p>
+            <p className="mt-1 text-sm text-muted-foreground/60">Enter a name or email address above</p>
           </div>
         )}
       </div>
@@ -207,12 +205,12 @@ export default function NewChatPage() {
       {/* Friends Section */}
       <div className="relative z-10 border-t border-border/50 bg-muted/20">
         <div className="px-5 py-4">
-          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+          <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-muted-foreground">
             <Heart className="w-3.5 h-3.5" />
             Your Friends
           </h3>
         </div>
-        <div className="max-h-52 overflow-y-auto custom-scrollbar px-3 pb-3">
+        <div className="px-3 pb-3 overflow-y-auto max-h-52 custom-scrollbar">
           {friendshipsLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
@@ -221,7 +219,7 @@ export default function NewChatPage() {
             friends.map(friend => (
               <div
                 key={friend.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors rounded-xl group"
+                className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/20 rounded-xl group"
               >
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -239,7 +237,7 @@ export default function NewChatPage() {
                     <p className="font-medium text-foreground">{friend.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {globalOnlineUsers.includes(friend.id) ? (
-                        <span className="text-green-500 font-medium">Online</span>
+                        <span className="font-medium text-green-500">Online</span>
                       ) : (
                         'Offline'
                       )}
@@ -249,7 +247,7 @@ export default function NewChatPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-2 transition-colors rounded-lg opacity-0 hover:bg-primary/10 group-hover:opacity-100"
                   onClick={() => handleCreateChat(friend.id, friend.name)}
                   disabled={creatingChatRoom}
                 >
@@ -263,8 +261,8 @@ export default function NewChatPage() {
             ))
           ) : (
             <div className="px-4 py-8 text-center">
-              <p className="text-muted-foreground text-sm mb-1">No friends yet</p>
-              <p className="text-muted-foreground/70 text-xs">Search for users to add friends</p>
+              <p className="mb-1 text-sm text-muted-foreground">No friends yet</p>
+              <p className="text-xs text-muted-foreground/70">Search for users to add friends</p>
             </div>
           )}
         </div>

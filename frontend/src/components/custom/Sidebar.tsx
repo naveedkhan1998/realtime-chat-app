@@ -12,7 +12,6 @@ import {
   Headphones,
   Settings,
   Bell,
-  User,
   UsersRound,
   Paperclip,
 } from 'lucide-react';
@@ -546,7 +545,6 @@ function ConversationRow({
     
     if (room.last_message) {
       const isOwnMessage = room.last_message.sender.id === currentUserId;
-      const prefix = isOwnMessage ? 'You: ' : '';
       
       if (room.last_message.attachment) {
         return (
