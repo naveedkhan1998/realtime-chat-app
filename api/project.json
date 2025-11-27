@@ -12,6 +12,28 @@
         "command": "uv sync"
       }
     },
+    "install:tailwind": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "api",
+        "command": "npm install"
+      }
+    },
+    "build:css": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "api",
+        "command": "npx tailwindcss -i ./static_src/css/input.css -o ./static_src/css/output.css --minify"
+      },
+      "outputs": ["{projectRoot}/static_src/css/output.css"]
+    },
+    "watch:css": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "api",
+        "command": "npx tailwindcss -i ./static_src/css/input.css -o ./static_src/css/output.css --watch"
+      }
+    },
     "dev": {
       "executor": "nx:run-commands",
       "options": {

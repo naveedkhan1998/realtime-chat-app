@@ -1,0 +1,12 @@
+{
+  "name": "api-tailwind",
+  "version": "1.0.0",
+  "description": "Tailwind CSS build for Django HTMX frontend",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./static_src/css/input.css -o ./static_src/css/output.css --minify",
+    "watch:css": "npx tailwindcss -i ./static_src/css/input.css -o ./static_src/css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
