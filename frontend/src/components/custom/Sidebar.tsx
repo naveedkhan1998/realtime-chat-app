@@ -100,12 +100,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (notifications) {
       notifications.forEach(notification => {
-        if (!notification.is_read && notification.chat_room) {
+        // Only set unread notification if not currently viewing this chat
+        if (!notification.is_read && notification.chat_room && notification.chat_room !== activeChat) {
           dispatch(setUnreadNotification(notification.chat_room));
         }
       });
     }
-  }, [notifications, dispatch]);
+  }, [notifications, dispatch, activeChat]);
 
   // Handle chat room creation events via unified WebSocket
   const handleChatRoomCreated = useCallback(

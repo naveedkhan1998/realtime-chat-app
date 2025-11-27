@@ -246,7 +246,7 @@ export const chatApi = baseApi.injectEndpoints({
       invalidatesTags: ['Notifications'],
     }),
     markRoomNotificationsRead: builder.mutation<
-      { status: string; count: number },
+      { status: string; count: number; messages_marked?: number },
       { chat_room_id: number }
     >({
       query: ({ chat_room_id }) => ({
