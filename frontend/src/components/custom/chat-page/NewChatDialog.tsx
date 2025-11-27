@@ -11,16 +11,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  PlusCircle,
-  Search,
-  Users,
-  MessageCircle,
-} from 'lucide-react';
-import {
-  useCreateChatRoomMutation,
-  User,
-} from '@/services/chatApi';
+import { PlusCircle, Search, Users, MessageCircle } from 'lucide-react';
+import { useCreateChatRoomMutation, User } from '@/services/chatApi';
 import { useSearchUsersQuery } from '@/services/userApi';
 import { useAppSelector } from '@/app/hooks';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +25,7 @@ const NewChatDialog: React.FC = () => {
     { query: searchQuery },
     { skip: !searchQuery }
   );
-  
+
   const [isGroup, setIsGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
@@ -44,7 +36,8 @@ const NewChatDialog: React.FC = () => {
 
   const currentUser = useAppSelector(state => state.auth.user);
 
-  const filteredUsers = searchResults?.filter(user => user.id !== currentUser?.id) || [];
+  const filteredUsers =
+    searchResults?.filter(user => user.id !== currentUser?.id) || [];
 
   const handleUserSelect = (userId: number) => {
     if (isGroup) {

@@ -111,6 +111,7 @@ def get_upload_url(request):
 
             # Generate a unique filename
             import uuid
+
             ext = filename.split(".")[-1]
             uuid_name = uuid.uuid4()
             blob_name = f"media/attachments/{uuid_name}.{ext}"
@@ -129,7 +130,7 @@ def get_upload_url(request):
 
             return Response({"url": url, "key": django_key})
         except ImportError:
-             return Response(
+            return Response(
                 {"detail": "Google Cloud Storage libraries not installed."},
                 status=status.HTTP_501_NOT_IMPLEMENTED,
             )
@@ -137,7 +138,7 @@ def get_upload_url(request):
             return Response(
                 {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     return Response(
         {"detail": "Direct upload not supported in this environment."},
         status=status.HTTP_400_BAD_REQUEST,
@@ -264,17 +265,14 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
 
         chat_room.refresh_from_db()
         output = self.get_serializer(chat_room)
-        
+
         # Broadcast chat_room_created event to all participants
         channel_layer = get_channel_layer()
         if channel_layer:
             for participant in users:
                 async_to_sync(channel_layer.group_send)(
                     f"user_{participant.id}",
-                    {
-                        "type": "chat_room_created",
-                        "room": output.data
-                    }
+                    {"type": "chat_room_created", "room": output.data},
                 )
 
         headers = self.get_success_headers(output.data)
@@ -301,7 +299,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """Delete/leave a chat room."""
         chat_room = self.get_object()
         user = request.user
-        
+
         if chat_room.is_group_chat:
             # For group chats, just leave (remove participant)
             ChatRoomParticipant.objects.filter(chat_room=chat_room, user=user).delete()
@@ -341,17 +339,15 @@ class MessageViewSet(viewsets.ModelViewSet):
         chat_room = serializer.validated_data["chat_room"]
         if not chat_room.participants.filter(id=self.request.user.id).exists():
             raise PermissionDenied("You are not a participant in this chat room.")
-        
+
         # Capture client_id from the initial data (it was popped in serializer.create)
         client_id = serializer.initial_data.get("client_id")
-        
+
         message = serializer.save(sender=self.request.user)
-        
+
         # Prepare payload
-        data = MessageSerializer(
-            message, context=self.get_serializer_context()
-        ).data
-        
+        data = MessageSerializer(message, context=self.get_serializer_context()).data
+
         # Inject client_id back into the response payload for optimistic reconciliation
         if client_id:
             data["client_id"] = client_id
@@ -359,11 +355,9 @@ class MessageViewSet(viewsets.ModelViewSet):
         self._broadcast_message_event(
             message.chat_room_id,
             "broadcast_chat_message",
-            {
-                "payload": data
-            },
+            {"payload": data},
         )
-        
+
         # Send notifications to participants not in the room
         self._notify_participants(chat_room, message)
 
@@ -441,9 +435,11 @@ class MessageViewSet(viewsets.ModelViewSet):
                         "chat_room_id": chat_room.id,
                         "sender_id": sender.id,
                         "sender_name": sender.name,
-                        "message_content": message.content[:100] if message.content else None,
+                        "message_content": (
+                            message.content[:100] if message.content else None
+                        ),
                         "has_attachment": bool(message.attachment),
-                    }
+                    },
                 )
             else:
                 # Create persistent notification for offline user

@@ -188,7 +188,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
-    
+
     def perform_update(self, serializer):
         serializer.save()
         cache.delete("all_users")  # Clear cache on profile update

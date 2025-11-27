@@ -292,7 +292,8 @@ class UnifiedWebSocketService {
         !this.isExplicitlyDisconnected &&
         this.token
       ) {
-        if (import.meta.env.DEV) console.log('🌐 Network online, reconnecting...');
+        if (import.meta.env.DEV)
+          console.log('🌐 Network online, reconnecting...');
         this.reconnect();
       }
     });
@@ -304,7 +305,8 @@ class UnifiedWebSocketService {
           !this.isExplicitlyDisconnected &&
           this.token
         ) {
-          if (import.meta.env.DEV) console.log('👁️ App visible, reconnecting...');
+          if (import.meta.env.DEV)
+            console.log('👁️ App visible, reconnecting...');
           this.reconnect();
         } else if (this.connectionState === 'authenticated') {
           // Send presence heartbeat when tab becomes visible
@@ -333,14 +335,15 @@ class UnifiedWebSocketService {
       this.socket = new WebSocket(socketUrl);
 
       this.socket.onopen = () => {
-        if (import.meta.env.DEV) console.log('✅ WebSocket connected, authenticating...');
+        if (import.meta.env.DEV)
+          console.log('✅ WebSocket connected, authenticating...');
         this.setConnectionState('authenticating');
         this.reconnectAttempts = 0;
         // Send authentication message
         this.sendRaw({ type: 'auth', token: this.token });
       };
 
-      this.socket.onmessage = (event) => {
+      this.socket.onmessage = event => {
         try {
           const data = JSON.parse(event.data) as UnifiedWebSocketEvent;
           this.handleMessage(data);
@@ -349,7 +352,7 @@ class UnifiedWebSocketService {
         }
       };
 
-      this.socket.onclose = (event) => {
+      this.socket.onclose = event => {
         this.cleanup();
         if (import.meta.env.DEV)
           console.log(`❌ WebSocket disconnected code=${event.code}`);
@@ -359,7 +362,7 @@ class UnifiedWebSocketService {
         }
       };
 
-      this.socket.onerror = (error) => {
+      this.socket.onerror = error => {
         console.error('WebSocket error:', error);
         this.setConnectionState('error');
       };
@@ -432,14 +435,16 @@ class UnifiedWebSocketService {
   private setConnectionState(state: ConnectionState): void {
     if (this.connectionState === state) return;
     this.connectionState = state;
-    this.stateListeners.forEach((listener) => listener(state));
+    this.stateListeners.forEach(listener => listener(state));
   }
 
   getConnectionState(): ConnectionState {
     return this.connectionState;
   }
 
-  onConnectionStateChange(listener: (state: ConnectionState) => void): () => void {
+  onConnectionStateChange(
+    listener: (state: ConnectionState) => void
+  ): () => void {
     this.stateListeners.add(listener);
     return () => this.stateListeners.delete(listener);
   }
@@ -456,7 +461,8 @@ class UnifiedWebSocketService {
     this.pingInterval = setInterval(() => {
       if (Date.now() - this.lastPongTime > this.heartbeatIntervalMs * 2) {
         // No pong received, connection might be dead
-        if (import.meta.env.DEV) console.log('💔 No pong received, reconnecting...');
+        if (import.meta.env.DEV)
+          console.log('💔 No pong received, reconnecting...');
         this.socket?.close();
         return;
       }
@@ -539,7 +545,7 @@ class UnifiedWebSocketService {
   private emit(eventType: string, data: UnifiedWebSocketEvent): void {
     const callbacks = this.callbacks.get(eventType);
     if (callbacks) {
-      callbacks.forEach((callback) => {
+      callbacks.forEach(callback => {
         try {
           callback(data);
         } catch (e) {
@@ -625,7 +631,7 @@ class UnifiedWebSocketService {
     // Re-subscribe to previously subscribed rooms after reconnection
     const rooms = Array.from(this.subscribedRooms);
     this.subscribedRooms.clear();
-    rooms.forEach((roomId) => {
+    rooms.forEach(roomId => {
       this.subscribeToRoom(roomId);
     });
 
@@ -639,7 +645,8 @@ class UnifiedWebSocketService {
 
   subscribeToRoom(roomId: number): void {
     if (this.subscribedRooms.has(roomId)) {
-      if (import.meta.env.DEV) console.log(`Already subscribed to room ${roomId}`);
+      if (import.meta.env.DEV)
+        console.log(`Already subscribed to room ${roomId}`);
       return;
     }
     this.send({ type: 'chat.subscribe', room_id: roomId });
@@ -714,10 +721,7 @@ class UnifiedWebSocketService {
     this.activeHuddleRoom = null;
   }
 
-  sendHuddleSignal(
-    targetId: number,
-    payload: HuddleSignalPayload
-  ): void {
+  sendHuddleSignal(targetId: number, payload: HuddleSignalPayload): void {
     if (!this.activeHuddleRoom) return;
     this.send({
       type: 'huddle.signal',

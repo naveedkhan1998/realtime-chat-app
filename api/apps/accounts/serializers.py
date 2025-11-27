@@ -145,9 +145,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         # Map avatar_url to avatar for consistency with frontend expectations
-        ret['avatar'] = ret.pop('avatar_url', None)
+        ret["avatar"] = ret.pop("avatar_url", None)
         # Map created_at to date_joined for frontend compatibility
-        ret['date_joined'] = ret.pop('created_at', None)
+        ret["date_joined"] = ret.pop("created_at", None)
         return ret
 
 

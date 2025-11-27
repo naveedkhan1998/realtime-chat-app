@@ -102,8 +102,8 @@ function MessageBubble({
           >
             {message.attachment && (
               <div className="mb-2">
-                <MessageAttachment 
-                  url={message.attachment} 
+                <MessageAttachment
+                  url={message.attachment}
                   type={message.attachment_type as any}
                 />
               </div>

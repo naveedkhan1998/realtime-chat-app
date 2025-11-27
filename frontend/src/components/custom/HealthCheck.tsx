@@ -99,7 +99,7 @@ export default function HealthCheck({ children }: HealthCheckProps) {
                 </p>
               </div>
             </div>
-            
+
             {!isError && (
               <motion.p
                 key={currentMessage}
@@ -117,4 +117,3 @@ export default function HealthCheck({ children }: HealthCheckProps) {
     </>
   );
 }
-

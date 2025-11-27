@@ -7,7 +7,7 @@ from .models import (
     ChatRoomParticipant,
     FriendRequest,
     FriendshipNew,
-    Notification
+    Notification,
 )
 
 # Register your models here.

@@ -6,7 +6,10 @@ import { AppShellContext } from '@/layouts/AppShell';
 import { useAppSelector } from '@/app/hooks';
 import { selectGlobalOnlineUsers } from '@/features/unifiedChatSlice';
 import { useSearchUsersQuery } from '@/services/userApi';
-import { useCreateChatRoomMutation, useGetFriendshipsQuery } from '@/services/chatApi';
+import {
+  useCreateChatRoomMutation,
+  useGetFriendshipsQuery,
+} from '@/services/chatApi';
 import { useDebounce } from '@/utils/hooks';
 import { toast } from '@/hooks/use-toast';
 import { getAvatarUrl } from '@/lib/utils';
@@ -36,7 +39,8 @@ export default function NewChatPage() {
     { query: debouncedSearchQuery },
     { skip: !debouncedSearchQuery }
   );
-  const { data: friendships, isLoading: friendshipsLoading } = useGetFriendshipsQuery();
+  const { data: friendships, isLoading: friendshipsLoading } =
+    useGetFriendshipsQuery();
   const [createChatRoom, { isLoading: creatingChatRoom }] =
     useCreateChatRoomMutation();
   const [pendingChatUserId, setPendingChatUserId] = useState<number | null>(
@@ -44,13 +48,17 @@ export default function NewChatPage() {
   );
 
   // Get friends list from friendships
-  const friends = friendships?.flatMap(friendship => {
-    return [friendship.user1, friendship.user2].filter(
-      friend => friend.id !== user?.id
-    );
-  }) || [];
+  const friends =
+    friendships?.flatMap(friendship => {
+      return [friendship.user1, friendship.user2].filter(
+        friend => friend.id !== user?.id
+      );
+    }) || [];
 
-  const handleCreateChat = async (participantId: number, participantName: string) => {
+  const handleCreateChat = async (
+    participantId: number,
+    participantName: string
+  ) => {
     setPendingChatUserId(participantId);
     try {
       const response = await createChatRoom({
@@ -79,7 +87,7 @@ export default function NewChatPage() {
         <title>New Chat | MNK Chat</title>
         <meta name="description" content="Start a new conversation" />
       </Helmet>
-      
+
       {/* Decorative Background */}
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
@@ -98,7 +106,9 @@ export default function NewChatPage() {
           )}
           <div>
             <h1 className="text-xl font-semibold text-foreground">New Chat</h1>
-            <p className="text-sm text-muted-foreground">Search for users to start a conversation</p>
+            <p className="text-sm text-muted-foreground">
+              Search for users to start a conversation
+            </p>
           </div>
         </div>
       </header>
@@ -145,7 +155,10 @@ export default function NewChatPage() {
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <Avatar className="h-11 w-11 ring-2 ring-border/50">
-                        <AvatarImage src={getAvatarUrl(candidate.avatar)} alt={candidate.name} />
+                        <AvatarImage
+                          src={getAvatarUrl(candidate.avatar)}
+                          alt={candidate.name}
+                        />
                         <AvatarFallback className="text-sm font-semibold text-white bg-gradient-to-br from-primary via-secondary to-accent">
                           {candidate.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -155,10 +168,14 @@ export default function NewChatPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{candidate.name}</p>
+                      <p className="font-medium text-foreground">
+                        {candidate.name}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {globalOnlineUsers.includes(candidate.id) ? (
-                          <span className="font-medium text-green-500">Online</span>
+                          <span className="font-medium text-green-500">
+                            Online
+                          </span>
                         ) : (
                           'Offline'
                         )}
@@ -169,7 +186,9 @@ export default function NewChatPage() {
                     size="sm"
                     variant="ghost"
                     className="p-2 transition-colors rounded-lg opacity-0 hover:bg-primary/10 group-hover:opacity-100"
-                    onClick={() => handleCreateChat(candidate.id, candidate.name)}
+                    onClick={() =>
+                      handleCreateChat(candidate.id, candidate.name)
+                    }
                     disabled={creatingChatRoom}
                   >
                     {pendingChatUserId === candidate.id ? (
@@ -196,8 +215,12 @@ export default function NewChatPage() {
             <div className="flex items-center justify-center w-20 h-20 mb-5 bg-muted/50 rounded-3xl ring-1 ring-border/50">
               <Users className="w-10 h-10 text-muted-foreground/60" />
             </div>
-            <p className="font-medium text-muted-foreground">Search for users to start chatting</p>
-            <p className="mt-1 text-sm text-muted-foreground/60">Enter a name or email address above</p>
+            <p className="font-medium text-muted-foreground">
+              Search for users to start chatting
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground/60">
+              Enter a name or email address above
+            </p>
           </div>
         )}
       </div>
@@ -224,7 +247,10 @@ export default function NewChatPage() {
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar className="h-11 w-11 ring-2 ring-border/50">
-                      <AvatarImage src={getAvatarUrl(friend.avatar)} alt={friend.name} />
+                      <AvatarImage
+                        src={getAvatarUrl(friend.avatar)}
+                        alt={friend.name}
+                      />
                       <AvatarFallback className="text-sm font-semibold text-white bg-gradient-to-br from-primary via-secondary to-accent">
                         {friend.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -237,7 +263,9 @@ export default function NewChatPage() {
                     <p className="font-medium text-foreground">{friend.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {globalOnlineUsers.includes(friend.id) ? (
-                        <span className="font-medium text-green-500">Online</span>
+                        <span className="font-medium text-green-500">
+                          Online
+                        </span>
                       ) : (
                         'Offline'
                       )}
@@ -261,8 +289,12 @@ export default function NewChatPage() {
             ))
           ) : (
             <div className="px-4 py-8 text-center">
-              <p className="mb-1 text-sm text-muted-foreground">No friends yet</p>
-              <p className="text-xs text-muted-foreground/70">Search for users to add friends</p>
+              <p className="mb-1 text-sm text-muted-foreground">
+                No friends yet
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                Search for users to add friends
+              </p>
             </div>
           )}
         </div>

@@ -28,7 +28,10 @@ export default function HomePage() {
         />
         {/* Open Graph tags are inherited from index.html for the home page, 
             but we can re-declare them to ensure client-side navigation consistency */}
-        <meta property="og:title" content="MNK Chat - Realtime Messaging & Voice Huddles" />
+        <meta
+          property="og:title"
+          content="MNK Chat - Realtime Messaging & Voice Huddles"
+        />
         <meta
           property="og:description"
           content="Experience instant messaging, crystal-clear voice huddles, and smart offline-first notifications. Built with React, Django Channels, and WebRTC."
@@ -113,7 +116,7 @@ function HeroSection() {
           <div className="relative overflow-hidden border shadow-2xl rounded-xl border-border bg-background/60 shadow-primary/20 backdrop-blur-2xl ring-1 ring-border/50 group">
             {/* Gradient Border Effect */}
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
-            
+
             {/* Window Controls */}
             <div className="absolute top-0 flex items-center w-full gap-2 px-4 py-3 border-b border-border/50 bg-muted/30 backdrop-blur-md z-20">
               <div className="flex gap-1.5">
@@ -143,7 +146,7 @@ function HeroSection() {
                   ))}
                 </div>
               </div>
-              
+
               {/* Chat Area */}
               <div className="flex flex-col bg-transparent h-full">
                 <div className="flex-1 p-6 space-y-6 mt-12 overflow-hidden">
@@ -248,7 +251,8 @@ function FeaturesGrid() {
             </div>
             <h3 className="mb-2 text-xl font-bold">Smart Notifications</h3>
             <p className="text-sm text-muted-foreground">
-              Offline-first alerts that sync instantly when you return. Never miss a beat with our intelligent coalescing engine.
+              Offline-first alerts that sync instantly when you return. Never
+              miss a beat with our intelligent coalescing engine.
             </p>
           </div>
         </div>
@@ -263,9 +267,13 @@ function FeaturesGrid() {
               <MessageCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="mb-2 text-2xl font-bold">Real-time Voice Huddles</h3>
+              <h3 className="mb-2 text-2xl font-bold">
+                Real-time Voice Huddles
+              </h3>
               <p className="max-w-md text-muted-foreground">
-                Powered by WebRTC for crystal clear, low-latency audio. We leverage a hybrid network of Google and Twilio STUN/TURN servers to guarantee reliable connections through any firewall.
+                Powered by WebRTC for crystal clear, low-latency audio. We
+                leverage a hybrid network of Google and Twilio STUN/TURN servers
+                to guarantee reliable connections through any firewall.
               </p>
             </div>
           </div>
@@ -278,7 +286,10 @@ function FeaturesGrid() {
 function WorkflowSection() {
   const steps = [
     { title: 'Sign Up', desc: 'Create your account in seconds.' },
-    { title: 'Find People', desc: 'Search for anyone and start a chat instantly.' },
+    {
+      title: 'Find People',
+      desc: 'Search for anyone and start a chat instantly.',
+    },
     { title: 'Start Chatting', desc: 'Instant messaging & collaboration.' },
   ];
 
@@ -320,7 +331,10 @@ function TechStackSection() {
   ];
 
   return (
-    <section id="stack" className="py-16 border-y border-border bg-muted/30 backdrop-blur-sm">
+    <section
+      id="stack"
+      className="py-16 border-y border-border bg-muted/30 backdrop-blur-sm"
+    >
       <div className="container px-4 mx-auto">
         <div className="mb-12 text-center">
           <h2 className="text-2xl font-bold">Powered by modern tech</h2>
