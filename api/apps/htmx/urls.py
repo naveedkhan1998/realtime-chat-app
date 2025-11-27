@@ -3,7 +3,7 @@ HTMX URL patterns for the Chat Application
 """
 
 from django.urls import path
-from . import views_htmx as views
+from . import views
 
 app_name = "htmx"
 

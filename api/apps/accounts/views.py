@@ -13,6 +13,7 @@ from .serializers import (
     UserPasswordResetSerializer,
 )
 from .models import User, AUTH_PROVIDERS
+from .throttling import LoginRateThrottle, RegisterRateThrottle
 from django.contrib.auth import authenticate
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -28,6 +29,7 @@ from django.core.cache import cache
 class GoogleLoginView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         token = request.data.get("token")
@@ -99,6 +101,7 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
+    throttle_classes = [RegisterRateThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -119,6 +122,7 @@ class UserRegistrationView(generics.CreateAPIView):
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request, format=None):
         serializer = UserLoginSerializer(data=request.data)
