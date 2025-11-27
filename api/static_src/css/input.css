@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern Aurora - Light Theme */
+    --background: 220 30% 96%; /* Soft Blue-Grey */
+    --foreground: 230 40% 15%; /* Deep Navy */
+
+    --card: 0 0% 100%;
+    --card-foreground: 230 40% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 40% 15%;
+
+    /* Vibrant Purple Primary - Darkened for contrast with white text */
+    --primary: 265 80% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Cyan Secondary */
+    --secondary: 190 80% 95%;
+    --secondary-foreground: 190 100% 25%;
+
+    /* Soft Muted */
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 25% 40%; /* Darkened for better readability */
+
+    /* Pink Accent */
+    --accent: 330 80% 96%;
+    --accent-foreground: 330 80% 40%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 20% 85%; /* Darkened for better definition */
+    --input: 220 20% 85%;
+    --ring: 265 80% 50%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    /* Modern Aurora - Dark Theme */
+    --background: 240 25% 8%; /* Deep Space Blue */
+    --foreground: 220 20% 98%;
+
+    --card: 240 25% 14%; /* Slightly lighter for separation */
+    --card-foreground: 220 20% 98%;
+
+    --popover: 240 25% 14%;
+    --popover-foreground: 220 20% 98%;
+
+    /* Glowing Purple Primary */
+    --primary: 265 90% 70%;
+    --primary-foreground: 220 20% 10%; /* Dark text for contrast on bright button */
+
+    /* Glowing Cyan Secondary */
+    --secondary: 190 50% 15%;
+    --secondary-foreground: 190 90% 80%;
+
+    /* Deep Muted */
+    --muted: 240 20% 15%;
+    --muted-foreground: 240 10% 75%; /* Lightened for readability */
+
+    /* Glowing Pink Accent */
+    --accent: 330 50% 15%;
+    --accent-foreground: 330 90% 80%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 20% 20%;
+    --input: 240 20% 20%;
+    --ring: 265 90% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+  [x-cloak] {
+    display: none !important;
+  }
+}
+
+/* Premium Glassmorphism Utilities */
+@layer utilities {
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-lg;
+  }
+
+  .glass-card {
+    @apply bg-card/70 backdrop-blur-lg border border-border/50 shadow-sm;
+  }
+
+  .blob {
+    @apply absolute rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob;
+  }
+
+  .dark .blob {
+    @apply mix-blend-screen opacity-30;
+  }
+}
+
+/* Component layer customizations */
+@layer components {
+  /* Button base styles */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all;
+  }
+
+  .btn:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  .btn:disabled {
+    @apply pointer-events-none opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/40;
+}
+
+/* Animation delay utilities */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Message animations */
+.message-enter {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typing indicator animation */
+.typing-dot {
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* HTMX loading indicator */
+.htmx-request .htmx-indicator {
+  display: inline-flex;
+}
+
+.htmx-indicator {
+  display: none;
+}
+
+/* Custom input focus styles */
+input:focus,
+textarea:focus,
+select:focus {
+  @apply outline-none ring-2 ring-ring/20;
+}
