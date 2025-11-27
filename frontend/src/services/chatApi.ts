@@ -144,7 +144,8 @@ export const chatApi = baseApi.injectEndpoints({
       invalidatesTags: ['ChatRooms'],
     }),
     getSharedMedia: builder.query<Message[], { chat_room_id: number }>({
-      query: ({ chat_room_id }) => `chat/messages/?chat_room=${chat_room_id}&has_attachment=true`,
+      query: ({ chat_room_id }) =>
+        `chat/messages/?chat_room=${chat_room_id}&has_attachment=true`,
       transformResponse: (response: PaginatedResponse<Message> | Message[]) => {
         // Handle both paginated and non-paginated responses
         if (Array.isArray(response)) {
@@ -246,8 +247,11 @@ export const chatApi = baseApi.injectEndpoints({
     }),
 
     // Upload URL
-    getUploadUrl: builder.mutation<{ url: string; key: string }, { filename: string; content_type: string }>({
-      query: (params) => ({
+    getUploadUrl: builder.mutation<
+      { url: string; key: string },
+      { filename: string; content_type: string }
+    >({
+      query: params => ({
         url: `chat/upload-url/?filename=${params.filename}&content_type=${params.content_type}`,
         method: 'GET',
       }),

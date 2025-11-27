@@ -85,7 +85,10 @@ const App: React.FC = () => {
                   <Route path="/new-chat" element={<NewChatPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route
+                    path="/notifications"
+                    element={<NotificationsPage />}
+                  />
                 </Route>
               </Route>
             </Routes>

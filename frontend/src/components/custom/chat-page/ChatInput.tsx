@@ -1,12 +1,22 @@
-import { Paperclip, Send, Smile, Image as ImageIcon, FileText } from 'lucide-react';
-import { UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import {
+  Paperclip,
+  Send,
+  Smile,
+  Image as ImageIcon,
+  FileText,
+} from 'lucide-react';
+import {
+  UseFormRegister,
+  UseFormWatch,
+  UseFormSetValue,
+} from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Message } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
@@ -79,7 +89,9 @@ export default function ChatInput({
         };
         const compressedFile = await imageCompression(file, options);
         // Ensure we keep the original filename and type
-        processedFile = new File([compressedFile], file.name, { type: file.type });
+        processedFile = new File([compressedFile], file.name, {
+          type: file.type,
+        });
       } catch (error) {
         console.error('Error compressing image:', error);
       }
@@ -194,7 +206,7 @@ export default function ChatInput({
             onChange={handleFileSelect}
             accept=".pdf,.doc,.docx,.txt"
           />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -220,7 +232,7 @@ export default function ChatInput({
 
           <textarea
             {...restRegister}
-            ref={(e) => {
+            ref={e => {
               registerRef(e);
               textareaRef.current = e;
             }}
@@ -238,8 +250,8 @@ export default function ChatInput({
               variant="ghost"
               size="icon"
               className={cn(
-                "transition-colors rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary",
-                showEmojiPicker && "text-primary bg-primary/10"
+                'transition-colors rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary',
+                showEmojiPicker && 'text-primary bg-primary/10'
               )}
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             >

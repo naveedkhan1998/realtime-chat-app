@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('chat', '0006_message_attachment'),
+        ("chat", "0006_message_attachment"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='message',
-            name='attachment_type',
+            model_name="message",
+            name="attachment_type",
             field=models.CharField(blank=True, max_length=50, null=True),
         ),
     ]

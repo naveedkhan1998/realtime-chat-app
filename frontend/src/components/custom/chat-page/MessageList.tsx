@@ -79,7 +79,7 @@ export default function MessageList({
           startReached={handleLoadMore}
           initialTopMostItemIndex={messages.length - 1}
           followOutput="smooth"
-          atBottomStateChange={(atBottom) => setShowScrollButton(!atBottom)}
+          atBottomStateChange={atBottom => setShowScrollButton(!atBottom)}
           components={{
             Header: () => (
               <div className="flex items-center justify-center h-24">

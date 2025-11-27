@@ -33,7 +33,10 @@ export default function SettingsPage() {
     return localStorage.getItem('notificationSound') !== 'false';
   });
   const [desktopNotifications, setDesktopNotifications] = useState(() => {
-    return typeof Notification !== 'undefined' && Notification.permission === 'granted';
+    return (
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'granted'
+    );
   });
   const [showOnlineStatus, setShowOnlineStatus] = useState(() => {
     return localStorage.getItem('showOnlineStatus') !== 'false';
@@ -85,7 +88,9 @@ export default function SettingsPage() {
         </Button>
         <div>
           <h1 className="text-xl font-bold text-foreground">Settings</h1>
-          <p className="text-sm text-muted-foreground">Customize your experience</p>
+          <p className="text-sm text-muted-foreground">
+            Customize your experience
+          </p>
         </div>
       </header>
 
@@ -109,7 +114,9 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">Theme</p>
-                  <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
+                  <p className="text-sm text-muted-foreground">
+                    Choose your preferred theme
+                  </p>
                 </div>
               </div>
 
@@ -154,8 +161,12 @@ export default function SettingsPage() {
                   <Volume2 className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Notification Sound</p>
-                  <p className="text-sm text-muted-foreground">Play a sound for new messages</p>
+                  <p className="font-semibold text-foreground">
+                    Notification Sound
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Play a sound for new messages
+                  </p>
                 </div>
               </div>
               <Switch
@@ -171,8 +182,12 @@ export default function SettingsPage() {
                   <BellRing className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Desktop Notifications</p>
-                  <p className="text-sm text-muted-foreground">Get notified even when the app is in background</p>
+                  <p className="font-semibold text-foreground">
+                    Desktop Notifications
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified even when the app is in background
+                  </p>
                 </div>
               </div>
               <Switch
@@ -198,8 +213,12 @@ export default function SettingsPage() {
                   <Eye className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Show Online Status</p>
-                  <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                  <p className="font-semibold text-foreground">
+                    Show Online Status
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Let others see when you're online
+                  </p>
                 </div>
               </div>
               <Switch
@@ -216,7 +235,9 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">Read Receipts</p>
-                  <p className="text-sm text-muted-foreground">Let others know when you've read their messages</p>
+                  <p className="text-sm text-muted-foreground">
+                    Let others know when you've read their messages
+                  </p>
                 </div>
               </div>
               <Switch
@@ -245,7 +266,9 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">Edit Profile</p>
-                  <p className="text-sm text-muted-foreground">Change your name and avatar</p>
+                  <p className="text-sm text-muted-foreground">
+                    Change your name and avatar
+                  </p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 transition-colors text-muted-foreground group-hover:text-foreground" />
@@ -254,7 +277,11 @@ export default function SettingsPage() {
             <button
               className="flex items-center justify-between w-full p-5 text-left transition-all duration-200 border rounded-2xl bg-destructive/5 border-destructive/20 hover:bg-destructive/10"
               onClick={() => {
-                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                if (
+                  confirm(
+                    'Are you sure you want to delete your account? This action cannot be undone.'
+                  )
+                ) {
                   // Handle account deletion
                 }
               }}
@@ -264,8 +291,12 @@ export default function SettingsPage() {
                   <Trash2 className="w-6 h-6 text-destructive" />
                 </div>
                 <div>
-                  <p className="font-semibold text-destructive">Delete Account</p>
-                  <p className="text-sm text-destructive/70">Permanently delete your account and all data</p>
+                  <p className="font-semibold text-destructive">
+                    Delete Account
+                  </p>
+                  <p className="text-sm text-destructive/70">
+                    Permanently delete your account and all data
+                  </p>
                 </div>
               </div>
             </button>
@@ -291,8 +322,7 @@ export default function SettingsPage() {
             </div>
             <p className="text-sm text-muted-foreground">
               Built with React, Redux Toolkit, and Tailwind CSS
-              <br />
-              © {new Date().getFullYear()} Chat App. All rights reserved.
+              <br />© {new Date().getFullYear()} Chat App. All rights reserved.
             </p>
           </div>
         </section>

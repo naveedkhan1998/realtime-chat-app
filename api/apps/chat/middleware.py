@@ -20,13 +20,13 @@ def parse_cookies(cookie_header):
     cookies = {}
     if not cookie_header:
         return cookies
-    
+
     # Split by '; ' to get individual cookies
-    parts = cookie_header.split('; ')
+    parts = cookie_header.split("; ")
     for part in parts:
         # Split only on first '=' to handle values with '=' in them
-        if '=' in part:
-            key, value = part.split('=', 1)
+        if "=" in part:
+            key, value = part.split("=", 1)
             cookies[key.strip()] = value.strip()
     return cookies
 
@@ -51,7 +51,7 @@ def get_user_from_session(session_key):
             user = User.objects.get(id=user_id)
             logger.info(f"Session auth successful for user {user_id}")
             return user
-        logger.warning(f"Session found but no user_id in session data")
+        logger.warning("Session found but no user_id in session data")
     except Session.DoesNotExist:
         logger.warning(f"Session not found: {session_key[:20]}...")
     except User.DoesNotExist:
@@ -84,7 +84,7 @@ class TokenAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
         headers = dict(scope.get("headers", []))
         cookie_header = headers.get(b"cookie", b"").decode()
-        
+
         query_string = scope["query_string"].decode()
         query_params = parse_qs(query_string)
         token = query_params.get("token", [None])[0]
@@ -97,7 +97,7 @@ class TokenAuthMiddleware(BaseMiddleware):
             if cookie_header:
                 cookies = parse_cookies(cookie_header)
                 session_id = cookies.get("sessionid")
-                
+
                 if session_id:
                     scope["user"] = await get_user_from_session(session_id)
                 else:

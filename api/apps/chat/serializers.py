@@ -81,17 +81,26 @@ class ChatRoomParticipantSerializer(serializers.ModelSerializer):
 
 class LastMessageSerializer(serializers.ModelSerializer):
     """Lightweight serializer for last message in chat room list."""
+
     sender = UserSerializer(read_only=True)
 
     class Meta:
         model = Message
-        fields = ["id", "sender", "content", "attachment", "attachment_type", "timestamp"]
+        fields = [
+            "id",
+            "sender",
+            "content",
+            "attachment",
+            "attachment_type",
+            "timestamp",
+        ]
 
 
 class SimpleChatRoomSerializer(serializers.ModelSerializer):
     """
     Lightweight serializer for list views to prevent N+1 queries.
     """
+
     participants = serializers.SerializerMethodField()
     is_group_chat = serializers.BooleanField(default=False)
     name = serializers.CharField(required=False, allow_blank=True)
@@ -117,7 +126,7 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request:
             return []
-        
+
         # Optimize: Prefetch related is handled in view, but we limit serialization here
         participants = obj.participants.all()
         # If it's a direct chat, we need the other user.
@@ -136,14 +145,13 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return 0
-        
-        return Message.objects.filter(
-            chat_room=obj
-        ).exclude(
-            sender=request.user
-        ).exclude(
-            read_receipts__user=request.user
-        ).count()
+
+        return (
+            Message.objects.filter(chat_room=obj)
+            .exclude(sender=request.user)
+            .exclude(read_receipts__user=request.user)
+            .count()
+        )
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
@@ -229,41 +237,53 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ["id", "chat_room", "sender", "content", "attachment", "attachment_type", "timestamp", "updated_at", "attachment_key", "client_id"]
+        fields = [
+            "id",
+            "chat_room",
+            "sender",
+            "content",
+            "attachment",
+            "attachment_type",
+            "timestamp",
+            "updated_at",
+            "attachment_key",
+            "client_id",
+        ]
         read_only_fields = ("sender", "timestamp", "updated_at", "attachment_type")
 
     def create(self, validated_data):
         attachment_key = validated_data.pop("attachment_key", None)
-        # We pop client_id so it doesn't cause an error when creating the model, 
+        # We pop client_id so it doesn't cause an error when creating the model,
         # but we don't need to store it in the DB.
         validated_data.pop("client_id", None)
-        
+
         import mimetypes
+
         mime_type = None
-        
+
         # Determine mime_type before creation
         if attachment_key:
             mime_type, _ = mimetypes.guess_type(attachment_key)
-        elif validated_data.get('attachment'):
-            mime_type, _ = mimetypes.guess_type(validated_data['attachment'].name)
-            
+        elif validated_data.get("attachment"):
+            mime_type, _ = mimetypes.guess_type(validated_data["attachment"].name)
+
         if mime_type:
-            if mime_type.startswith('image'):
-                validated_data['attachment_type'] = 'image'
-            elif mime_type.startswith('video'):
-                validated_data['attachment_type'] = 'video'
-            elif mime_type.startswith('audio'):
-                validated_data['attachment_type'] = 'audio'
+            if mime_type.startswith("image"):
+                validated_data["attachment_type"] = "image"
+            elif mime_type.startswith("video"):
+                validated_data["attachment_type"] = "video"
+            elif mime_type.startswith("audio"):
+                validated_data["attachment_type"] = "audio"
             else:
-                validated_data['attachment_type'] = 'file'
-        
+                validated_data["attachment_type"] = "file"
+
         message = super().create(validated_data)
-        
+
         # If using GCS signed URL flow, we need to manually associate the key
         if attachment_key:
             message.attachment.name = attachment_key
-            message.save(update_fields=['attachment'])
-            
+            message.save(update_fields=["attachment"])
+
         return message
 
     def update(self, instance, validated_data):

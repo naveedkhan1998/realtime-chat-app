@@ -49,10 +49,12 @@ export default function ChatInfoPanel({
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const [deleteChatRoom, { isLoading: isDeleting }] = useDeleteChatRoomMutation();
-  const { data: sharedMedia, isLoading: isLoadingMedia } = useGetSharedMediaQuery({
-    chat_room_id: room.id,
-  });
+  const [deleteChatRoom, { isLoading: isDeleting }] =
+    useDeleteChatRoomMutation();
+  const { data: sharedMedia, isLoading: isLoadingMedia } =
+    useGetSharedMediaQuery({
+      chat_room_id: room.id,
+    });
 
   const otherParticipant = room.is_group_chat
     ? null
@@ -125,7 +127,9 @@ export default function ChatInfoPanel({
                   {otherParticipant.name}
                 </h4>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {onlineUsers.includes(otherParticipant.id) ? 'Online' : 'Offline'}
+                  {onlineUsers.includes(otherParticipant.id)
+                    ? 'Online'
+                    : 'Offline'}
                 </p>
               </>
             ) : null}

@@ -37,8 +37,8 @@ export function DeleteMessageDialog({
           <DrawerHeader className="text-left">
             <DrawerTitle>Delete Message</DrawerTitle>
             <DrawerDescription>
-              Are you sure you want to delete this message? This action cannot be
-              undone.
+              Are you sure you want to delete this message? This action cannot
+              be undone.
             </DrawerDescription>
           </DrawerHeader>
           <DrawerFooter className="pt-2">

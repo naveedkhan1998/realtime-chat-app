@@ -22,7 +22,8 @@ export default function NotificationsPage() {
 
   const { data: notifications, isLoading } = useGetNotificationsQuery();
   const [markNotificationRead] = useMarkNotificationReadMutation();
-  const [markAllNotificationsRead, { isLoading: isMarkingAll }] = useMarkAllNotificationsReadMutation();
+  const [markAllNotificationsRead, { isLoading: isMarkingAll }] =
+    useMarkAllNotificationsReadMutation();
 
   const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
@@ -34,7 +35,11 @@ export default function NotificationsPage() {
     await markAllNotificationsRead();
   };
 
-  const handleNotificationClick = (notification: { id: number; chat_room: number | null; is_read: boolean }) => {
+  const handleNotificationClick = (notification: {
+    id: number;
+    chat_room: number | null;
+    is_read: boolean;
+  }) => {
     if (!notification.is_read) {
       markNotificationRead({ id: notification.id });
     }
@@ -65,7 +70,9 @@ export default function NotificationsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Notifications</h1>
+            <h1 className="text-lg font-semibold text-foreground">
+              Notifications
+            </h1>
             <p className="text-sm text-muted-foreground">
               {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
             </p>
@@ -114,17 +121,24 @@ export default function NotificationsPage() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className={cn('text-foreground', !notification.is_read && 'font-medium')}>
+                <p
+                  className={cn(
+                    'text-foreground',
+                    !notification.is_read && 'font-medium'
+                  )}
+                >
                   {notification.content}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(notification.created_at), {
+                    addSuffix: true,
+                  })}
                 </p>
               </div>
 
               {!notification.is_read ? (
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     handleMarkAsRead(notification.id);
                   }}
@@ -145,8 +159,12 @@ export default function NotificationsPage() {
             <div className="flex items-center justify-center w-20 h-20 mb-4 bg-muted/30 rounded-2xl">
               <BellOff className="w-10 h-10 text-muted-foreground" />
             </div>
-            <p className="mb-1 font-medium text-foreground">No notifications yet</p>
-            <p className="text-sm text-muted-foreground">We'll notify you when something happens</p>
+            <p className="mb-1 font-medium text-foreground">
+              No notifications yet
+            </p>
+            <p className="text-sm text-muted-foreground">
+              We'll notify you when something happens
+            </p>
           </div>
         )}
       </div>

@@ -51,7 +51,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     - Global presence and notifications (global.*)
     - Chat room messages, typing, presence, collaboration (chat.*)
     - Voice huddle signaling (huddle.*)
-    
+
     Message format:
     {
         "type": "namespace.event",
@@ -67,17 +67,17 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         self.user_data: Dict[str, Any] = {}
         self.user_group: str = ""
         self.global_group = "global_presence"
-        
+
         # Track subscribed chat rooms
         self.subscribed_rooms: Set[int] = set()
-        
+
         # Track active huddle room (can only be in one huddle at a time)
         self.active_huddle_room: Optional[int] = None
-        
+
         # Heartbeat task
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._presence_refresh_task: Optional[asyncio.Task] = None
-        
+
         # Last activity timestamp for idle detection
         self._last_activity = time.time()
 
@@ -85,10 +85,14 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Accept connection but require authentication via first message."""
         await self.accept()
         # Send auth required message
-        await self.send(json.dumps({
-            "type": "auth.required",
-            "message": "Send auth message with token to authenticate"
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "auth.required",
+                    "message": "Send auth message with token to authenticate",
+                }
+            )
+        )
 
     async def disconnect(self, close_code):
         """Clean up all subscriptions and presence on disconnect."""
@@ -99,7 +103,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 await self._heartbeat_task
             except asyncio.CancelledError:
                 pass
-        
+
         if self._presence_refresh_task:
             self._presence_refresh_task.cancel()
             try:
@@ -113,7 +117,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         # Leave all chat rooms
         for room_id in list(self.subscribed_rooms):
             await self._leave_chat_room(room_id)
-        
+
         # Leave huddle if active
         if self.active_huddle_room:
             await self._leave_huddle(self.active_huddle_room)
@@ -129,7 +133,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         # Broadcast offline status
         await self.channel_layer.group_send(
             self.global_group,
-            {"type": "broadcast_user_offline", "user_id": self.user.id}
+            {"type": "broadcast_user_offline", "user_id": self.user.id},
         )
 
     async def receive(self, text_data: str):
@@ -150,11 +154,15 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
         # All other events require authentication
         if not self.is_authenticated:
-            await self.send(json.dumps({
-                "type": "error",
-                "code": "AUTH_REQUIRED",
-                "message": "Authentication required"
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "code": "AUTH_REQUIRED",
+                        "message": "Authentication required",
+                    }
+                )
+            )
             return
 
         # Handle heartbeat
@@ -186,10 +194,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         token = data.get("token")
         if not token:
             try:
-                await self.send(json.dumps({
-                    "type": "auth.error",
-                    "message": "Token required"
-                }))
+                await self.send(
+                    json.dumps({"type": "auth.error", "message": "Token required"})
+                )
             except Exception:
                 pass
             return
@@ -197,10 +204,11 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         user = await self._get_user_from_token(token)
         if not user or isinstance(user, AnonymousUser) or not user.is_authenticated:
             try:
-                await self.send(json.dumps({
-                    "type": "auth.error",
-                    "message": "Invalid or expired token"
-                }))
+                await self.send(
+                    json.dumps(
+                        {"type": "auth.error", "message": "Invalid or expired token"}
+                    )
+                )
             except Exception:
                 pass
             await self.close(code=4001)
@@ -224,16 +232,20 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         self._presence_refresh_task = asyncio.create_task(self._presence_refresh_loop())
 
         # Send auth success with initial global state
-        await self.send(json.dumps({
-            "type": "auth.success",
-            "user": self.user_data,
-            "online_users": online_users
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "auth.success",
+                    "user": self.user_data,
+                    "online_users": online_users,
+                }
+            )
+        )
 
         # Broadcast online status to others
         await self.channel_layer.group_send(
             self.global_group,
-            {"type": "broadcast_user_online", "user_id": self.user.id}
+            {"type": "broadcast_user_online", "user_id": self.user.id},
         )
 
     @database_sync_to_async
@@ -246,20 +258,24 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             if scope_user and scope_user.is_authenticated:
                 return scope_user
             return AnonymousUser()
-        
+
         # JWT token auth (for React frontend)
         cache_key = f"user_token_{token}"
         user = cache.get(cache_key)
-        
+
         if user is None:
             try:
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 user_id = payload.get("user_id")
                 user = User.objects.get(id=user_id)
                 cache.set(cache_key, user, timeout=3600)
-            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, User.DoesNotExist):
+            except (
+                jwt.ExpiredSignatureError,
+                jwt.InvalidTokenError,
+                User.DoesNotExist,
+            ):
                 return AnonymousUser()
-        
+
         return user
 
     # ==================== BACKGROUND TASKS ====================
@@ -306,17 +322,18 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         # Client can request refresh of online users
         if event_type == "global.refresh":
             online_users = await self._get_global_online_users()
-            await self.send(json.dumps({
-                "type": "global.online_users",
-                "online_users": online_users
-            }))
+            await self.send(
+                json.dumps(
+                    {"type": "global.online_users", "online_users": online_users}
+                )
+            )
 
     # ==================== CHAT EVENTS ====================
 
     async def _handle_chat_event(self, event_type: str, data: Dict[str, Any]):
         """Handle chat namespace events."""
         room_id = data.get("room_id")
-        
+
         if event_type == "chat.subscribe":
             if room_id:
                 await self._subscribe_to_room(room_id)
@@ -328,7 +345,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 await self._handle_send_message(room_id, data.get("content"))
         elif event_type == "chat.edit_message":
             if room_id and room_id in self.subscribed_rooms:
-                await self._handle_edit_message(room_id, data.get("message_id"), data.get("content"))
+                await self._handle_edit_message(
+                    room_id, data.get("message_id"), data.get("content")
+                )
         elif event_type == "chat.delete_message":
             if room_id and room_id in self.subscribed_rooms:
                 await self._handle_delete_message(room_id, data.get("message_id"))
@@ -349,20 +368,28 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
         # Verify participant
         if not await self._is_room_participant(room_id):
-            await self.send(json.dumps({
-                "type": "error",
-                "code": "NOT_PARTICIPANT",
-                "message": "Not a participant of this room"
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "code": "NOT_PARTICIPANT",
+                        "message": "Not a participant of this room",
+                    }
+                )
+            )
             return
 
         chat_room = await self._get_chat_room(room_id)
         if not chat_room:
-            await self.send(json.dumps({
-                "type": "error",
-                "code": "ROOM_NOT_FOUND",
-                "message": "Chat room not found"
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "code": "ROOM_NOT_FOUND",
+                        "message": "Chat room not found",
+                    }
+                )
+            )
             return
 
         # Join room group
@@ -374,38 +401,54 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         presence_payload = await self._mark_room_presence(room_id)
 
         # Send initial state
-        await self.send(json.dumps({
-            "type": "chat.subscribed",
-            "room_id": room_id,
-            "presence": presence_payload
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.subscribed",
+                    "room_id": room_id,
+                    "presence": presence_payload,
+                }
+            )
+        )
 
         # Get collaborative note state
         note_state = await self._get_note_state(room_id)
         if note_state is not None:
-            await self.send(json.dumps({
-                "type": "chat.collab_state",
-                "room_id": room_id,
-                "content": note_state
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "chat.collab_state",
+                        "room_id": room_id,
+                        "content": note_state,
+                    }
+                )
+            )
 
         # Get cursor state
         cursor_state = await self._get_cursor_state(room_id)
         if cursor_state:
-            await self.send(json.dumps({
-                "type": "chat.cursor_state",
-                "room_id": room_id,
-                "cursors": cursor_state
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "chat.cursor_state",
+                        "room_id": room_id,
+                        "cursors": cursor_state,
+                    }
+                )
+            )
 
         # Get huddle participants
         huddle_participants = await self._get_huddle_participants(room_id)
         if huddle_participants:
-            await self.send(json.dumps({
-                "type": "chat.huddle_participants",
-                "room_id": room_id,
-                "participants": huddle_participants
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "chat.huddle_participants",
+                        "room_id": room_id,
+                        "participants": huddle_participants,
+                    }
+                )
+            )
 
         # Broadcast join to room
         await self.channel_layer.group_send(
@@ -415,7 +458,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "room_id": room_id,
                 "action": "join",
                 "user": self.user_data,
-            }
+            },
         )
 
     async def _unsubscribe_from_room(self, room_id: int):
@@ -424,11 +467,8 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             return
 
         await self._leave_chat_room(room_id)
-        
-        await self.send(json.dumps({
-            "type": "chat.unsubscribed",
-            "room_id": room_id
-        }))
+
+        await self.send(json.dumps({"type": "chat.unsubscribed", "room_id": room_id}))
 
     async def _leave_chat_room(self, room_id: int):
         """Internal method to leave a chat room."""
@@ -436,7 +476,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
         # Remove presence
         removed_user = await self._remove_room_presence(room_id)
-        
+
         # Clear typing state
         await self._clear_typing_state(room_id)
 
@@ -453,7 +493,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                     "room_id": room_id,
                     "action": "leave",
                     "user": removed_user,
-                }
+                },
             )
 
     # ==================== HUDDLE EVENTS ====================
@@ -480,11 +520,15 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
         # Verify participant
         if not await self._is_room_participant(room_id):
-            await self.send(json.dumps({
-                "type": "error",
-                "code": "NOT_PARTICIPANT",
-                "message": "Not a participant of this room"
-            }))
+            await self.send(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "code": "NOT_PARTICIPANT",
+                        "message": "Not a participant of this room",
+                    }
+                )
+            )
             return
 
         self.active_huddle_room = room_id
@@ -498,7 +542,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "type": "broadcast_huddle_participants",
                 "room_id": room_id,
                 "participants": participants,
-            }
+            },
         )
 
     async def _leave_huddle(self, room_id: int):
@@ -514,14 +558,14 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "type": "broadcast_huddle_participants",
                 "room_id": room_id,
                 "participants": participants or [],
-            }
+            },
         )
 
     async def _handle_huddle_signal(self, data: Dict[str, Any]):
         """Handle WebRTC signaling."""
         target_id = data.get("target_id")
         payload = data.get("payload")
-        
+
         if not isinstance(target_id, int) or payload is None:
             return
 
@@ -532,7 +576,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "from": self.user_data,
                 "payload": payload,
                 "room_id": self.active_huddle_room,
-            }
+            },
         )
 
     # ==================== LEGACY EVENT HANDLERS ====================
@@ -540,7 +584,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     async def _handle_legacy_event(self, event_type: str, data: Dict[str, Any]):
         """Handle legacy event types for backward compatibility."""
         room_id = data.get("room_id")
-        
+
         # Map legacy events to new namespaced events
         legacy_map = {
             "send_message": ("chat.send_message", room_id),
@@ -558,7 +602,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             new_type, _ = legacy_map[event_type]
             data["type"] = new_type
             namespace = new_type.split(".")[0]
-            
+
             if namespace == "chat":
                 await self._handle_chat_event(new_type, data)
             elif namespace == "huddle":
@@ -570,13 +614,13 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Handle sending a new message."""
         if not content or not content.strip():
             return
-        
+
         chat_room = await self._get_chat_room(room_id)
         if not chat_room:
             return
 
         message_data = await self._create_message(chat_room, content.strip())
-        
+
         room_group = f"chat_{room_id}"
         await self.channel_layer.group_send(
             room_group,
@@ -584,13 +628,15 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "type": "broadcast_chat_message",
                 "room_id": room_id,
                 "payload": message_data,
-            }
+            },
         )
 
         # Notify participants
         await self._notify_participants(room_id, chat_room, message_data)
 
-    async def _handle_edit_message(self, room_id: int, message_id: Optional[int], content: Optional[str]):
+    async def _handle_edit_message(
+        self, room_id: int, message_id: Optional[int], content: Optional[str]
+    ):
         """Handle editing a message."""
         if not isinstance(message_id, int) or not content or not content.strip():
             return
@@ -604,7 +650,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                     "type": "broadcast_message_updated",
                     "room_id": room_id,
                     "message": updated,
-                }
+                },
             )
 
     async def _handle_delete_message(self, room_id: int, message_id: Optional[int]):
@@ -621,13 +667,13 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                     "type": "broadcast_message_deleted",
                     "room_id": room_id,
                     "message_id": deleted_id,
-                }
+                },
             )
 
     async def _handle_typing(self, room_id: int, is_typing: bool):
         """Handle typing status update."""
         await self._set_typing_state(room_id, is_typing)
-        
+
         room_group = f"chat_{room_id}"
         await self.channel_layer.group_send(
             room_group,
@@ -636,7 +682,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "room_id": room_id,
                 "user_id": self.user.id,
                 "is_typing": is_typing,
-            }
+            },
         )
 
     async def _handle_collab_update(self, room_id: int, content: Optional[str]):
@@ -650,7 +696,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             return
 
         await self._set_note_state(room_id, content)
-        
+
         room_group = f"chat_{room_id}"
         await self.channel_layer.group_send(
             room_group,
@@ -659,16 +705,18 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "room_id": room_id,
                 "content": content,
                 "user": self.user_data,
-            }
+            },
         )
 
-    async def _handle_cursor_update(self, room_id: int, cursor: Optional[Dict[str, Any]]):
+    async def _handle_cursor_update(
+        self, room_id: int, cursor: Optional[Dict[str, Any]]
+    ):
         """Handle cursor position update."""
         if cursor is None:
             return
 
         await self._set_cursor_state(room_id, cursor)
-        
+
         room_group = f"chat_{room_id}"
         await self.channel_layer.group_send(
             room_group,
@@ -677,7 +725,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 "room_id": room_id,
                 "cursor": cursor,
                 "user": self.user_data,
-            }
+            },
         )
 
     # ==================== BROADCAST HANDLERS ====================
@@ -686,114 +734,151 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         """Broadcast user online event."""
         if event["user_id"] == self.user.id:
             return
-        await self.send(json.dumps({
-            "type": "global.user_online",
-            "user_id": event["user_id"]
-        }))
+        await self.send(
+            json.dumps({"type": "global.user_online", "user_id": event["user_id"]})
+        )
 
     async def broadcast_user_offline(self, event):
         """Broadcast user offline event."""
         if event["user_id"] == self.user.id:
             return
-        await self.send(json.dumps({
-            "type": "global.user_offline",
-            "user_id": event["user_id"]
-        }))
+        await self.send(
+            json.dumps({"type": "global.user_offline", "user_id": event["user_id"]})
+        )
 
     async def broadcast_chat_message(self, event):
         """Broadcast new chat message."""
-        await self.send(json.dumps({
-            "type": "chat.message",
-            "room_id": event["room_id"],
-            "message": event["payload"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.message",
+                    "room_id": event["room_id"],
+                    "message": event["payload"],
+                }
+            )
+        )
 
     async def broadcast_message_updated(self, event):
         """Broadcast message update."""
-        await self.send(json.dumps({
-            "type": "chat.message_updated",
-            "room_id": event["room_id"],
-            "message": event["message"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.message_updated",
+                    "room_id": event["room_id"],
+                    "message": event["message"],
+                }
+            )
+        )
 
     async def broadcast_message_deleted(self, event):
         """Broadcast message deletion."""
-        await self.send(json.dumps({
-            "type": "chat.message_deleted",
-            "room_id": event["room_id"],
-            "message_id": event["message_id"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.message_deleted",
+                    "room_id": event["room_id"],
+                    "message_id": event["message_id"],
+                }
+            )
+        )
 
     async def broadcast_typing_status(self, event):
         """Broadcast typing status."""
-        await self.send(json.dumps({
-            "type": "chat.typing_status",
-            "room_id": event["room_id"],
-            "user_id": event["user_id"],
-            "is_typing": event["is_typing"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.typing_status",
+                    "room_id": event["room_id"],
+                    "user_id": event["user_id"],
+                    "is_typing": event["is_typing"],
+                }
+            )
+        )
 
     async def broadcast_presence_update(self, event):
         """Broadcast presence update."""
-        await self.send(json.dumps({
-            "type": "chat.presence_update",
-            "room_id": event["room_id"],
-            "action": event["action"],
-            "user": event["user"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.presence_update",
+                    "room_id": event["room_id"],
+                    "action": event["action"],
+                    "user": event["user"],
+                }
+            )
+        )
 
     async def broadcast_collab_update(self, event):
         """Broadcast collaborative note update."""
-        await self.send(json.dumps({
-            "type": "chat.collab_update",
-            "room_id": event["room_id"],
-            "content": event["content"],
-            "user": event["user"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.collab_update",
+                    "room_id": event["room_id"],
+                    "content": event["content"],
+                    "user": event["user"],
+                }
+            )
+        )
 
     async def broadcast_cursor_update(self, event):
         """Broadcast cursor update."""
-        await self.send(json.dumps({
-            "type": "chat.cursor_update",
-            "room_id": event["room_id"],
-            "cursor": event["cursor"],
-            "user": event["user"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.cursor_update",
+                    "room_id": event["room_id"],
+                    "cursor": event["cursor"],
+                    "user": event["user"],
+                }
+            )
+        )
 
     async def broadcast_huddle_participants(self, event):
         """Broadcast huddle participants list."""
-        await self.send(json.dumps({
-            "type": "chat.huddle_participants",
-            "room_id": event["room_id"],
-            "participants": event["participants"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "chat.huddle_participants",
+                    "room_id": event["room_id"],
+                    "participants": event["participants"],
+                }
+            )
+        )
 
     async def broadcast_huddle_signal(self, event):
         """Broadcast huddle WebRTC signal."""
-        await self.send(json.dumps({
-            "type": "huddle.signal",
-            "room_id": event["room_id"],
-            "from": event["from"],
-            "payload": event["payload"]
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "huddle.signal",
+                    "room_id": event["room_id"],
+                    "from": event["from"],
+                    "payload": event["payload"],
+                }
+            )
+        )
 
     async def chat_room_created(self, event):
         """Handle chat room creation notification."""
-        await self.send(json.dumps({
-            "type": "global.chat_room_created",
-            "room": event["room"]
-        }))
+        await self.send(
+            json.dumps({"type": "global.chat_room_created", "room": event["room"]})
+        )
 
     async def new_message_notification(self, event):
         """Handle new message notification for offline room."""
-        await self.send(json.dumps({
-            "type": "global.new_message_notification",
-            "chat_room_id": event["chat_room_id"],
-            "sender_id": event["sender_id"],
-            "sender_name": event.get("sender_name"),
-            "message_content": event.get("message_content"),
-            "has_attachment": event.get("has_attachment", False),
-        }))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "global.new_message_notification",
+                    "chat_room_id": event["chat_room_id"],
+                    "sender_id": event["sender_id"],
+                    "sender_name": event.get("sender_name"),
+                    "message_content": event.get("message_content"),
+                    "has_attachment": event.get("has_attachment", False),
+                }
+            )
+        )
 
     # ==================== DATABASE OPERATIONS ====================
 
@@ -827,7 +912,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         return MessageSerializer(message).data
 
     @database_sync_to_async
-    def _update_message(self, room_id: int, message_id: int, content: str) -> Optional[Dict[str, Any]]:
+    def _update_message(
+        self, room_id: int, message_id: int, content: str
+    ) -> Optional[Dict[str, Any]]:
         try:
             message = Message.objects.get(
                 id=message_id, chat_room_id=room_id, sender_id=self.user.id
@@ -871,21 +958,23 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         except User.DoesNotExist:
             pass
 
-    async def _notify_participants(self, room_id: int, chat_room: ChatRoom, message_data: Dict[str, Any]):
+    async def _notify_participants(
+        self, room_id: int, chat_room: ChatRoom, message_data: Dict[str, Any]
+    ):
         """Notify participants about new message."""
         participant_ids = await self._get_participant_ids(chat_room)
-        
+
         # Extract message content and attachment info from message_data
         msg_content = message_data.get("content", "")
         msg_attachment = message_data.get("attachment")
-        
+
         for participant_id in participant_ids:
             is_in_room = await self._is_user_in_room(room_id, participant_id)
             if is_in_room:
                 continue
 
             is_online = await self._is_user_online(participant_id)
-            
+
             if is_online:
                 # Send ephemeral notification with message preview
                 await self.channel_layer.group_send(
@@ -895,16 +984,18 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                         "chat_room_id": room_id,
                         "sender_id": self.user.id,
                         "sender_name": self.user.name,
-                        "message_content": msg_content[:100] if msg_content else None,  # Truncate for preview
+                        "message_content": (
+                            msg_content[:100] if msg_content else None
+                        ),  # Truncate for preview
                         "has_attachment": bool(msg_attachment),
-                    }
+                    },
                 )
             else:
                 # Create persistent notification
                 await self._create_notification(
                     user_id=participant_id,
                     chat_room_id=room_id,
-                    content=f"New message from {self.user.name}"
+                    content=f"New message from {self.user.name}",
                 )
 
     # ==================== REDIS OPERATIONS ====================
@@ -1027,7 +1118,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         values = conn.hgetall(f"chat:cursors:{room_id}")
         if not values:
             return {}
-        return {int(uid.decode()): json.loads(val.decode()) for uid, val in values.items()}
+        return {
+            int(uid.decode()): json.loads(val.decode()) for uid, val in values.items()
+        }
 
     @database_sync_to_async
     def _set_cursor_state(self, room_id: int, cursor: Dict[str, Any]):
@@ -1049,11 +1142,13 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         conn = get_redis_connection("default")
         key = f"chat:huddle:{room_id}"
         avatar = getattr(self.user, "avatar", None)
-        payload = json.dumps({
-            "id": self.user.id, 
-            "name": self.user.name,
-            "avatar": avatar.url if avatar else None
-        })
+        payload = json.dumps(
+            {
+                "id": self.user.id,
+                "name": self.user.name,
+                "avatar": avatar.url if avatar else None,
+            }
+        )
         pipeline = conn.pipeline(True)
         pipeline.hset(key, self.user.id, payload)
         pipeline.expire(key, HUDDLE_TTL)
@@ -1061,7 +1156,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         return [json.loads(v.decode()) for v in conn.hvals(key)]
 
     @database_sync_to_async
-    def _remove_huddle_participant(self, room_id: int) -> Optional[List[Dict[str, Any]]]:
+    def _remove_huddle_participant(
+        self, room_id: int
+    ) -> Optional[List[Dict[str, Any]]]:
         conn = get_redis_connection("default")
         key = f"chat:huddle:{room_id}"
         if not conn.hexists(key, self.user.id):

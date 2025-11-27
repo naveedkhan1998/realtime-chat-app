@@ -97,11 +97,11 @@
   .glass-card {
     @apply bg-card/70 backdrop-blur-lg border border-border/50 shadow-sm;
   }
-  
+
   .blob {
     @apply absolute rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob;
   }
-  
+
   .dark .blob {
     @apply mix-blend-screen opacity-30;
   }

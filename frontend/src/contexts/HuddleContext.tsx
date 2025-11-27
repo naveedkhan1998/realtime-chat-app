@@ -14,7 +14,10 @@ import type {
   ChatHuddleParticipantsEvent,
 } from '@/utils/unifiedWebSocket';
 import { useGetIceServersQuery } from '@/services/chatApi';
-import { setHuddleParticipants, selectRoomHuddleParticipants } from '@/features/unifiedChatSlice';
+import {
+  setHuddleParticipants,
+  selectRoomHuddleParticipants,
+} from '@/features/unifiedChatSlice';
 
 interface HuddleContextType {
   isHuddleActive: boolean;
@@ -99,7 +102,9 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     };
   }, [huddleChatId, dispatch]);
 
-  const prevStatsRef = useRef<Map<number, { bytesSent: number; bytesReceived: number; timestamp: number }>>(new Map());
+  const prevStatsRef = useRef<
+    Map<number, { bytesSent: number; bytesReceived: number; timestamp: number }>
+  >(new Map());
 
   const checkConnectionStats = useCallback(
     async (pc: RTCPeerConnection, peerId: number) => {
@@ -185,15 +190,21 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         const now = Date.now();
         let bitrateIn = 0;
         let bitrateOut = 0;
-        
+
         if (activePair && prevStats) {
           const timeDiff = (now - prevStats.timestamp) / 1000;
           if (timeDiff > 0) {
-            bitrateIn = ((activePair.bytesReceived - prevStats.bytesReceived) * 8) / timeDiff / 1000; // kbps
-            bitrateOut = ((activePair.bytesSent - prevStats.bytesSent) * 8) / timeDiff / 1000; // kbps
+            bitrateIn =
+              ((activePair.bytesReceived - prevStats.bytesReceived) * 8) /
+              timeDiff /
+              1000; // kbps
+            bitrateOut =
+              ((activePair.bytesSent - prevStats.bytesSent) * 8) /
+              timeDiff /
+              1000; // kbps
           }
         }
-        
+
         if (activePair) {
           prevStatsRef.current.set(peerId, {
             bytesSent: activePair.bytesSent || 0,
@@ -214,7 +225,10 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           if (localType === 'relay' || remoteType === 'relay') {
             type = 'TURN Relay';
             connectionPath = 'relay';
-            if (localCandidate?.url?.includes('twilio') || remoteCandidate?.url?.includes('twilio')) {
+            if (
+              localCandidate?.url?.includes('twilio') ||
+              remoteCandidate?.url?.includes('twilio')
+            ) {
               type = 'Twilio TURN';
             }
           } else if (localType === 'host' && remoteType === 'host') {
@@ -240,12 +254,18 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           }
 
           // Calculate packet loss percentage
-          const packetLossPercent = audioInbound && audioInbound.packetsReceived > 0
-            ? ((audioInbound.packetsLost || 0) / (audioInbound.packetsReceived + (audioInbound.packetsLost || 0))) * 100
-            : 0;
+          const packetLossPercent =
+            audioInbound && audioInbound.packetsReceived > 0
+              ? ((audioInbound.packetsLost || 0) /
+                  (audioInbound.packetsReceived +
+                    (audioInbound.packetsLost || 0))) *
+                100
+              : 0;
 
           // Determine connection quality
-          const rtt = activePair.currentRoundTripTime ? activePair.currentRoundTripTime * 1000 : null;
+          const rtt = activePair.currentRoundTripTime
+            ? activePair.currentRoundTripTime * 1000
+            : null;
           let quality: 'excellent' | 'good' | 'fair' | 'poor' = 'excellent';
           if (rtt !== null) {
             if (rtt > 300 || packetLossPercent > 5) quality = 'poor';

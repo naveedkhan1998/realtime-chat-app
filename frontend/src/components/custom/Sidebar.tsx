@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isHuddleActive, huddleChatId } = useHuddle();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -92,10 +92,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { data: notifications } = useGetNotificationsQuery();
   const [markNotificationRead] = useMarkNotificationReadMutation();
 
-  const { data: searchResults, isLoading: isSearchingUsers } = useSearchUsersQuery(
-    { query: debouncedSearchQuery },
-    { skip: !debouncedSearchQuery }
-  );
+  const { data: searchResults, isLoading: isSearchingUsers } =
+    useSearchUsersQuery(
+      { query: debouncedSearchQuery },
+      { skip: !debouncedSearchQuery }
+    );
 
   const [createChatRoom] = useCreateChatRoomMutation();
 
@@ -132,17 +133,23 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (event.chat_room_id !== activeChat) {
         dispatch(setUnreadNotification(event.chat_room_id));
       }
-      
+
       // Update the last_message and unread_count in the chat rooms cache
       dispatch(
         chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
-          const roomIndex = draft.findIndex(room => room.id === event.chat_room_id);
+          const roomIndex = draft.findIndex(
+            room => room.id === event.chat_room_id
+          );
           if (roomIndex !== -1) {
             const room = draft[roomIndex];
             // Update last message
             room.last_message = {
               id: Date.now(), // Temporary ID
-              sender: { id: event.sender_id, name: event.sender_name || 'Unknown', avatar: undefined },
+              sender: {
+                id: event.sender_id,
+                name: event.sender_name || 'Unknown',
+                avatar: undefined,
+              },
               content: event.message_content || '',
               attachment: event.has_attachment ? 'attachment' : undefined,
               timestamp: new Date().toISOString(),
@@ -160,7 +167,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     [dispatch, activeChat]
   );
-  useWebSocketEvent('global.new_message_notification', handleNewMessageNotification);
+  useWebSocketEvent(
+    'global.new_message_notification',
+    handleNewMessageNotification
+  );
 
   if (!user) return null;
 
@@ -170,30 +180,34 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // Filter and sort existing chats
-  const filteredChatRooms = chatRooms?.filter(room => {
-    if (!debouncedSearchQuery) return true;
-    
-    // Check room name (for groups)
-    if (room.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return true;
+  const filteredChatRooms = chatRooms
+    ?.filter(room => {
+      if (!debouncedSearchQuery) return true;
 
-    // Check participants (for DMs and Groups)
-    return room.participants.some(p => 
-      p.id !== user.id && 
-      p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
-    );
-  }).sort((a, b) => {
-    const getOnlineCount = (room: ChatRoom) => {
-      return room.participants.filter(
-        p => p.id !== user.id && globalOnlineUsers.includes(p.id)
-      ).length;
-    };
+      // Check room name (for groups)
+      if (room.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+        return true;
 
-    const aOnline = getOnlineCount(a);
-    const bOnline = getOnlineCount(b);
+      // Check participants (for DMs and Groups)
+      return room.participants.some(
+        p =>
+          p.id !== user.id &&
+          p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      const getOnlineCount = (room: ChatRoom) => {
+        return room.participants.filter(
+          p => p.id !== user.id && globalOnlineUsers.includes(p.id)
+        ).length;
+      };
 
-    // Sort by online count descending
-    return bOnline - aOnline;
-  });
+      const aOnline = getOnlineCount(a);
+      const bOnline = getOnlineCount(b);
+
+      // Sort by online count descending
+      return bOnline - aOnline;
+    });
 
   // Identify users who are already in DM chats to exclude them from "New People"
   const existingDMParticipantIds = new Set(
@@ -204,9 +218,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       .map(p => p.id)
   );
 
-  const potentialNewChats = searchResults?.filter(u => 
-    u.id !== user.id && !existingDMParticipantIds.has(u.id)
-  ) || [];
+  const potentialNewChats =
+    searchResults?.filter(
+      u => u.id !== user.id && !existingDMParticipantIds.has(u.id)
+    ) || [];
 
   const handleCreateChat = async (userId: number) => {
     try {
@@ -284,7 +299,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* User Profile Card */}
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 p-3 border rounded-2xl bg-muted/30 border-border">
-            <Link to="/profile" className="relative" onClick={() => isMobile && onClose()}>
+            <Link
+              to="/profile"
+              className="relative"
+              onClick={() => isMobile && onClose()}
+            >
               <Avatar className="w-10 h-10 transition-all border-2 shadow-sm cursor-pointer border-background hover:ring-2 hover:ring-primary/30">
                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
                 <AvatarFallback className="font-bold bg-primary/10 text-primary">
@@ -293,8 +312,14 @@ const Sidebar: React.FC<SidebarProps> = ({
               </Avatar>
               <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 rounded-full border-background ring-1 ring-green-500/20" />
             </Link>
-            <Link to="/profile" className="flex-1 min-w-0" onClick={() => isMobile && onClose()}>
-              <p className="text-sm font-bold truncate transition-colors cursor-pointer hover:text-primary">{user.name}</p>
+            <Link
+              to="/profile"
+              className="flex-1 min-w-0"
+              onClick={() => isMobile && onClose()}
+            >
+              <p className="text-sm font-bold truncate transition-colors cursor-pointer hover:text-primary">
+                {user.name}
+              </p>
               <p className="text-xs truncate text-muted-foreground">Online</p>
             </Link>
             <div className="flex items-center gap-1">
@@ -305,11 +330,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className="relative w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
                 >
                   <Bell className="w-4 h-4" />
-                  {notifications && notifications.filter(n => !n.is_read).length > 0 && (
-                    <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
-                      {notifications.filter(n => !n.is_read).length > 9 ? '9+' : notifications.filter(n => !n.is_read).length}
-                    </span>
-                  )}
+                  {notifications &&
+                    notifications.filter(n => !n.is_read).length > 0 && (
+                      <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                        {notifications.filter(n => !n.is_read).length > 9
+                          ? '9+'
+                          : notifications.filter(n => !n.is_read).length}
+                      </span>
+                    )}
                 </Button>
               </Link>
               <Link to="/settings" onClick={() => isMobile && onClose()}>
@@ -341,7 +369,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               placeholder="Search conversations..."
               className="h-10 transition-all border-transparent pl-9 bg-muted/50 hover:bg-muted/80 focus:bg-background focus:border-primary/20 rounded-xl placeholder:text-muted-foreground/70"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
 
@@ -402,7 +430,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {/* Existing Chats */}
                 {filteredChatRooms && filteredChatRooms.length > 0 && (
                   <>
-                    {searchQuery && <p className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">Existing Chats</p>}
+                    {searchQuery && (
+                      <p className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">
+                        Existing Chats
+                      </p>
+                    )}
                     {filteredChatRooms.map(room => (
                       <ConversationRow
                         key={room.id}
@@ -414,17 +446,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onSelect={() => {
                           setActiveChat(room.id);
                           dispatch(clearUnreadNotification(room.id));
-                          
+
                           // Reset unread count in the cache
                           dispatch(
-                            chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
-                              const r = draft.find(r => r.id === room.id);
-                              if (r) {
-                                r.unread_count = 0;
+                            chatApi.util.updateQueryData(
+                              'getChatRooms',
+                              undefined,
+                              draft => {
+                                const r = draft.find(r => r.id === room.id);
+                                if (r) {
+                                  r.unread_count = 0;
+                                }
                               }
-                            })
+                            )
                           );
-                          
+
                           // Find and mark notification as read
                           const notification = notifications?.find(
                             n => n.chat_room === room.id && !n.is_read
@@ -444,7 +480,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {/* New People (Only when searching) */}
                 {searchQuery && potentialNewChats.length > 0 && (
                   <>
-                    <p className="px-2 py-1 mt-4 text-[10px] font-semibold text-muted-foreground uppercase">New People</p>
+                    <p className="px-2 py-1 mt-4 text-[10px] font-semibold text-muted-foreground uppercase">
+                      New People
+                    </p>
                     {potentialNewChats.map(u => (
                       <button
                         key={u.id}
@@ -452,7 +490,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                         className="flex items-center w-full gap-3 p-3 text-left transition-all duration-200 border border-transparent rounded-xl hover:bg-secondary/40 group"
                       >
                         <Avatar className="transition-all border-2 border-transparent h-11 w-11 group-hover:border-primary/30">
-                          <AvatarImage src={getAvatarUrl(u.avatar)} alt={u.name} />
+                          <AvatarImage
+                            src={getAvatarUrl(u.avatar)}
+                            alt={u.name}
+                          />
                           <AvatarFallback className="text-xs font-bold bg-secondary text-muted-foreground">
                             {u.name.charAt(0)}
                           </AvatarFallback>
@@ -474,16 +515,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
 
                 {/* No Results State */}
-                {searchQuery && 
-                 (!filteredChatRooms || filteredChatRooms.length === 0) && 
-                 (!potentialNewChats || potentialNewChats.length === 0) && 
-                 !isSearchingUsers && (
-                  <div className="flex flex-col items-center justify-center px-4 py-8 text-center opacity-60">
-                    <p className="text-sm text-muted-foreground">
-                      No results found for "{searchQuery}"
-                    </p>
-                  </div>
-                )}
+                {searchQuery &&
+                  (!filteredChatRooms || filteredChatRooms.length === 0) &&
+                  (!potentialNewChats || potentialNewChats.length === 0) &&
+                  !isSearchingUsers && (
+                    <div className="flex flex-col items-center justify-center px-4 py-8 text-center opacity-60">
+                      <p className="text-sm text-muted-foreground">
+                        No results found for "{searchQuery}"
+                      </p>
+                    </div>
+                  )}
 
                 {/* Empty State (No chats, no search) */}
                 {!searchQuery && (!chatRooms || chatRooms.length === 0) && (
@@ -533,8 +574,8 @@ function ConversationRow({
   const isOnline = counterpart ? onlineUsers.includes(counterpart.id) : false;
   // Use unread_count from API, fall back to notification state
   const hasUnreadFromApi = (room.unread_count ?? 0) > 0;
-  const hasUnreadFromState = useAppSelector(
-    state => selectHasUnreadNotification(state, room.id)
+  const hasUnreadFromState = useAppSelector(state =>
+    selectHasUnreadNotification(state, room.id)
   );
   const hasUnread = hasUnreadFromApi || hasUnreadFromState;
   const hasActiveHuddle = huddleChatId === room.id;
@@ -542,10 +583,10 @@ function ConversationRow({
   // Format last message preview
   const getLastMessagePreview = () => {
     if (hasActiveHuddle) return 'Huddle in progress';
-    
+
     if (room.last_message) {
       const isOwnMessage = room.last_message.sender.id === currentUserId;
-      
+
       if (room.last_message.attachment) {
         return (
           <>
@@ -555,10 +596,11 @@ function ConversationRow({
           </>
         );
       }
-      
+
       const content = room.last_message.content;
-      const truncated = content.length > 35 ? content.substring(0, 35) + '...' : content;
-      
+      const truncated =
+        content.length > 35 ? content.substring(0, 35) + '...' : content;
+
       return (
         <>
           {isOwnMessage && <span className="opacity-60">You: </span>}
@@ -566,11 +608,11 @@ function ConversationRow({
         </>
       );
     }
-    
+
     if (room.is_group_chat) {
       return `${room.participants.length} members`;
     }
-    
+
     return 'Click to open chat';
   };
 
@@ -582,8 +624,8 @@ function ConversationRow({
         active
           ? 'bg-primary/10 shadow-sm border border-primary/10'
           : hasActiveHuddle
-          ? 'bg-green-500/10 border border-green-500/20'
-          : 'hover:bg-secondary/40 border border-transparent'
+            ? 'bg-green-500/10 border border-green-500/20'
+            : 'hover:bg-secondary/40 border border-transparent'
       )}
     >
       {active && (

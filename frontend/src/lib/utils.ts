@@ -14,9 +14,9 @@ export function getAvatarUrl(url: string | null | undefined) {
   const protocol = window.location.protocol; // http: or https:
   // Remove trailing slash if present
   const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-  
-  const host = cleanBaseUrl.startsWith('http') 
-    ? cleanBaseUrl 
+
+  const host = cleanBaseUrl.startsWith('http')
+    ? cleanBaseUrl
     : `${protocol}//${cleanBaseUrl}`;
 
   // Ensure url starts with /
