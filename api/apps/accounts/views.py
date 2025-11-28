@@ -17,6 +17,7 @@ from .throttling import LoginRateThrottle, RegisterRateThrottle
 from django.contrib.auth import authenticate
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -24,6 +25,35 @@ from config.settings import GOOGLE_OAUTH_CLIENT_ID
 from django.core.cache import cache
 
 # Create your views here.
+
+
+class UserLogoutView(APIView):
+    """Logout view that blacklists the refresh token."""
+
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserRenderer]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response(
+                    {"error": "Refresh token is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response(
+                {"msg": "Successfully logged out."},
+                status=status.HTTP_200_OK,
+            )
+        except TokenError:
+            return Response(
+                {"error": "Invalid or expired token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class GoogleLoginView(APIView):
