@@ -23,6 +23,7 @@ interface MessageAttachmentProps {
   type?: 'image' | 'video' | 'audio' | 'file';
   name?: string; // Filename if available
   size?: string; // Formatted size if available
+  compact?: boolean; // Compact mode for grid display
 }
 
 function ImageViewer({ src, onClose }: { src: string; onClose: () => void }) {
@@ -171,6 +172,7 @@ export function MessageAttachment({
   type,
   name,
   size,
+  compact = false,
 }: MessageAttachmentProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -191,11 +193,17 @@ export function MessageAttachment({
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <div className="relative overflow-hidden border rounded-lg cursor-pointer group border-border/50 bg-background/50">
+          <div className={cn(
+            "relative overflow-hidden border rounded-lg cursor-pointer group border-border/50 bg-background/50",
+            compact && "w-full h-full"
+          )}>
             <img
               src={url}
               alt="Attachment"
-              className="max-w-full max-h-[300px] object-cover transition-transform duration-300 group-hover:scale-105"
+              className={cn(
+                "object-cover transition-transform duration-300 group-hover:scale-105",
+                compact ? "w-full h-full" : "max-w-full max-h-[300px]"
+              )}
               loading="lazy"
             />
             <div className="absolute inset-0 flex items-center justify-center transition-colors opacity-0 bg-black/0 group-hover:bg-black/10 group-hover:opacity-100">
@@ -243,13 +251,16 @@ export function MessageAttachment({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center max-w-sm gap-3 p-3 transition-colors border rounded-xl border-border bg-background/50 hover:bg-background/80 group"
+      className={cn(
+        "grid items-center gap-2 p-2.5 transition-colors border rounded-xl border-border bg-background/50 hover:bg-background/80 group",
+        compact ? "grid-cols-[auto_1fr_auto]" : "grid-cols-[auto_1fr_auto] max-w-sm"
+      )}
     >
-      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500/10">
-        <FileText className="w-5 h-5 text-orange-600" />
+      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-500/10">
+        <FileText className="w-4 h-4 text-orange-600" />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate transition-colors text-foreground group-hover:text-primary">
+      <div className="overflow-hidden">
+        <p className="text-sm font-medium transition-colors truncate text-foreground group-hover:text-primary">
           {fileName}
         </p>
         {size && <p className="text-xs text-muted-foreground">{size}</p>}
@@ -257,9 +268,9 @@ export function MessageAttachment({
       <Button
         variant="ghost"
         size="icon"
-        className="w-8 h-8 text-muted-foreground group-hover:text-primary"
+        className="w-7 h-7 text-muted-foreground group-hover:text-primary"
       >
-        <Download className="w-4 h-4" />
+        <Download className="w-3.5 h-3.5" />
       </Button>
     </a>
   );

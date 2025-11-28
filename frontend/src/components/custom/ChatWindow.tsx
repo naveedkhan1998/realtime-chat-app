@@ -440,12 +440,15 @@ export default function ChatWindow({
         </div>
 
         {/* Chat Info Panel */}
-        {showInfoPanel && activeRoom && (
+        {activeRoom && (
           <ChatInfoPanel
             room={activeRoom}
             user={user}
             onlineUsers={globalOnlineUsers}
             onClose={() => setShowInfoPanel(false)}
+            isMobile={isMobile}
+            isOpen={showInfoPanel}
+            messages={messages}
           />
         )}
       </div>
