@@ -22,7 +22,6 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
 import {
   setUnreadNotification,
-  clearUnreadNotification,
   selectGlobalOnlineUsers,
   selectHasUnreadNotification,
 } from '@/features/unifiedChatSlice';
@@ -32,7 +31,6 @@ import {
   chatApi,
   useCreateChatRoomMutation,
   useGetNotificationsQuery,
-  useMarkNotificationReadMutation,
 } from '@/services/chatApi';
 import { useSearchUsersQuery } from '@/services/userApi';
 import { baseApi } from '@/services/baseApi';
@@ -90,7 +88,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   } = useGetChatRoomsQuery();
 
   const { data: notifications } = useGetNotificationsQuery();
-  const [markNotificationRead] = useMarkNotificationReadMutation();
 
   const { data: searchResults, isLoading: isSearchingUsers } =
     useSearchUsersQuery(
@@ -103,12 +100,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (notifications) {
       notifications.forEach(notification => {
-        if (!notification.is_read && notification.chat_room) {
+        // Only set unread notification if not currently viewing this chat
+        if (!notification.is_read && notification.chat_room && notification.chat_room !== activeChat) {
           dispatch(setUnreadNotification(notification.chat_room));
         }
       });
     }
-  }, [notifications, dispatch]);
+  }, [notifications, dispatch, activeChat]);
 
   // Handle chat room creation events via unified WebSocket
   const handleChatRoomCreated = useCallback(
@@ -445,30 +443,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         huddleChatId={isHuddleActive ? huddleChatId : null}
                         onSelect={() => {
                           setActiveChat(room.id);
-                          dispatch(clearUnreadNotification(room.id));
-
-                          // Reset unread count in the cache
-                          dispatch(
-                            chatApi.util.updateQueryData(
-                              'getChatRooms',
-                              undefined,
-                              draft => {
-                                const r = draft.find(r => r.id === room.id);
-                                if (r) {
-                                  r.unread_count = 0;
-                                }
-                              }
-                            )
-                          );
-
-                          // Find and mark notification as read
-                          const notification = notifications?.find(
-                            n => n.chat_room === room.id && !n.is_read
-                          );
-                          if (notification) {
-                            markNotificationRead({ id: notification.id });
-                          }
-
+                          // Notification clearing is now handled by ChatPage
                           if (isMobile) onClose();
                           setSearchQuery('');
                         }}

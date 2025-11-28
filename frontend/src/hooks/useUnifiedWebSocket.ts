@@ -31,7 +31,6 @@ import type {
   GlobalUserOnlineEvent,
   GlobalUserOfflineEvent,
   GlobalChatRoomCreatedEvent,
-  GlobalNewMessageNotificationEvent,
   HuddleSignalEvent,
   AuthSuccessEvent,
   CursorPosition,
@@ -53,7 +52,6 @@ import {
   setCursorState,
   updateCursor,
   setHuddleParticipants,
-  setUnreadNotification,
   clearUnreadNotification,
   selectConnectionState,
   selectGlobalOnlineUsers,
@@ -126,15 +124,8 @@ export function useUnifiedWebSocket(token: string | null) {
       })
     );
 
-    // New message notifications (for rooms not currently subscribed)
-    unsubscribers.push(
-      ws.current.on(
-        'global.new_message_notification',
-        (event: GlobalNewMessageNotificationEvent) => {
-          dispatch(setUnreadNotification(event.chat_room_id));
-        }
-      )
-    );
+    // Note: global.new_message_notification is handled by Sidebar.tsx
+    // which has access to activeChat and can skip notifications for the current chat
 
     return () => {
       unsubscribers.forEach(unsub => unsub());

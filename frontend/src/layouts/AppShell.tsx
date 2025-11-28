@@ -3,6 +3,7 @@ import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/custom/Sidebar';
 import { cn } from '@/lib/utils';
 import { BackgroundBlobs } from '@/components/ui/background-blobs';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -49,6 +50,9 @@ export default function AppShell({ isMobile }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isMobileChatList = isMobile && location.pathname === '/chat';
+
+  // Initialize notifications - handles sound, desktop notifications, and title updates
+  useNotifications(activeChat);
 
   useEffect(() => {
     if (!isMobile) {

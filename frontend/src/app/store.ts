@@ -8,6 +8,7 @@ import errorReducer from '@/features/errorSlice';
 import themeReducer from '@/features/themeSlice';
 import uiReducer from '@/features/uiSlice';
 import unifiedChatReducer from '@/features/unifiedChatSlice';
+import notificationSettingsReducer from '@/features/notificationSettingsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     theme: themeReducer,
     unifiedChat: unifiedChatReducer,
     ui: uiReducer,
+    notificationSettings: notificationSettingsReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({ serializableCheck: false }).concat(

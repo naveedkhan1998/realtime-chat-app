@@ -23,7 +23,7 @@ MAIN_URL_2 = "http://localhost:8000"
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-(fw-8k28l584l*w!s*hfxf$_j@)mi8*-1l&0^$e3od#j$8zpzb"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "your-default-secret-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set DEBUG based on an environment variable
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     # Custom apps
     "apps.accounts",
     "apps.chat",
+    "apps.htmx",
 ]
 
 MIDDLEWARE = [
@@ -154,6 +155,17 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+    # Rate limiting / throttling
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",
+        "user": "1000/hour",
+        "login": "10/minute",
+        "register": "5/minute",
+    },
 }
 
 # Session settings for HTMX frontend
@@ -161,6 +173,33 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 days
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
+
+# Production security settings
+if not DEBUG:
+    # Secure cookies (HTTPS only)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Other security headers
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_SSL_REDIRECT = (
+        False  # Set to True if not behind a reverse proxy that handles SSL
+    )
+
+    # Proxy SSL header (for reverse proxies like nginx)
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Rate limiting configuration (uses Redis cache)
+RATELIMIT_USE_CACHE = "default"
+RATELIMIT_ENABLE = True
+RATELIMIT_VIEW_RATE = "100/m"  # Default rate for views
+RATELIMIT_FAIL_OPEN = False  # Deny requests if rate limit check fails
 
 # Login URLs for HTMX frontend
 LOGIN_URL = "/app/login/"
@@ -242,7 +281,7 @@ GS_FILE_OVERWRITE = False
 
 # # CORS and CSRF:
 
-CSRF_COOKIE_SECURE = False
+# CSRF_COOKIE_SECURE is set in the production security settings above
 CSRF_TRUSTED_ORIGINS = [
     "https://chat-frontend.mnaveedk.com",
     "http://localhost:5173",

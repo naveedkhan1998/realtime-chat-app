@@ -245,6 +245,17 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Notifications'],
     }),
+    markRoomNotificationsRead: builder.mutation<
+      { status: string; count: number; messages_marked?: number },
+      { chat_room_id: number }
+    >({
+      query: ({ chat_room_id }) => ({
+        url: 'chat/notifications/mark_room_read/',
+        method: 'POST',
+        body: { chat_room_id },
+      }),
+      invalidatesTags: ['Notifications'],
+    }),
 
     // Upload URL
     getUploadUrl: builder.mutation<
@@ -279,5 +290,6 @@ export const {
   useGetNotificationsQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
+  useMarkRoomNotificationsReadMutation,
   useGetUploadUrlMutation,
 } = chatApi;

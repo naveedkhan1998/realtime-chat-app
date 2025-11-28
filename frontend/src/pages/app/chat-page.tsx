@@ -1,14 +1,21 @@
+import { useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useAppSelector } from '@/app/hooks';
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
 
-import { useGetChatRoomsQuery } from '@/services/chatApi';
+import {
+  useGetChatRoomsQuery,
+  useMarkRoomNotificationsReadMutation,
+  chatApi,
+} from '@/services/chatApi';
 import { useRoomSubscription } from '@/hooks/useUnifiedWebSocket';
+import { clearUnreadNotification } from '@/features/unifiedChatSlice';
 import ChatWindow from '@/components/custom/ChatWindow';
 import { AppShellContext } from '@/layouts/AppShell';
 import { MessageSquareMore, Sparkles } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 export default function ChatPage() {
+  const dispatch = useAppDispatch();
   const { activeChat, setActiveChat, isMobile } =
     useOutletContext<AppShellContext>();
   const user = useAppSelector(state => state.auth.user);
@@ -18,6 +25,29 @@ export default function ChatPage() {
       activeRoom: data?.find(room => room.id === activeChat),
     }),
   });
+
+  const [markRoomNotificationsRead] = useMarkRoomNotificationsReadMutation();
+
+  // Mark notifications as read when opening a chat
+  useEffect(() => {
+    if (activeChat) {
+      // Clear local Redux state immediately
+      dispatch(clearUnreadNotification(activeChat));
+
+      // Reset unread count in the chat rooms cache
+      dispatch(
+        chatApi.util.updateQueryData('getChatRooms', undefined, draft => {
+          const room = draft.find(r => r.id === activeChat);
+          if (room) {
+            room.unread_count = 0;
+          }
+        })
+      );
+
+      // Mark notifications as read in the backend
+      markRoomNotificationsRead({ chat_room_id: activeChat });
+    }
+  }, [activeChat, dispatch, markRoomNotificationsRead]);
 
   const pageTitle = activeRoom
     ? `${activeRoom.name || 'Chat'} | MNK Chat`

@@ -509,3 +509,40 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification.is_read = True
         notification.save()
         return Response({"status": "notification marked as read"})
+
+    @action(detail=False, methods=["post"])
+    def mark_room_read(self, request):
+        """Mark all notifications for a specific chat room as read and create read receipts for messages."""
+        chat_room_id = request.data.get("chat_room_id")
+        if not chat_room_id:
+            return Response(
+                {"error": "chat_room_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        # Mark notifications as read
+        updated = self.get_queryset().filter(
+            chat_room_id=chat_room_id, is_read=False
+        ).update(is_read=True)
+        
+        # Also create read receipts for all unread messages in this room
+        unread_messages = Message.objects.filter(
+            chat_room_id=chat_room_id
+        ).exclude(
+            sender=request.user
+        ).exclude(
+            read_receipts__user=request.user
+        )
+        
+        read_receipts = [
+            MessageReadReceipt(message=msg, user=request.user)
+            for msg in unread_messages
+        ]
+        if read_receipts:
+            MessageReadReceipt.objects.bulk_create(read_receipts, ignore_conflicts=True)
+        
+        return Response({
+            "status": "notifications marked as read",
+            "count": updated,
+            "messages_marked": len(read_receipts)
+        })

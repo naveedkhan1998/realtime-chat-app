@@ -13,6 +13,7 @@ from .serializers import (
     UserPasswordResetSerializer,
 )
 from .models import User, AUTH_PROVIDERS
+from .throttling import LoginRateThrottle, RegisterRateThrottle
 from django.contrib.auth import authenticate
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -28,6 +29,7 @@ from django.core.cache import cache
 class GoogleLoginView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         token = request.data.get("token")
@@ -99,6 +101,7 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
+    throttle_classes = [RegisterRateThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -119,6 +122,7 @@ class UserRegistrationView(generics.CreateAPIView):
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request, format=None):
         serializer = UserLoginSerializer(data=request.data)
@@ -155,29 +159,34 @@ class UserLoginView(APIView):
 
 
 class UserListView(generics.ListAPIView):
+    """
+    Search and list users. Supports searching by name or email.
+    Requires at least 2 characters for search to filter results.
+    Excludes the current user from results.
+    """
+
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Load all users from the cache
-        users = cache.get("all_users")
+        search_term = self.request.query_params.get("search", "").strip()
 
-        if users is None:
-            # Cache miss: fetch from database and cache the result
-            users = list(User.objects.all())  # Convert QuerySet to list
-            cache.set("all_users", users, timeout=900)  # Cache for 15 minutes
+        # Require at least 2 characters for search
+        if len(search_term) < 2:
+            return User.objects.none()
 
-        return users
+        # Use Django ORM filtering with icontains for case-insensitive search
+        # This is more efficient and database-friendly than in-memory filtering
+        from django.db.models import Q
 
-    def filter_queryset(self, queryset):
-        # Perform filtering on cached data (list) instead of using DRF's default filter
-        search_term = self.request.query_params.get("search", "").strip().lower()
-        if search_term:
-            queryset = [
-                user
-                for user in queryset
-                if search_term in user.name.lower() or search_term in user.email.lower()
-            ]
+        queryset = (
+            User.objects.filter(
+                Q(name__icontains=search_term) | Q(email__icontains=search_term)
+            )
+            .exclude(id=self.request.user.id)  # Exclude current user
+            .order_by("name")[:50]  # Limit results and order by name
+        )
+
         return queryset
 
 

@@ -1,20 +1,6 @@
-import {
-  ArrowLeft,
-  MoreVertical,
-  Phone,
-  Video,
-  Activity,
-  Radio,
-  Info,
-} from 'lucide-react';
+import { ArrowLeft, Phone, Video, Activity, Radio, Info } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
@@ -210,24 +196,6 @@ export default function ChatHeader({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full h-9 w-9 hover:bg-primary/10 text-muted-foreground hover:text-primary"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-xl">
-              <DropdownMenuItem>View Profile</DropdownMenuItem>
-              <DropdownMenuItem>Search in Chat</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                Block User
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 

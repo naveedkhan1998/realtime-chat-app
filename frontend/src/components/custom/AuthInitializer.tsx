@@ -7,6 +7,10 @@ import { logOut, setCredentials, setUser } from '@/features/authSlice';
 import { getCookie } from '@/utils/cookie';
 import { baseApi } from '@/services/baseApi';
 import { useUnifiedWebSocket } from '@/hooks/useUnifiedWebSocket';
+import {
+  loadUserSettings,
+  clearUserSettings,
+} from '@/features/notificationSettingsSlice';
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
@@ -16,6 +20,15 @@ export default function AuthInitializer() {
   // Initialize WebSocket connection with the unified service
   // This hook handles all global online user events automatically via Redux
   useUnifiedWebSocket(accessToken);
+
+  // Load user-specific notification settings when user changes
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(loadUserSettings(user.id));
+    } else {
+      dispatch(clearUserSettings());
+    }
+  }, [user?.id, dispatch]);
 
   useEffect(() => {
     if (!accessToken || !user) {

@@ -1,16 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  X,
-  Users,
-  Bell,
-  Search,
-  Image,
-  LogOut,
-  Trash2,
-  Loader2,
-  ExternalLink,
-} from 'lucide-react';
+import { X, Users, Image, LogOut, Trash2, Loader2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -24,37 +14,68 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  ChatRoom,
-  useDeleteChatRoomMutation,
-  useGetSharedMediaQuery,
-} from '@/services/chatApi';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChatRoom, Message, useDeleteChatRoomMutation } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
 import { getAvatarUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { MessageAttachment } from './MessageAttachment';
 
 interface ChatInfoPanelProps {
   room: ChatRoom;
   user: UserProfile;
   onlineUsers: number[];
   onClose: () => void;
+  isMobile: boolean;
+  isOpen: boolean;
+  messages: Message[];
 }
 
-export default function ChatInfoPanel({
+function ChatInfoContent({
   room,
   user,
   onlineUsers,
   onClose,
-}: ChatInfoPanelProps) {
+  messages,
+  showCloseButton = true,
+}: {
+  room: ChatRoom;
+  user: UserProfile;
+  onlineUsers: number[];
+  onClose: () => void;
+  messages: Message[];
+  showCloseButton?: boolean;
+}) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const [deleteChatRoom, { isLoading: isDeleting }] =
     useDeleteChatRoomMutation();
-  const { data: sharedMedia, isLoading: isLoadingMedia } =
-    useGetSharedMediaQuery({
-      chat_room_id: room.id,
+
+  // Filter messages with attachments from the loaded messages
+  const { mediaMessages, fileMessages } = useMemo(() => {
+    const media: Message[] = [];
+    const files: Message[] = [];
+
+    messages.forEach(msg => {
+      if (msg.attachment) {
+        if (msg.attachment_type === 'image' || msg.attachment_type === 'video') {
+          media.push(msg);
+        } else {
+          files.push(msg);
+        }
+      }
     });
+
+    return { mediaMessages: media, fileMessages: files };
+  }, [messages]);
 
   const otherParticipant = room.is_group_chat
     ? null
@@ -69,8 +90,9 @@ export default function ChatInfoPanel({
           ? 'You have left the group.'
           : 'The conversation has been deleted.',
       });
+      onClose();
       navigate('/chat');
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to delete conversation',
@@ -82,10 +104,10 @@ export default function ChatInfoPanel({
 
   return (
     <>
-      <div className="flex flex-col h-full overflow-y-auto border-l bg-background/50 backdrop-blur-xl border-border/50 w-80">
-        <div className="p-5">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col h-full">
+        {/* Header - only show close button for desktop sidebar */}
+        {showCloseButton && (
+          <div className="flex items-center justify-between p-4 border-b border-border/50">
             <h3 className="text-lg font-semibold text-foreground">Chat Info</h3>
             <Button
               variant="ghost"
@@ -96,162 +118,169 @@ export default function ChatInfoPanel({
               <X className="w-5 h-5" />
             </Button>
           </div>
+        )}
 
-          {/* Room Info Card */}
-          <div className="p-5 mb-6 text-center border bg-muted/30 rounded-2xl border-border/30">
-            {room.is_group_chat ? (
-              <>
-                <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 shadow-xl bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl shadow-primary/20">
-                  <Users className="w-10 h-10 text-white" />
-                </div>
-                <h4 className="text-lg font-bold text-foreground">
-                  {room.name || 'Group Chat'}
-                </h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {room.participants.length} members
-                </p>
-              </>
-            ) : otherParticipant ? (
-              <>
-                <Avatar className="w-20 h-20 mx-auto mb-4 shadow-lg ring-4 ring-primary/20 rounded-2xl">
-                  <AvatarImage
-                    src={getAvatarUrl(otherParticipant.avatar)}
-                    alt={otherParticipant.name}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary rounded-2xl">
-                    {otherParticipant.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <h4 className="text-lg font-bold text-foreground">
-                  {otherParticipant.name}
-                </h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {onlineUsers.includes(otherParticipant.id)
-                    ? 'Online'
-                    : 'Offline'}
-                </p>
-              </>
-            ) : null}
-          </div>
-
-          {/* Actions */}
-          <div className="mb-6 space-y-1">
-            <button className="flex items-center w-full gap-3 px-4 py-3 transition-colors rounded-xl hover:bg-muted/50 group">
-              <Bell className="w-5 h-5 transition-colors text-muted-foreground group-hover:text-foreground" />
-              <span className="text-foreground/90">Notifications</span>
-              <span className="ml-auto text-sm text-muted-foreground">On</span>
-            </button>
-            <button className="flex items-center w-full gap-3 px-4 py-3 transition-colors rounded-xl hover:bg-muted/50 group">
-              <Search className="w-5 h-5 transition-colors text-muted-foreground group-hover:text-foreground" />
-              <span className="text-foreground/90">Search in conversation</span>
-            </button>
-          </div>
-
-          {/* Participants (for group chats) */}
-          {room.is_group_chat && (
-            <div className="mb-6">
-              <h5 className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                <Users className="w-3.5 h-3.5" />
-                Participants
-              </h5>
-              <div className="p-2 space-y-1 bg-muted/20 rounded-xl">
-                {room.participants.map(participant => (
-                  <div
-                    key={participant.id}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <Avatar className="w-9 h-9 ring-2 ring-border/50 rounded-xl">
-                      <AvatarImage
-                        src={getAvatarUrl(participant.avatar)}
-                        alt={participant.name}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="text-sm font-semibold bg-muted text-muted-foreground rounded-xl">
-                        {participant.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate text-foreground">
-                        {participant.name}
-                        {participant.id === user.id && (
-                          <span className="text-muted-foreground"> (you)</span>
-                        )}
-                      </p>
-                    </div>
-                    {onlineUsers.includes(participant.id) && (
-                      <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Shared Media */}
-          <div className="mb-6">
-            <h5 className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              <Image className="w-3.5 h-3.5" />
-              Shared Media
-            </h5>
-            {isLoadingMedia ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : sharedMedia && sharedMedia.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {sharedMedia.slice(0, 9).map(message => (
-                  <a
-                    key={message.id}
-                    href={message.attachment}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative overflow-hidden transition-all duration-200 bg-muted aspect-square rounded-xl group hover:ring-2 hover:ring-primary/50"
-                  >
-                    {message.attachment_type === 'image' ? (
-                      <img
-                        src={message.attachment}
-                        alt="Shared media"
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-full bg-muted/50">
-                        <ExternalLink className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 opacity-0 bg-black/50 group-hover:opacity-100">
-                      <ExternalLink className="w-5 h-5 text-white" />
-                    </div>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-sm text-center text-muted-foreground bg-muted/20 rounded-xl">
-                No shared media yet
-              </div>
-            )}
-          </div>
-
-          {/* Danger Zone */}
-          <div className="pt-5 border-t border-border/30">
-            <button
-              onClick={() => setShowDeleteDialog(true)}
-              className="flex items-center w-full gap-3 px-4 py-3 transition-colors rounded-xl text-destructive hover:bg-destructive/10"
-            >
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-6">
+            {/* Room Info Card */}
+            <div className="p-5 text-center border bg-muted/30 rounded-2xl border-border/30">
               {room.is_group_chat ? (
                 <>
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">Leave Group</span>
+                  <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 shadow-xl bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl shadow-primary/20">
+                    <Users className="w-10 h-10 text-white" />
+                  </div>
+                  <h4 className="text-lg font-bold text-foreground">
+                    {room.name || 'Group Chat'}
+                  </h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {room.participants.length} members
+                  </p>
                 </>
-              ) : (
+              ) : otherParticipant ? (
                 <>
-                  <Trash2 className="w-5 h-5" />
-                  <span className="font-medium">Delete Conversation</span>
+                  <Avatar className="w-20 h-20 mx-auto mb-4 shadow-lg ring-4 ring-primary/20">
+                    <AvatarImage
+                      src={getAvatarUrl(otherParticipant.avatar)}
+                      alt={otherParticipant.name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
+                      {otherParticipant.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <h4 className="text-lg font-bold text-foreground">
+                    {otherParticipant.name}
+                  </h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {onlineUsers.includes(otherParticipant.id)
+                      ? 'Online'
+                      : 'Offline'}
+                  </p>
                 </>
-              )}
-            </button>
+              ) : null}
+            </div>
+
+            {/* Participants (for group chats) */}
+            {room.is_group_chat && (
+              <div>
+                <h5 className="flex items-center gap-2 mb-3 text-xs font-bold tracking-widest uppercase text-muted-foreground">
+                  <Users className="w-3.5 h-3.5" />
+                  Participants
+                </h5>
+                <div className="p-2 space-y-1 bg-muted/20 rounded-xl">
+                  {room.participants.map(participant => (
+                    <div
+                      key={participant.id}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <Avatar className="w-9 h-9 ring-2 ring-border/50">
+                        <AvatarImage
+                          src={getAvatarUrl(participant.avatar)}
+                          alt={participant.name}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="text-sm font-semibold bg-muted text-muted-foreground">
+                          {participant.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate text-foreground">
+                          {participant.name}
+                          {participant.id === user.id && (
+                            <span className="text-muted-foreground"> (you)</span>
+                          )}
+                        </p>
+                      </div>
+                      {onlineUsers.includes(participant.id) && (
+                        <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Shared Media & Files */}
+            <div className="overflow-hidden">
+              <Tabs defaultValue="media" className="w-full overflow-hidden">
+                <TabsList className="grid w-full grid-cols-2 mb-3">
+                  <TabsTrigger value="media" className="text-xs">
+                    <Image className="w-3.5 h-3.5 mr-1.5" />
+                    Media ({mediaMessages.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="files" className="text-xs">
+                    <FileText className="w-3.5 h-3.5 mr-1.5" />
+                    Files ({fileMessages.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="media" className="mt-0">
+                  {mediaMessages.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {mediaMessages.slice(0, 12).map(message => (
+                        <div key={message.id} className="aspect-square">
+                          {message.attachment && (
+                            <MessageAttachment
+                              url={message.attachment}
+                              type={message.attachment_type}
+                              compact
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-sm text-center text-muted-foreground bg-muted/20 rounded-xl">
+                      No media shared yet
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="files" className="mt-0 overflow-hidden">
+                  {fileMessages.length > 0 ? (
+                    <div className="w-full space-y-2">
+                      {fileMessages.slice(0, 12).map(message => (
+                        <div key={message.id}>
+                          {message.attachment && (
+                            <MessageAttachment
+                              url={message.attachment}
+                              type={message.attachment_type}
+                              compact
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-sm text-center text-muted-foreground bg-muted/20 rounded-xl">
+                      No files shared yet
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="pt-4 border-t border-border/30">
+              <button
+                onClick={() => setShowDeleteDialog(true)}
+                className="flex items-center w-full gap-3 px-4 py-3 transition-colors rounded-xl text-destructive hover:bg-destructive/10"
+              >
+                {room.is_group_chat ? (
+                  <>
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium">Leave Group</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-5 h-5" />
+                    <span className="font-medium">Delete Conversation</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -283,5 +312,52 @@ export default function ChatInfoPanel({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+export default function ChatInfoPanel({
+  room,
+  user,
+  onlineUsers,
+  onClose,
+  isMobile,
+  isOpen,
+  messages,
+}: ChatInfoPanelProps) {
+  // Mobile: use Sheet (slides from right)
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
+        <SheetContent side="right" className="w-full p-0 sm:max-w-md">
+          <SheetHeader className="p-4 border-b border-border/50">
+            <SheetTitle>Chat Info</SheetTitle>
+          </SheetHeader>
+          <ChatInfoContent
+            room={room}
+            user={user}
+            onlineUsers={onlineUsers}
+            onClose={onClose}
+            messages={messages}
+            showCloseButton={false}
+          />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: show as sidebar panel
+  if (!isOpen) return null;
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden border-l bg-background/50 backdrop-blur-xl border-border/50 w-80">
+      <ChatInfoContent
+        room={room}
+        user={user}
+        onlineUsers={onlineUsers}
+        onClose={onClose}
+        messages={messages}
+        showCloseButton={true}
+      />
+    </div>
   );
 }

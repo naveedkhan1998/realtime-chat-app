@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from django_ratelimit.decorators import ratelimit
 
 from apps.accounts.models import User
 from apps.chat.models import (
@@ -44,6 +45,7 @@ def home(request):
 # =============================================================================
 
 
+@ratelimit(key="ip", rate="10/m", method=["POST"], block=True)
 def login_page(request):
     """Login/Register page"""
     if request.user.is_authenticated:
@@ -90,6 +92,7 @@ def login_page(request):
     )
 
 
+@ratelimit(key="ip", rate="5/m", method=["POST"], block=True)
 def register_page(request):
     """Registration - same page as login with different tab"""
     if request.user.is_authenticated:
@@ -143,6 +146,7 @@ def register_page(request):
     )
 
 
+@ratelimit(key="ip", rate="10/m", method=["POST"], block=True)
 @require_POST
 def google_login(request):
     """Handle Google OAuth login"""
