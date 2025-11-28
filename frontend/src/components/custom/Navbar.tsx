@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { useTheme } from '@/hooks/useTheme';
 import { logOut } from '@/features/authSlice';
+import { useLogoutMutation } from '@/services/authApi';
 import { Menu, Moon, Sun, Home, User, LogOut, Group } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -18,12 +19,14 @@ import { baseApi } from '@/services/baseApi';
 const Navbar: React.FC = () => {
   const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
   const user = useAppSelector(state => state.auth.user);
+  const refreshToken = useAppSelector(state => state.auth.refreshToken);
   const showNavbar = useAppSelector(state => state.ui.showNavbar);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [logout] = useLogoutMutation();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -31,10 +34,19 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogout = () => {
-    dispatch(logOut());
-    dispatch(baseApi.util.resetApiState());
-    setIsMenuOpen(false); // Close the menu after logout
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) {
+        await logout({ refresh: refreshToken }).unwrap();
+      }
+    } catch (error) {
+      // Even if the backend logout fails, we should still clear local state
+      console.error('Logout error:', error);
+    } finally {
+      dispatch(logOut());
+      dispatch(baseApi.util.resetApiState());
+      setIsMenuOpen(false); // Close the menu after logout
+    }
   };
 
   const NavItems = () => (

@@ -27,6 +27,14 @@ interface GoogleLoginRequest {
   token: string;
 }
 
+interface LogoutRequest {
+  refresh: string;
+}
+
+interface LogoutResponse {
+  msg: string;
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: builder => ({
     login: builder.mutation<TokenResponse, LoginRequest>({
@@ -35,6 +43,13 @@ export const authApi = baseApi.injectEndpoints({
         url: 'accounts/login/',
         method: 'POST',
         body: credentials,
+      }),
+    }),
+    logout: builder.mutation<LogoutResponse, LogoutRequest>({
+      query: data => ({
+        url: 'accounts/logout/',
+        method: 'POST',
+        body: data,
       }),
     }),
     register: builder.mutation<TokenResponse, RegisterRequest>({
@@ -57,5 +72,9 @@ export const authApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useLoginMutation, useRegisterMutation, useGoogleLoginMutation } =
-  authApi;
+export const {
+  useLoginMutation,
+  useRegisterMutation,
+  useGoogleLoginMutation,
+  useLogoutMutation,
+} = authApi;

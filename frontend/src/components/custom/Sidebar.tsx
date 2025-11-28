@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { logOut } from '@/features/authSlice';
+import { useLogoutMutation } from '@/services/authApi';
 import {
   setUnreadNotification,
   selectGlobalOnlineUsers,
@@ -73,10 +74,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   showCloseButton = true,
 }) => {
   const user = useAppSelector(state => state.auth.user);
+  const refreshToken = useAppSelector(state => state.auth.refreshToken);
   const globalOnlineUsers = useAppSelector(selectGlobalOnlineUsers);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isHuddleActive, huddleChatId } = useHuddle();
+  const [logout] = useLogoutMutation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -172,9 +175,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   if (!user) return null;
 
-  const handleLogout = () => {
-    dispatch(logOut());
-    dispatch(baseApi.util.resetApiState());
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) {
+        await logout({ refresh: refreshToken }).unwrap();
+      }
+    } catch (error) {
+      // Even if the backend logout fails, we should still clear local state
+      console.error('Logout error:', error);
+    } finally {
+      dispatch(logOut());
+      dispatch(baseApi.util.resetApiState());
+    }
   };
 
   // Filter and sort existing chats
