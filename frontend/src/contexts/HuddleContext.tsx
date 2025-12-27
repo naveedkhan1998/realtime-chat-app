@@ -366,7 +366,10 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
       const newStats: SfuStats = { timestamp: now };
 
       // Check publish connection stats
-      if (sfuPublishPcRef.current && sfuPublishPcRef.current.connectionState === 'connected') {
+      if (
+        sfuPublishPcRef.current &&
+        sfuPublishPcRef.current.connectionState === 'connected'
+      ) {
         const stats = await sfuPublishPcRef.current.getStats();
         let activePair: any = null;
         let audioOutbound: any = null;
@@ -375,7 +378,11 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           if (report.type === 'transport' && report.selectedCandidatePairId) {
             activePair = stats.get(report.selectedCandidatePairId);
           }
-          if (report.type === 'candidate-pair' && report.selected && !activePair) {
+          if (
+            report.type === 'candidate-pair' &&
+            report.selected &&
+            !activePair
+          ) {
             activePair = report;
           }
           if (report.type === 'outbound-rtp' && report.kind === 'audio') {
@@ -388,16 +395,27 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
 
         let bitrateOut = 0;
         if (audioOutbound && sfuPrevStatsRef.current.publish) {
-          const timeDiff = (now - sfuPrevStatsRef.current.publish.timestamp) / 1000;
+          const timeDiff =
+            (now - sfuPrevStatsRef.current.publish.timestamp) / 1000;
           if (timeDiff > 0) {
-            bitrateOut = ((audioOutbound.bytesSent - sfuPrevStatsRef.current.publish.bytesSent) * 8) / timeDiff / 1000;
+            bitrateOut =
+              ((audioOutbound.bytesSent -
+                sfuPrevStatsRef.current.publish.bytesSent) *
+                8) /
+              timeDiff /
+              1000;
           }
         }
         if (audioOutbound) {
-          sfuPrevStatsRef.current.publish = { bytesSent: audioOutbound.bytesSent, timestamp: now };
+          sfuPrevStatsRef.current.publish = {
+            bytesSent: audioOutbound.bytesSent,
+            timestamp: now,
+          };
         }
 
-        const rtt = activePair?.currentRoundTripTime ? activePair.currentRoundTripTime * 1000 : undefined;
+        const rtt = activePair?.currentRoundTripTime
+          ? activePair.currentRoundTripTime * 1000
+          : undefined;
         let quality: 'excellent' | 'good' | 'fair' | 'poor' = 'excellent';
         if (rtt !== undefined) {
           if (rtt > 300) quality = 'poor';
@@ -416,7 +434,10 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
       }
 
       // Check subscribe connection stats
-      if (sfuSubscribePcRef.current && sfuSubscribePcRef.current.connectionState === 'connected') {
+      if (
+        sfuSubscribePcRef.current &&
+        sfuSubscribePcRef.current.connectionState === 'connected'
+      ) {
         const stats = await sfuSubscribePcRef.current.getStats();
         let activePair: any = null;
         let audioInbound: any = null;
@@ -425,7 +446,11 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           if (report.type === 'transport' && report.selectedCandidatePairId) {
             activePair = stats.get(report.selectedCandidatePairId);
           }
-          if (report.type === 'candidate-pair' && report.selected && !activePair) {
+          if (
+            report.type === 'candidate-pair' &&
+            report.selected &&
+            !activePair
+          ) {
             activePair = report;
           }
           if (report.type === 'inbound-rtp' && report.kind === 'audio') {
@@ -440,20 +465,35 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
 
         let bitrateIn = 0;
         if (audioInbound && sfuPrevStatsRef.current.subscribe) {
-          const timeDiff = (now - sfuPrevStatsRef.current.subscribe.timestamp) / 1000;
+          const timeDiff =
+            (now - sfuPrevStatsRef.current.subscribe.timestamp) / 1000;
           if (timeDiff > 0) {
-            bitrateIn = ((audioInbound.bytesReceived - sfuPrevStatsRef.current.subscribe.bytesReceived) * 8) / timeDiff / 1000;
+            bitrateIn =
+              ((audioInbound.bytesReceived -
+                sfuPrevStatsRef.current.subscribe.bytesReceived) *
+                8) /
+              timeDiff /
+              1000;
           }
         }
         if (audioInbound) {
-          sfuPrevStatsRef.current.subscribe = { bytesReceived: audioInbound.bytesReceived, timestamp: now };
+          sfuPrevStatsRef.current.subscribe = {
+            bytesReceived: audioInbound.bytesReceived,
+            timestamp: now,
+          };
         }
 
-        const packetLossPercent = audioInbound && audioInbound.packetsReceived > 0
-          ? ((audioInbound.packetsLost || 0) / (audioInbound.packetsReceived + (audioInbound.packetsLost || 0))) * 100
-          : 0;
+        const packetLossPercent =
+          audioInbound && audioInbound.packetsReceived > 0
+            ? ((audioInbound.packetsLost || 0) /
+                (audioInbound.packetsReceived +
+                  (audioInbound.packetsLost || 0))) *
+              100
+            : 0;
 
-        const rtt = activePair?.currentRoundTripTime ? activePair.currentRoundTripTime * 1000 : undefined;
+        const rtt = activePair?.currentRoundTripTime
+          ? activePair.currentRoundTripTime * 1000
+          : undefined;
         let quality: 'excellent' | 'good' | 'fair' | 'poor' = 'excellent';
         if (rtt !== undefined) {
           if (rtt > 300 || packetLossPercent > 5) quality = 'poor';
@@ -600,7 +640,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     // Clean up P2P connections
     peersRef.current.forEach(pc => pc.close());
     peersRef.current.clear();
-    
+
     // Clean up SFU connections
     if (sfuPublishPcRef.current) {
       sfuPublishPcRef.current.close();
@@ -614,7 +654,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     setIsUsingSfu(false);
     setSfuStats(null);
     sfuPrevStatsRef.current = {};
-    
+
     remoteStreamsRef.current.clear();
     refreshRemoteStreams();
     setConnectionDetails({});
@@ -668,132 +708,130 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
 
   // ==================== SFU Upgrade Handling ====================
 
-  const switchToSfu = useCallback(
-    async () => {
-      if (isUsingSfu) return; // Already on SFU
-      
-      console.log('🔄 Upgrading to SFU mode');
-      
-      // Close all P2P connections
-      peersRef.current.forEach(pc => pc.close());
-      peersRef.current.clear();
-      remoteStreamsRef.current.clear();
-      refreshRemoteStreams();
-      setConnectionDetails({});
-      
-      setIsUsingSfu(true);
-      
-      // Create SFU publish connection for local audio
-      // Server will create the session automatically
-      if (localStreamRef.current) {
-        await publishToSfu();
-      }
-      
-      // Subscribe to remote tracks after a short delay to let others publish
-      setTimeout(() => {
-        subscribeToSfu();
-      }, 1000);
-    },
-    [isUsingSfu, refreshRemoteStreams]
-  );
+  const switchToSfu = useCallback(async () => {
+    if (isUsingSfu) return; // Already on SFU
 
-  const publishToSfu = useCallback(
-    async () => {
-      if (!localStreamRef.current) return;
-      
-      console.log('📤 Publishing audio to SFU');
-      const ws = getUnifiedWebSocket();
-      const pc = new RTCPeerConnection({
-        iceServers: iceServers || [{ urls: 'stun:stun.cloudflare.com:3478' }],
-      });
-      sfuPublishPcRef.current = pc;
-      
-      // ICE gathering logging
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log('📍 SFU Publish ICE candidate:', event.candidate.type);
-        }
-      };
-      
-      pc.oniceconnectionstatechange = () => {
-        console.log('📡 SFU Publish ICE state:', pc.iceConnectionState);
-      };
-      
-      pc.onconnectionstatechange = () => {
-        console.log('🔗 SFU Publish connection state:', pc.connectionState);
-      };
-      
-      // Add local audio track
-      localStreamRef.current.getAudioTracks().forEach(track => {
-        console.log('🎤 Adding local audio track to SFU:', track.label);
-        pc.addTrack(track, localStreamRef.current!);
-      });
-      
-      // Create offer and send to server (server manages session)
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      
-      // Note: No session_id needed - server creates/manages it
-      ws.sendSfuPublish('audio', offer.sdp || '');
-    },
-    [iceServers]
-  );
+    console.log('🔄 Upgrading to SFU mode');
 
-  const subscribeToSfu = useCallback(
-    async () => {
-      // Check if we're already negotiating
-      if (sfuSubscribeNegotiatingRef.current) {
-        console.log('📥 SFU subscription already in progress, queuing request');
-        sfuSubscribePendingRef.current = true;
-        return;
+    // Close all P2P connections
+    peersRef.current.forEach(pc => pc.close());
+    peersRef.current.clear();
+    remoteStreamsRef.current.clear();
+    refreshRemoteStreams();
+    setConnectionDetails({});
+
+    setIsUsingSfu(true);
+
+    // Create SFU publish connection for local audio
+    // Server will create the session automatically
+    if (localStreamRef.current) {
+      await publishToSfu();
+    }
+
+    // Subscribe to remote tracks after a short delay to let others publish
+    setTimeout(() => {
+      subscribeToSfu();
+    }, 1000);
+  }, [isUsingSfu, refreshRemoteStreams]);
+
+  const publishToSfu = useCallback(async () => {
+    if (!localStreamRef.current) return;
+
+    console.log('📤 Publishing audio to SFU');
+    const ws = getUnifiedWebSocket();
+    const pc = new RTCPeerConnection({
+      iceServers: iceServers || [{ urls: 'stun:stun.cloudflare.com:3478' }],
+    });
+    sfuPublishPcRef.current = pc;
+
+    // ICE gathering logging
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        console.log('📍 SFU Publish ICE candidate:', event.candidate.type);
       }
-      
-      console.log('📥 Requesting subscription to SFU remote tracks');
-      sfuSubscribeNegotiatingRef.current = true;
-      sfuSubscribePendingRef.current = false;
-      
-      const ws = getUnifiedWebSocket();
-      
-      // Create the subscriber PeerConnection
-      // We'll set it up when we receive the offer from SFU
-      const pc = new RTCPeerConnection({
-        iceServers: iceServers || [{ urls: 'stun:stun.cloudflare.com:3478' }],
-      });
-      sfuSubscribePcRef.current = pc;
-      
-      // ICE gathering logging
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log('📍 SFU Subscribe ICE candidate:', event.candidate.type);
-        }
-      };
-      
-      pc.oniceconnectionstatechange = () => {
-        console.log('📡 SFU Subscribe ICE state:', pc.iceConnectionState);
-      };
-      
-      pc.onconnectionstatechange = () => {
-        console.log('🔗 SFU Subscribe connection state:', pc.connectionState);
-      };
-      
-      // Handle incoming tracks from SFU
-      pc.ontrack = event => {
-        console.log('📥 Received track from SFU:', event.track.kind, event.track.label);
-        const stream = event.streams[0];
-        if (stream) {
-          console.log('📥 Got stream from SFU:', stream.id);
-          // Store by stream ID for SFU mode
-          remoteStreamsRef.current.set(stream.id.hashCode?.() || Date.now(), stream);
-          refreshRemoteStreams();
-        }
-      };
-      
-      // Request subscription - NO SDP offer needed
-      // Server will return an SDP offer from the SFU
-      ws.sendSfuSubscribe();
-    },
-    [iceServers, refreshRemoteStreams]
-  );
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('📡 SFU Publish ICE state:', pc.iceConnectionState);
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log('🔗 SFU Publish connection state:', pc.connectionState);
+    };
+
+    // Add local audio track
+    localStreamRef.current.getAudioTracks().forEach(track => {
+      console.log('🎤 Adding local audio track to SFU:', track.label);
+      pc.addTrack(track, localStreamRef.current!);
+    });
+
+    // Create offer and send to server (server manages session)
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    // Note: No session_id needed - server creates/manages it
+    ws.sendSfuPublish('audio', offer.sdp || '');
+  }, [iceServers]);
+
+  const subscribeToSfu = useCallback(async () => {
+    // Check if we're already negotiating
+    if (sfuSubscribeNegotiatingRef.current) {
+      console.log('📥 SFU subscription already in progress, queuing request');
+      sfuSubscribePendingRef.current = true;
+      return;
+    }
+
+    console.log('📥 Requesting subscription to SFU remote tracks');
+    sfuSubscribeNegotiatingRef.current = true;
+    sfuSubscribePendingRef.current = false;
+
+    const ws = getUnifiedWebSocket();
+
+    // Create the subscriber PeerConnection
+    // We'll set it up when we receive the offer from SFU
+    const pc = new RTCPeerConnection({
+      iceServers: iceServers || [{ urls: 'stun:stun.cloudflare.com:3478' }],
+    });
+    sfuSubscribePcRef.current = pc;
+
+    // ICE gathering logging
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        console.log('📍 SFU Subscribe ICE candidate:', event.candidate.type);
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('📡 SFU Subscribe ICE state:', pc.iceConnectionState);
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log('🔗 SFU Subscribe connection state:', pc.connectionState);
+    };
+
+    // Handle incoming tracks from SFU
+    pc.ontrack = event => {
+      console.log(
+        '📥 Received track from SFU:',
+        event.track.kind,
+        event.track.label
+      );
+      const stream = event.streams[0];
+      if (stream) {
+        console.log('📥 Got stream from SFU:', stream.id);
+        // Store by stream ID for SFU mode - use a simple hash of the stream ID
+        const streamKey = stream.id
+          .split('')
+          .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        remoteStreamsRef.current.set(streamKey, stream);
+        refreshRemoteStreams();
+      }
+    };
+
+    // Request subscription - NO SDP offer needed
+    // Server will return an SDP offer from the SFU
+    ws.sendSfuSubscribe();
+  }, [iceServers, refreshRemoteStreams]);
 
   // Handle SFU subscription offer (SFU generates the offer, we create an answer)
   const handleSfuSubscribeOffer = useCallback(
@@ -803,23 +841,26 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         sfuSubscribeNegotiatingRef.current = false;
         return;
       }
-      
+
       try {
-        console.log('📬 Received SFU subscribe offer, tracks:', event.tracks?.length);
-        
+        console.log(
+          '📬 Received SFU subscribe offer, tracks:',
+          event.tracks?.length
+        );
+
         // Set the remote description with the SFU's offer
         await sfuSubscribePcRef.current.setRemoteDescription(event.sdp_offer);
-        
+
         // Create an answer
         const answer = await sfuSubscribePcRef.current.createAnswer();
         await sfuSubscribePcRef.current.setLocalDescription(answer);
-        
+
         console.log('📤 Sending SFU renegotiate answer');
-        
+
         // Send the answer back to complete renegotiation
         const ws = getUnifiedWebSocket();
         ws.sendSfuRenegotiate(answer.sdp || '');
-        
+
         console.log('✅ SFU subscription negotiation complete');
       } catch (err) {
         console.error('Failed to handle SFU subscribe offer:', err);
@@ -834,7 +875,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     (_event: HuddleSfuRenegotiateCompleteEvent) => {
       console.log('✅ SFU renegotiation confirmed by server');
       sfuSubscribeNegotiatingRef.current = false;
-      
+
       // If there were pending subscription requests, process them now
       if (sfuSubscribePendingRef.current) {
         console.log('📥 Processing pending SFU subscription request');
@@ -851,12 +892,15 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
   const handleSfuPublishAnswer = useCallback(
     async (event: HuddleSfuPublishAnswerEvent) => {
       if (!sfuPublishPcRef.current) return;
-      
+
       try {
-        console.log('📬 Received SFU publish answer, session:', event.session_id);
+        console.log(
+          '📬 Received SFU publish answer, session:',
+          event.session_id
+        );
         await sfuPublishPcRef.current.setRemoteDescription(event.sdp_answer);
         console.log('✅ SFU publish connection established');
-        
+
         // Store our session ID for reference
         if (event.session_id) {
           sfuSessionIdRef.current = event.session_id;
@@ -876,10 +920,13 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (huddleChatId !== event.room_id) {
-        console.log('📡 Ignoring SFU upgrade - room mismatch', { huddleChatId, eventRoomId: event.room_id });
+        console.log('📡 Ignoring SFU upgrade - room mismatch', {
+          huddleChatId,
+          eventRoomId: event.room_id,
+        });
         return;
       }
-      
+
       console.log('📡 Initiating SFU upgrade');
       switchToSfu();
     },
@@ -890,7 +937,7 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     (event: HuddleSfuTrackAddedEvent) => {
       if (!isHuddleActive || !isUsingSfu) return;
       if (huddleChatId !== event.room_id) return;
-      
+
       console.log(`🎵 New track from ${event.user_name}: ${event.track_name}`);
       // Re-subscribe to get the new track
       subscribeToSfu();
@@ -903,19 +950,31 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     const ws = getUnifiedWebSocket();
     const unsubUpgrade = ws.on('huddle.sfu_upgrade', handleSfuUpgrade);
     const unsubSession = ws.on('huddle.sfu_session', handleSfuUpgrade);
-    const unsubPublish = ws.on('huddle.sfu_publish_answer', handleSfuPublishAnswer);
-    const unsubSubscribeOffer = ws.on('huddle.sfu_subscribe_offer', handleSfuSubscribeOffer);
-    const unsubRenegotiateComplete = ws.on('huddle.sfu_renegotiate_complete', handleSfuRenegotiateComplete);
+    const unsubPublish = ws.on(
+      'huddle.sfu_publish_answer',
+      handleSfuPublishAnswer
+    );
+    const unsubSubscribeOffer = ws.on(
+      'huddle.sfu_subscribe_offer',
+      handleSfuSubscribeOffer
+    );
+    const unsubRenegotiateComplete = ws.on(
+      'huddle.sfu_renegotiate_complete',
+      handleSfuRenegotiateComplete
+    );
     const unsubTrack = ws.on('huddle.sfu_track_added', handleSfuTrackAdded);
-    
+
     // Handle SFU errors - release negotiation lock
-    const unsubError = ws.on('error', (event) => {
-      if (event.code === 'SFU_SUBSCRIBE_FAILED' || event.code === 'SFU_RENEGOTIATE_FAILED') {
+    const unsubError = ws.on('error', event => {
+      if (
+        event.code === 'SFU_SUBSCRIBE_FAILED' ||
+        event.code === 'SFU_RENEGOTIATE_FAILED'
+      ) {
         console.warn('SFU operation failed:', event.message);
         sfuSubscribeNegotiatingRef.current = false;
       }
     });
-    
+
     return () => {
       unsubUpgrade();
       unsubSession();
@@ -925,7 +984,13 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
       unsubTrack();
       unsubError();
     };
-  }, [handleSfuUpgrade, handleSfuPublishAnswer, handleSfuSubscribeOffer, handleSfuRenegotiateComplete, handleSfuTrackAdded]);
+  }, [
+    handleSfuUpgrade,
+    handleSfuPublishAnswer,
+    handleSfuSubscribeOffer,
+    handleSfuRenegotiateComplete,
+    handleSfuTrackAdded,
+  ]);
 
   useEffect(() => {
     // Skip P2P connection management when using SFU

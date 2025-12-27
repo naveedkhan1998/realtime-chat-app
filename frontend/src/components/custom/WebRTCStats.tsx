@@ -687,9 +687,9 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
     return qualityOrder[Math.min(pubIdx, subIdx)];
   }, [publishQuality, subscribeQuality]);
 
-  const qualityConfig =
-    QUALITY_CONFIGS[overallQuality as keyof typeof QUALITY_CONFIGS] ||
-    DEFAULT_QUALITY_CONFIG;
+  // const _qualityConfig =
+  //   QUALITY_CONFIGS[overallQuality as keyof typeof QUALITY_CONFIGS] ||
+  //   DEFAULT_QUALITY_CONFIG;
 
   return (
     <div className="space-y-6">
