@@ -19,6 +19,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import {
   Search,
@@ -27,12 +29,19 @@ import {
   ArrowLeft,
   Users2,
   LucideProps,
+  UserPlus,
+  X,
 } from 'lucide-react';
+
+type ChatMode = 'direct' | 'group';
 
 export default function NewChatPage() {
   const user = useAppSelector(state => state.auth.user);
   const globalOnlineUsers = useAppSelector(selectGlobalOnlineUsers);
   const [searchQuery, setSearchQuery] = useState('');
+  const [chatMode, setChatMode] = useState<ChatMode>('direct');
+  const [groupName, setGroupName] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const navigate = useNavigate();
 
@@ -56,7 +65,7 @@ export default function NewChatPage() {
       );
     }) || [];
 
-  const handleCreateChat = async (
+  const handleCreateDirectChat = async (
     participantId: number,
     participantName: string
   ) => {
@@ -82,7 +91,62 @@ export default function NewChatPage() {
     }
   };
 
+  const handleCreateGroupChat = async () => {
+    if (selectedUsers.length < 1) {
+      toast({
+        title: 'Select participants',
+        description: 'Please select at least one participant for the group.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!groupName.trim()) {
+      toast({
+        title: 'Group name required',
+        description: 'Please enter a name for the group.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const response = await createChatRoom({
+        name: groupName.trim(),
+        is_group_chat: true,
+        participant_ids: selectedUsers.map(u => u.id),
+      }).unwrap();
+      toast({
+        title: 'Group created',
+        description: `Group "${groupName}" has been created.`,
+      });
+      navigate(`/chat/${response.id}`);
+    } catch (error) {
+      console.error('Failed to create group:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create group. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleUserSelection = (userToToggle: User) => {
+    setSelectedUsers(prev => {
+      const isSelected = prev.some(u => u.id === userToToggle.id);
+      if (isSelected) {
+        return prev.filter(u => u.id !== userToToggle.id);
+      }
+      return [...prev, userToToggle];
+    });
+  };
+
+  const removeSelectedUser = (userId: number) => {
+    setSelectedUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
   const isOnline = (userId: number) => globalOnlineUsers.includes(userId);
+  const isUserSelected = (userId: number) =>
+    selectedUsers.some(u => u.id === userId);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -103,13 +167,111 @@ export default function NewChatPage() {
         </Button>
         <div className="min-w-0">
           <h1 className="text-lg font-bold truncate sm:text-xl text-foreground">
-            New Chat
+            {chatMode === 'direct' ? 'New Chat' : 'New Group'}
           </h1>
           <p className="text-xs truncate sm:text-sm text-muted-foreground">
-            Start a conversation
+            {chatMode === 'direct'
+              ? 'Start a conversation'
+              : 'Create a group chat'}
           </p>
         </div>
       </header>
+
+      {/* Mode Tabs */}
+      <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
+        <Tabs
+          value={chatMode}
+          onValueChange={v => {
+            setChatMode(v as ChatMode);
+            setSelectedUsers([]);
+            setGroupName('');
+          }}
+        >
+          <TabsList className="grid w-full max-w-xs grid-cols-2 mx-auto">
+            <TabsTrigger value="direct" className="gap-2">
+              <MessageSquarePlus className="w-4 h-4" />
+              Direct
+            </TabsTrigger>
+            <TabsTrigger value="group" className="gap-2">
+              <Users2 className="w-4 h-4" />
+              Group
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Group Name Input (only for group mode) */}
+      {chatMode === 'group' && (
+        <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
+          <div className="max-w-xl mx-auto">
+            <Input
+              placeholder="Enter group name..."
+              value={groupName}
+              onChange={e => setGroupName(e.target.value)}
+              className="h-12 text-base border rounded-xl bg-muted/50 border-border/50 focus:bg-background"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Selected Users (only for group mode) */}
+      {chatMode === 'group' && selectedUsers.length > 0 && (
+        <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
+          <div className="max-w-xl mx-auto">
+            <div className="flex flex-wrap gap-2">
+              {selectedUsers.map(selectedUser => (
+                <Badge
+                  key={selectedUser.id}
+                  variant="secondary"
+                  className="flex items-center gap-1 py-1 pl-1 pr-2"
+                >
+                  <Avatar className="w-5 h-5">
+                    <AvatarImage
+                      src={getAvatarUrl(selectedUser.avatar)}
+                      alt={selectedUser.name}
+                    />
+                    <AvatarFallback className="text-[10px]">
+                      {selectedUser.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs">{selectedUser.name}</span>
+                  <button
+                    onClick={() => removeSelectedUser(selectedUser.id)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Group Button (only for group mode) */}
+      {chatMode === 'group' && (
+        <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
+          <div className="max-w-xl mx-auto">
+            <Button
+              onClick={handleCreateGroupChat}
+              disabled={
+                creatingChatRoom ||
+                selectedUsers.length < 1 ||
+                !groupName.trim()
+              }
+              className="w-full h-11 rounded-xl"
+            >
+              {creatingChatRoom ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <UserPlus className="w-4 h-4 mr-2" />
+              )}
+              Create Group ({selectedUsers.length} member
+              {selectedUsers.length !== 1 ? 's' : ''})
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Search Input */}
       <div className="px-4 py-4 border-b sm:px-6 border-border/50 bg-background/50">
@@ -161,8 +323,11 @@ export default function NewChatPage() {
                           user={candidate}
                           isOnline={isOnline(candidate.id)}
                           onStartChat={() =>
-                            handleCreateChat(candidate.id, candidate.name)
+                            handleCreateDirectChat(candidate.id, candidate.name)
                           }
+                          onToggleSelect={() => toggleUserSelection(candidate)}
+                          isSelected={isUserSelected(candidate.id)}
+                          isGroupMode={chatMode === 'group'}
                           isLoading={
                             creatingChatRoom &&
                             pendingChatUserId === candidate.id
@@ -212,8 +377,11 @@ export default function NewChatPage() {
                         user={friend}
                         isOnline={isOnline(friend.id)}
                         onStartChat={() =>
-                          handleCreateChat(friend.id, friend.name)
+                          handleCreateDirectChat(friend.id, friend.name)
                         }
+                        onToggleSelect={() => toggleUserSelection(friend)}
+                        isSelected={isUserSelected(friend.id)}
+                        isGroupMode={chatMode === 'group'}
                         isLoading={
                           creatingChatRoom && pendingChatUserId === friend.id
                         }
@@ -257,6 +425,9 @@ function UserCard({
   user,
   isOnline,
   onStartChat,
+  onToggleSelect,
+  isSelected,
+  isGroupMode,
   isLoading,
   disabled,
   isFriend,
@@ -264,12 +435,34 @@ function UserCard({
   user: User;
   isOnline: boolean;
   onStartChat: () => void;
+  onToggleSelect: () => void;
+  isSelected: boolean;
+  isGroupMode: boolean;
   isLoading: boolean;
   disabled: boolean;
   isFriend?: boolean;
 }) {
+  const handleClick = () => {
+    if (isGroupMode) {
+      onToggleSelect();
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3 p-3 transition-colors border rounded-xl bg-card border-border/50 hover:bg-accent/50 sm:p-4">
+    <div
+      className={`flex items-center gap-3 p-3 transition-colors border rounded-xl bg-card border-border/50 hover:bg-accent/50 sm:p-4 ${
+        isGroupMode ? 'cursor-pointer' : ''
+      } ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
+      onClick={handleClick}
+    >
+      {isGroupMode && (
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onToggleSelect()}
+          onClick={e => e.stopPropagation()}
+          className="shrink-0"
+        />
+      )}
       <div className="relative">
         <Avatar className="w-10 h-10 border sm:w-12 sm:h-12 border-border/50">
           <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
@@ -299,21 +492,23 @@ function UserCard({
           )}
         </p>
       </div>
-      <Button
-        size="sm"
-        onClick={onStartChat}
-        disabled={disabled}
-        className="h-9 rounded-lg shrink-0 sm:h-10"
-      >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <>
-            <MessageSquarePlus className="w-4 h-4 mr-1.5" />
-            <span className="hidden sm:inline">Chat</span>
-          </>
-        )}
-      </Button>
+      {!isGroupMode && (
+        <Button
+          size="sm"
+          onClick={onStartChat}
+          disabled={disabled}
+          className="rounded-lg h-9 shrink-0 sm:h-10"
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <MessageSquarePlus className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Chat</span>
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 }
@@ -332,7 +527,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-      <div className="flex items-center justify-center w-14 h-14 mb-4 border rounded-2xl bg-muted/50 border-border/50">
+      <div className="flex items-center justify-center mb-4 border w-14 h-14 rounded-2xl bg-muted/50 border-border/50">
         <Icon className="w-7 h-7 text-muted-foreground" />
       </div>
       <h3 className="mb-1 text-sm font-semibold text-foreground">{title}</h3>

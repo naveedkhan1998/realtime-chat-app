@@ -32,8 +32,14 @@ class ChatRoomParticipant(models.Model):
     Through model for participants in a chat room, storing additional information per participant.
     """
 
+    ROLE_CHOICES = [
+        ("admin", "Admin"),
+        ("member", "Member"),
+    ]
+
     chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="member")
     joined_at = models.DateTimeField(auto_now_add=True)
     last_read_message = models.ForeignKey(
         "Message", null=True, blank=True, on_delete=models.SET_NULL
