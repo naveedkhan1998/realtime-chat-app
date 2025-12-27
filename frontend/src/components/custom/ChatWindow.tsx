@@ -85,6 +85,8 @@ export default function ChatWindow({
     startHuddle,
     stopHuddle,
     connectionDetails,
+    isUsingSfu,
+    sfuStats,
   } = useHuddle();
 
   // Simple loading state
@@ -403,6 +405,8 @@ export default function ChatWindow({
             startHuddle={() => startHuddle(activeChat)}
             stopHuddle={stopHuddle}
             connectionDetails={connectionDetails}
+            isUsingSfu={isUsingSfu}
+            sfuStats={sfuStats}
             onInfoClick={() => setShowInfoPanel(!showInfoPanel)}
           />
 

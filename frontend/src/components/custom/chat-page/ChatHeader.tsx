@@ -27,6 +27,34 @@ import {
 import { useState } from 'react';
 import WebRTCStats from '@/components/custom/WebRTCStats';
 
+interface SfuStats {
+  publish?: {
+    connectionState: string;
+    type: string;
+    quality: string;
+    bitrate: { out: number };
+    audio?: {
+      packetsSent?: number;
+      bytesSent?: number;
+    };
+    rtt?: number;
+  };
+  subscribe?: {
+    connectionState: string;
+    type: string;
+    quality: string;
+    bitrate: { in: number };
+    audio?: {
+      packetsReceived?: number;
+      bytesReceived?: number;
+      jitter?: number;
+      packetLossPercent?: number;
+    };
+    rtt?: number;
+  };
+  timestamp?: number;
+}
+
 interface ChatHeaderProps {
   activeRoom: ChatRoom | undefined;
   otherParticipant: UserProfile;
@@ -39,6 +67,8 @@ interface ChatHeaderProps {
   startHuddle: () => void;
   stopHuddle: () => void;
   connectionDetails?: Record<number, any>;
+  isUsingSfu?: boolean;
+  sfuStats?: SfuStats | null;
   onInfoClick?: () => void;
 }
 
@@ -54,14 +84,19 @@ export default function ChatHeader({
   startHuddle,
   stopHuddle,
   connectionDetails,
+  isUsingSfu,
+  sfuStats,
   onInfoClick,
 }: ChatHeaderProps) {
   const [showConnectionDetails, setShowConnectionDetails] = useState(false);
 
+  // For P2P mode: filter huddle users that have connection details
   const connectedPeers = huddleUsers.filter(
     p => connectionDetails && connectionDetails[p.id]
   );
-  const hasActiveConnection = connectedPeers.length > 0;
+  
+  // Show the activity button if we have P2P connections OR if we have SFU stats
+  const hasActiveConnection = connectedPeers.length > 0 || (isUsingSfu && sfuStats && (sfuStats.publish || sfuStats.subscribe));
 
   return (
     <>
@@ -141,6 +176,27 @@ export default function ChatHeader({
             </div>
           )}
 
+          {/* Show connection mode indicator when in a huddle */}
+          {isHuddleActive && huddleUsers.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={cn(
+                    "px-2 py-1 text-[10px] font-medium rounded-full border",
+                    isUsingSfu 
+                      ? "bg-purple-500/10 text-purple-500 border-purple-500/30" 
+                      : "bg-blue-500/10 text-blue-500 border-blue-500/30"
+                  )}>
+                    {isUsingSfu ? 'SFU' : 'P2P'}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isUsingSfu ? 'Using Cloudflare SFU (3+ users)' : 'Using P2P mesh (1-2 users)'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {hasActiveConnection && (
             <TooltipProvider>
               <Tooltip>
@@ -211,13 +267,15 @@ export default function ChatHeader({
                 WebRTC Live Stats
               </DrawerTitle>
               <DrawerDescription>
-                Real-time peer-to-peer connection metrics
+                {isUsingSfu ? 'Cloudflare SFU connection metrics' : 'Real-time peer-to-peer connection metrics'}
               </DrawerDescription>
             </DrawerHeader>
             <div className="p-4 overflow-y-auto max-h-[70vh]">
               <WebRTCStats
                 connectionDetails={connectionDetails || {}}
                 connectedPeers={connectedPeers}
+                isUsingSfu={isUsingSfu}
+                sfuStats={sfuStats}
                 scrollable={false}
               />
             </div>
@@ -235,12 +293,14 @@ export default function ChatHeader({
                 WebRTC Live Stats
               </DialogTitle>
               <DialogDescription>
-                Real-time peer-to-peer connection metrics
+                {isUsingSfu ? 'Cloudflare SFU connection metrics' : 'Real-time peer-to-peer connection metrics'}
               </DialogDescription>
             </DialogHeader>
             <WebRTCStats
               connectionDetails={connectionDetails || {}}
               connectedPeers={connectedPeers}
+              isUsingSfu={isUsingSfu}
+              sfuStats={sfuStats}
               scrollable={true}
             />
           </DialogContent>

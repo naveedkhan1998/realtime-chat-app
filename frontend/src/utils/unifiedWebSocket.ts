@@ -145,6 +145,58 @@ export interface HuddleSignalEvent {
   payload: HuddleSignalPayload;
 }
 
+// SFU Events (for group huddles with 3+ participants)
+export interface HuddleSfuUpgradeEvent {
+  type: 'huddle.sfu_upgrade';
+  room_id: number;
+  // session_id is no longer sent - each user creates their own session
+}
+
+export interface HuddleSfuSessionEvent {
+  type: 'huddle.sfu_session';
+  room_id: number;
+  use_sfu: boolean;
+}
+
+export interface HuddleSfuPublishAnswerEvent {
+  type: 'huddle.sfu_publish_answer';
+  room_id: number;
+  session_id?: string;  // User's session ID (returned from server)
+  track_name: string;
+  sdp_answer: RTCSessionDescriptionInit;
+  tracks: Array<{ mid: string; trackName: string }>;
+}
+
+export interface HuddleSfuSubscribeAnswerEvent {
+  type: 'huddle.sfu_subscribe_answer';
+  room_id: number;
+  sdp_answer: RTCSessionDescriptionInit;
+  tracks: Array<{ mid: string; trackName: string }>;
+}
+
+export interface HuddleSfuSubscribeOfferEvent {
+  type: 'huddle.sfu_subscribe_offer';
+  room_id: number;
+  session_id: string;
+  sdp_offer: RTCSessionDescriptionInit;
+  tracks: Array<{ mid: string; trackName: string; sessionId: string }>;
+  requires_renegotiation: boolean;
+}
+
+export interface HuddleSfuTrackAddedEvent {
+  type: 'huddle.sfu_track_added';
+  room_id: number;
+  user_id: number;
+  user_name: string;
+  track_name: string;
+}
+
+export interface HuddleSfuRenegotiateCompleteEvent {
+  type: 'huddle.sfu_renegotiate_complete';
+  room_id: number;
+  success: boolean;
+}
+
 export interface PresenceAckEvent {
   type: 'presence.ack';
 }
@@ -183,6 +235,13 @@ export type UnifiedWebSocketEvent =
   | ChatCursorUpdateEvent
   | ChatHuddleParticipantsEvent
   | HuddleSignalEvent
+  | HuddleSfuUpgradeEvent
+  | HuddleSfuSessionEvent
+  | HuddleSfuPublishAnswerEvent
+  | HuddleSfuSubscribeAnswerEvent
+  | HuddleSfuSubscribeOfferEvent
+  | HuddleSfuTrackAddedEvent
+  | HuddleSfuRenegotiateCompleteEvent
   | PresenceAckEvent
   | SystemPongEvent
   | ErrorEvent;
@@ -728,6 +787,35 @@ class UnifiedWebSocketService {
       room_id: this.activeHuddleRoom,
       target_id: targetId,
       payload,
+    });
+  }
+
+  // SFU Actions (for group huddles)
+  // Note: session_id is managed by the server - each user gets their own session
+  sendSfuPublish(trackName: string, sdpOffer: string): void {
+    if (!this.activeHuddleRoom) return;
+    this.send({
+      type: 'huddle.sfu_publish',
+      room_id: this.activeHuddleRoom,
+      track_name: trackName,
+      sdp_offer: sdpOffer,
+    });
+  }
+
+  sendSfuSubscribe(): void {
+    if (!this.activeHuddleRoom) return;
+    this.send({
+      type: 'huddle.sfu_subscribe',
+      room_id: this.activeHuddleRoom,
+    });
+  }
+
+  sendSfuRenegotiate(sdpAnswer: string): void {
+    if (!this.activeHuddleRoom) return;
+    this.send({
+      type: 'huddle.sfu_renegotiate',
+      room_id: this.activeHuddleRoom,
+      sdp_answer: sdpAnswer,
     });
   }
 

@@ -73,10 +73,11 @@ class FriendshipSerializer(serializers.ModelSerializer):
 class ChatRoomParticipantSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     last_read_message = serializers.PrimaryKeyRelatedField(read_only=True)
+    role = serializers.CharField(read_only=True)
 
     class Meta:
         model = ChatRoomParticipant
-        fields = ["user", "joined_at", "last_read_message"]
+        fields = ["user", "role", "joined_at", "last_read_message"]
 
 
 class LastMessageSerializer(serializers.ModelSerializer):
@@ -94,6 +95,18 @@ class LastMessageSerializer(serializers.ModelSerializer):
             "attachment_type",
             "timestamp",
         ]
+
+
+class ParticipantWithRoleSerializer(serializers.ModelSerializer):
+    """Serializer for participant with role information."""
+    id = serializers.IntegerField(source="user.id")
+    name = serializers.CharField(source="user.name")
+    avatar = serializers.ImageField(source="user.avatar")
+    role = serializers.CharField()
+
+    class Meta:
+        model = ChatRoomParticipant
+        fields = ["id", "name", "avatar", "role"]
 
 
 class SimpleChatRoomSerializer(serializers.ModelSerializer):
@@ -120,18 +133,17 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
         ]
 
     def get_participants(self, obj):
-        # Return only a subset of participants (e.g., top 3) or just the count
-        # For the sidebar, we usually need the other user's avatar/name (for 1-on-1)
-        # or a few avatars (for groups).
+        # Return participants with their roles for group chats
         request = self.context.get("request")
         if not request:
             return []
 
-        # Optimize: Prefetch related is handled in view, but we limit serialization here
-        participants = obj.participants.all()
-        # If it's a direct chat, we need the other user.
-        # If it's a group chat, maybe just the first 3.
-        return UserSerializer(participants[:4], many=True).data
+        # Get participants through the ChatRoomParticipant model to include role
+        participant_records = ChatRoomParticipant.objects.filter(
+            chat_room=obj
+        ).select_related("user")[:4]
+        
+        return ParticipantWithRoleSerializer(participant_records, many=True).data
 
     def get_last_message(self, obj):
         """Get the most recent message in this chat room."""
@@ -155,7 +167,7 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
+    participants = serializers.SerializerMethodField()
     participant_ids = serializers.ListField(
         child=serializers.IntegerField(min_value=1),
         write_only=True,
@@ -175,6 +187,13 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             "participant_ids",
             "created_at",
         ]
+
+    def get_participants(self, obj):
+        """Return participants with their roles."""
+        participant_records = ChatRoomParticipant.objects.filter(
+            chat_room=obj
+        ).select_related("user")
+        return ParticipantWithRoleSerializer(participant_records, many=True).data
 
     def validate(self, attrs):
         request = self.context["request"]

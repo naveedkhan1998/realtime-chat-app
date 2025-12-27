@@ -17,6 +17,9 @@ import {
   CircleDot,
   Sparkles,
   LucideIcon,
+  Cloud,
+  Upload,
+  Download,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,9 +27,39 @@ import { Badge } from '@/components/ui/badge';
 import { cn, getAvatarUrl } from '@/lib/utils';
 
 // ============ TYPES ============
+interface SfuStats {
+  publish?: {
+    connectionState: string;
+    type: string;
+    quality: string;
+    bitrate: { out: number };
+    audio?: {
+      packetsSent?: number;
+      bytesSent?: number;
+    };
+    rtt?: number;
+  };
+  subscribe?: {
+    connectionState: string;
+    type: string;
+    quality: string;
+    bitrate: { in: number };
+    audio?: {
+      packetsReceived?: number;
+      bytesReceived?: number;
+      jitter?: number;
+      packetLossPercent?: number;
+    };
+    rtt?: number;
+  };
+  timestamp?: number;
+}
+
 interface WebRTCStatsProps {
   connectionDetails: Record<number, ConnectionDetail>;
   connectedPeers: Array<{ id: number; name: string; avatar: string }>;
+  isUsingSfu?: boolean;
+  sfuStats?: SfuStats | null;
   scrollable?: boolean;
 }
 
@@ -638,10 +671,212 @@ const PeerStats = memo(({ peer, details, showHeader }: PeerStatsProps) => {
 });
 PeerStats.displayName = 'PeerStats';
 
+// ============ SFU STATS COMPONENT ============
+const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
+  const publishQuality = sfuStats.publish?.quality || 'unknown';
+  const subscribeQuality = sfuStats.subscribe?.quality || 'unknown';
+  
+  // Overall quality is the worst of the two
+  const overallQuality = useMemo(() => {
+    const qualityOrder = ['poor', 'fair', 'good', 'excellent'];
+    const pubIdx = qualityOrder.indexOf(publishQuality);
+    const subIdx = qualityOrder.indexOf(subscribeQuality);
+    if (pubIdx === -1 && subIdx === -1) return 'unknown';
+    if (pubIdx === -1) return subscribeQuality;
+    if (subIdx === -1) return publishQuality;
+    return qualityOrder[Math.min(pubIdx, subIdx)];
+  }, [publishQuality, subscribeQuality]);
+
+  const qualityConfig =
+    QUALITY_CONFIGS[overallQuality as keyof typeof QUALITY_CONFIGS] ||
+    DEFAULT_QUALITY_CONFIG;
+
+  return (
+    <div className="space-y-6">
+      {/* SFU Header */}
+      <div className="p-4 border rounded-xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-indigo-500/10 border-primary/20">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-primary/10 border-primary/30">
+                <Cloud className="w-6 h-6 text-primary" />
+              </div>
+              <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Cloudflare SFU</h3>
+              <p className="text-xs text-muted-foreground">Selective Forwarding Unit</p>
+            </div>
+          </div>
+          <QualityIndicator quality={overallQuality} />
+        </div>
+
+        {/* Connection Path Visual for SFU */}
+        <div className="relative p-4 overflow-hidden border rounded-xl bg-gradient-to-br from-background via-background to-muted/30">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-[size:20px_20px]" />
+          </div>
+
+          <div className="relative flex items-center justify-between">
+            {/* You */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative">
+                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-primary/10 border-primary/30">
+                  <Radio className="w-5 h-5 text-primary" />
+                </div>
+                <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">You</span>
+            </div>
+
+            {/* Connection line to SFU */}
+            <div className="relative flex-1 mx-4">
+              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-blue-500 to-purple-500/50 rounded-full" />
+              <div className="absolute inset-0 overflow-hidden">
+                <div
+                  className="absolute w-2 h-2 rounded-full top-1/2 -translate-y-1/2 bg-blue-500 animate-[ping_2s_ease-in-out_infinite]"
+                  style={{ left: '30%' }}
+                />
+              </div>
+            </div>
+
+            {/* SFU Cloud */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative">
+                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-purple-500/10 border-purple-500/30">
+                  <Cloud className="w-5 h-5 text-purple-500" />
+                </div>
+                <div className="absolute w-3 h-3 bg-blue-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">SFU</span>
+            </div>
+
+            {/* Connection line to peers */}
+            <div className="relative flex-1 mx-4">
+              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 via-indigo-500 to-primary/50 rounded-full" />
+              <div className="absolute inset-0 overflow-hidden">
+                <div
+                  className="absolute w-2 h-2 rounded-full top-1/2 -translate-y-1/2 bg-indigo-500 animate-[ping_2s_ease-in-out_infinite_0.5s]"
+                  style={{ left: '70%' }}
+                />
+              </div>
+            </div>
+
+            {/* Peers */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative">
+                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-indigo-500/10 border-indigo-500/30">
+                  <Server className="w-5 h-5 text-indigo-500" />
+                </div>
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">Peers</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Publish Stats */}
+      {sfuStats.publish && (
+        <div className="p-4 space-y-4 border rounded-xl bg-card border-border/50">
+          <div className="flex items-center gap-2">
+            <Upload className="w-4 h-4 text-green-500" />
+            <h4 className="font-medium text-foreground">Upload (Publish)</h4>
+            <Badge variant="outline" className="ml-auto text-xs">
+              {sfuStats.publish.connectionState}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              icon={ArrowUpRight}
+              label="Bitrate Out"
+              value={`${sfuStats.publish.bitrate.out.toFixed(1)} kbps`}
+              color="text-green-500"
+            />
+            {sfuStats.publish.rtt !== undefined && (
+              <StatCard
+                icon={Clock}
+                label="RTT"
+                value={`${sfuStats.publish.rtt.toFixed(0)} ms`}
+                color="text-blue-500"
+              />
+            )}
+            {sfuStats.publish.audio?.packetsSent !== undefined && (
+              <StatCard
+                icon={Package}
+                label="Packets Sent"
+                value={sfuStats.publish.audio.packetsSent.toLocaleString()}
+                color="text-purple-500"
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Subscribe Stats */}
+      {sfuStats.subscribe && (
+        <div className="p-4 space-y-4 border rounded-xl bg-card border-border/50">
+          <div className="flex items-center gap-2">
+            <Download className="w-4 h-4 text-blue-500" />
+            <h4 className="font-medium text-foreground">Download (Subscribe)</h4>
+            <Badge variant="outline" className="ml-auto text-xs">
+              {sfuStats.subscribe.connectionState}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              icon={ArrowDownLeft}
+              label="Bitrate In"
+              value={`${sfuStats.subscribe.bitrate.in.toFixed(1)} kbps`}
+              color="text-blue-500"
+            />
+            {sfuStats.subscribe.rtt !== undefined && (
+              <StatCard
+                icon={Clock}
+                label="RTT"
+                value={`${sfuStats.subscribe.rtt.toFixed(0)} ms`}
+                color="text-blue-500"
+              />
+            )}
+            {sfuStats.subscribe.audio?.packetsReceived !== undefined && (
+              <StatCard
+                icon={Package}
+                label="Packets Received"
+                value={sfuStats.subscribe.audio.packetsReceived.toLocaleString()}
+                color="text-purple-500"
+              />
+            )}
+            {sfuStats.subscribe.audio?.packetLossPercent !== undefined && (
+              <StatCard
+                icon={AlertTriangle}
+                label="Packet Loss"
+                value={`${sfuStats.subscribe.audio.packetLossPercent.toFixed(2)}%`}
+                color={sfuStats.subscribe.audio.packetLossPercent > 2 ? 'text-red-500' : 'text-green-500'}
+              />
+            )}
+            {sfuStats.subscribe.audio?.jitter !== undefined && (
+              <StatCard
+                icon={Activity}
+                label="Jitter"
+                value={`${(sfuStats.subscribe.audio.jitter * 1000).toFixed(1)} ms`}
+                color="text-yellow-500"
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+SfuStatsDisplay.displayName = 'SfuStatsDisplay';
+
 // ============ MAIN COMPONENT ============
 function WebRTCStats({
   connectionDetails,
   connectedPeers,
+  isUsingSfu = false,
+  sfuStats,
   scrollable = true,
 }: WebRTCStatsProps) {
   // Early return for no connections - memoized empty state
@@ -662,6 +897,17 @@ function WebRTCStats({
     []
   );
 
+  // SFU mode: show SFU stats
+  if (isUsingSfu && sfuStats && (sfuStats.publish || sfuStats.subscribe)) {
+    const content = <SfuStatsDisplay sfuStats={sfuStats} />;
+    
+    if (scrollable) {
+      return <ScrollArea className="max-h-[70vh] pr-4">{content}</ScrollArea>;
+    }
+    return content;
+  }
+
+  // P2P mode: show per-peer stats
   if (connectedPeers.length === 0) {
     return emptyState;
   }

@@ -6,6 +6,10 @@ export interface User {
   avatar?: string;
 }
 
+export interface ChatParticipant extends User {
+  role: 'admin' | 'member';
+}
+
 export interface FriendRequest {
   id: number;
   from_user: User;
@@ -34,7 +38,7 @@ export interface ChatRoom {
   id: number;
   name?: string;
   is_group_chat: boolean;
-  participants: User[];
+  participants: ChatParticipant[];
   last_message?: LastMessage;
   unread_count?: number;
   created_at: string;
@@ -143,6 +147,49 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['ChatRooms'],
     }),
+
+    // Group Admin Actions
+    addParticipant: builder.mutation<void, { roomId: number; userId: number }>({
+      query: ({ roomId, userId }) => ({
+        url: `chat/chat-rooms/${roomId}/add_participant/`,
+        method: 'POST',
+        body: { user_id: userId },
+      }),
+      invalidatesTags: ['ChatRooms'],
+    }),
+    removeParticipant: builder.mutation<void, { roomId: number; userId: number }>({
+      query: ({ roomId, userId }) => ({
+        url: `chat/chat-rooms/${roomId}/remove_participant/`,
+        method: 'POST',
+        body: { user_id: userId },
+      }),
+      invalidatesTags: ['ChatRooms'],
+    }),
+    promoteToAdmin: builder.mutation<void, { roomId: number; userId: number }>({
+      query: ({ roomId, userId }) => ({
+        url: `chat/chat-rooms/${roomId}/promote_to_admin/`,
+        method: 'POST',
+        body: { user_id: userId },
+      }),
+      invalidatesTags: ['ChatRooms'],
+    }),
+    demoteToMember: builder.mutation<void, { roomId: number; userId: number }>({
+      query: ({ roomId, userId }) => ({
+        url: `chat/chat-rooms/${roomId}/demote_to_member/`,
+        method: 'POST',
+        body: { user_id: userId },
+      }),
+      invalidatesTags: ['ChatRooms'],
+    }),
+    renameGroup: builder.mutation<void, { roomId: number; name: string }>({
+      query: ({ roomId, name }) => ({
+        url: `chat/chat-rooms/${roomId}/rename_group/`,
+        method: 'POST',
+        body: { name },
+      }),
+      invalidatesTags: ['ChatRooms'],
+    }),
+
     getSharedMedia: builder.query<Message[], { chat_room_id: number }>({
       query: ({ chat_room_id }) =>
         `chat/messages/?chat_room=${chat_room_id}&has_attachment=true`,
@@ -292,4 +339,10 @@ export const {
   useMarkAllNotificationsReadMutation,
   useMarkRoomNotificationsReadMutation,
   useGetUploadUrlMutation,
+  // Group Admin Hooks
+  useAddParticipantMutation,
+  useRemoveParticipantMutation,
+  usePromoteToAdminMutation,
+  useDemoteToMemberMutation,
+  useRenameGroupMutation,
 } = chatApi;
