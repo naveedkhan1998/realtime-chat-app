@@ -29,7 +29,7 @@
     "api:shell": "nx run api:shell"
   },
   "devDependencies": {
-    "nx": "^20.0.0",
-    "@nx/js": "^20.0.0"
+    "@nx/js": "^20.8.4",
+    "nx": "^20.0.0"
   }
 }
