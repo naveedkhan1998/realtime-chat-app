@@ -29,7 +29,6 @@ from apps.chat.models import (
 from config.settings import GOOGLE_OAUTH_CLIENT_ID
 import json
 
-
 # =============================================================================
 # Public Pages
 # =============================================================================

@@ -570,7 +570,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
         # If SFU mode is already active, tell the joining user to use SFU
         if sfu_active:
-            logger.info("Room %d already in SFU mode, notifying user %d", room_id, self.user.id)
+            logger.info(
+                "Room %d already in SFU mode, notifying user %d", room_id, self.user.id
+            )
             await self.send(
                 json.dumps(
                     {
@@ -581,8 +583,12 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             )
         # If we just hit the threshold, upgrade everyone to SFU
         elif participant_count >= SFU_PARTICIPANT_THRESHOLD:
-            logger.info("Room %d hit SFU threshold (%d >= %d), upgrading to SFU",
-                       room_id, participant_count, SFU_PARTICIPANT_THRESHOLD)
+            logger.info(
+                "Room %d hit SFU threshold (%d >= %d), upgrading to SFU",
+                room_id,
+                participant_count,
+                SFU_PARTICIPANT_THRESHOLD,
+            )
             await self._trigger_sfu_upgrade(room_id)
 
     async def _leave_huddle(self, room_id: int):
@@ -1325,7 +1331,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         Each user will create their own session when they publish.
         """
         logger.info("Triggering SFU upgrade for room %d", room_id)
-        
+
         # Check if SFU is configured
         if not sfu_service.is_configured:
             logger.warning("SFU not configured - continuing with P2P mesh")
@@ -1333,7 +1339,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
 
         # Mark room as SFU mode
         await self._activate_sfu_mode(room_id)
-        
+
         logger.debug("Broadcasting SFU upgrade to room %d", room_id)
         # Broadcast SFU upgrade to all participants
         room_group = f"chat_{room_id}"
@@ -1348,7 +1354,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     async def _handle_sfu_publish(self, data: Dict[str, Any]):
         """
         Handle SFU track publishing (WHIP - publish local tracks to SFU).
-        
+
         Each user gets their own session. If they don't have one yet,
         we create it when they first publish.
         """
@@ -1388,7 +1394,12 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 )
                 return
             session_id = session_result["session_id"]
-            logger.info("Created session %s for user %d in room %d", session_id, self.user.id, room_id)
+            logger.info(
+                "Created session %s for user %d in room %d",
+                session_id,
+                self.user.id,
+                room_id,
+            )
 
         result = await self._sfu_add_track(room_id, session_id, track_name, sdp_offer)
         if result:
@@ -1431,7 +1442,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     async def _handle_sfu_subscribe(self, data: Dict[str, Any]):
         """
         Handle SFU track subscription (WHEP - subscribe to remote tracks).
-        
+
         New flow (SFU generates the offer):
         1. Client requests subscription (no SDP needed)
         2. We request tracks from Cloudflare - it returns an SDP OFFER
@@ -1460,7 +1471,12 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                 )
                 return
             session_id = session_result["session_id"]
-            logger.info("Created session %s for subscriber %d in room %d", session_id, self.user.id, room_id)
+            logger.info(
+                "Created session %s for subscriber %d in room %d",
+                session_id,
+                self.user.id,
+                room_id,
+            )
 
         # Subscribe to tracks - SFU will generate an offer
         result = await self._sfu_subscribe_tracks(session_id, room_id)
@@ -1475,7 +1491,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
                         "session_id": session_id,
                         "sdp_offer": result.get("sessionDescription", {}),
                         "tracks": result.get("tracks", []),
-                        "requires_renegotiation": result.get("requiresImmediateRenegotiation", True),
+                        "requires_renegotiation": result.get(
+                            "requiresImmediateRenegotiation", True
+                        ),
                     }
                 )
             )

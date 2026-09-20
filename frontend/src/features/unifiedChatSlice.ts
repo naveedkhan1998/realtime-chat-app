@@ -536,6 +536,14 @@ export const selectRoomHuddleParticipants = (
   return room?.huddleParticipants ?? EMPTY_HUDDLE_PARTICIPANTS;
 };
 
+export const selectActiveHuddleRoomIds = createSelector(
+  [(state: RootState) => state.unifiedChat.rooms],
+  rooms =>
+    Object.keys(rooms)
+      .map(Number)
+      .filter(roomId => (rooms[roomId]?.huddleParticipants?.length ?? 0) > 0)
+);
+
 export const selectRoomPagination = (state: RootState, roomId: number) => {
   const room = state.unifiedChat.rooms[roomId];
   return room?.pagination ?? EMPTY_PAGINATION;

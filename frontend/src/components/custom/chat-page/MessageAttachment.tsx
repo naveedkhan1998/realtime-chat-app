@@ -193,16 +193,18 @@ export function MessageAttachment({
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <div className={cn(
-            "relative overflow-hidden border rounded-lg cursor-pointer group border-border/50 bg-background/50",
-            compact && "w-full h-full"
-          )}>
+          <div
+            className={cn(
+              'relative overflow-hidden border rounded-lg cursor-pointer group border-border/50 bg-background/50',
+              compact && 'w-full h-full'
+            )}
+          >
             <img
               src={url}
               alt="Attachment"
               className={cn(
-                "object-cover transition-transform duration-300 group-hover:scale-105",
-                compact ? "w-full h-full" : "max-w-full max-h-[300px]"
+                'object-cover transition-transform duration-300 group-hover:scale-105',
+                compact ? 'w-full h-full' : 'max-w-full max-h-[300px]'
               )}
               loading="lazy"
             />
@@ -252,8 +254,10 @@ export function MessageAttachment({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "grid items-center gap-2 p-2.5 transition-colors border rounded-xl border-border bg-background/50 hover:bg-background/80 group",
-        compact ? "grid-cols-[auto_1fr_auto]" : "grid-cols-[auto_1fr_auto] max-w-sm"
+        'grid items-center gap-2 p-2.5 transition-colors border rounded-xl border-border bg-background/50 hover:bg-background/80 group',
+        compact
+          ? 'grid-cols-[auto_1fr_auto]'
+          : 'grid-cols-[auto_1fr_auto] max-w-sm'
       )}
     >
       <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-500/10">

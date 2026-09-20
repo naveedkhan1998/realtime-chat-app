@@ -71,20 +71,22 @@ def get_ice_servers(request):
             }
             # Request credentials with 1 hour TTL (3600 seconds)
             payload = {"ttl": 3600}
-            
+
             response = requests.post(url, json=payload, headers=headers, timeout=10)
             response.raise_for_status()
-            
+
             data = response.json()
             ice_credentials = data.get("iceServers", {})
-            
+
             # Cloudflare returns: {"iceServers": {"urls": [...], "username": "...", "credential": "..."}}
             if ice_credentials:
-                ice_servers.append({
-                    "urls": ice_credentials.get("urls", []),
-                    "username": ice_credentials.get("username", ""),
-                    "credential": ice_credentials.get("credential", ""),
-                })
+                ice_servers.append(
+                    {
+                        "urls": ice_credentials.get("urls", []),
+                        "username": ice_credentials.get("username", ""),
+                        "credential": ice_credentials.get("credential", ""),
+                    }
+                )
         except requests.exceptions.RequestException as e:
             print(f"Error fetching Cloudflare TURN credentials: {e}")
         except Exception as e:
@@ -258,22 +260,20 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 return Response(existing_data, status=status.HTTP_200_OK)
 
         chat_room = ChatRoom.objects.create(**serializer.validated_data)
-        
+
         # Creator is admin for group chats, member for direct chats
         creator_role = "admin" if is_group_chat else "member"
         ChatRoomParticipant.objects.get_or_create(
-            chat_room=chat_room, user=request.user,
-            defaults={"role": creator_role}
+            chat_room=chat_room, user=request.user, defaults={"role": creator_role}
         )
-        
+
         # Other participants are members
         other_participants = User.objects.filter(id__in=participant_ids).exclude(
             id=request.user.id
         )
         for participant in other_participants:
             ChatRoomParticipant.objects.get_or_create(
-                chat_room=chat_room, user=participant,
-                defaults={"role": "member"}
+                chat_room=chat_room, user=participant, defaults={"role": "member"}
             )
 
         chat_room.refresh_from_db()
@@ -295,17 +295,19 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
     def add_participant(self, request, pk=None):
         """Add a participant to a group chat. Only admins can add participants."""
         chat_room = self.get_object()
-        
+
         if not chat_room.is_group_chat:
-            raise ValidationError({"detail": "Cannot add participants to direct chats."})
-        
+            raise ValidationError(
+                {"detail": "Cannot add participants to direct chats."}
+            )
+
         # Check if requester is admin
         requester_participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user=request.user
         ).first()
         if not requester_participant or requester_participant.role != "admin":
             raise PermissionDenied("Only admins can add participants.")
-        
+
         user_id = request.data.get("user_id")
         if not user_id:
             raise ValidationError({"user_id": "user_id is required."})
@@ -320,7 +322,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         ChatRoomParticipant.objects.create(
             chat_room=chat_room, user=user, role="member"
         )
-        
+
         # Broadcast participant added event
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -329,39 +331,43 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 f"chat_{chat_room.id}",
                 {"type": "broadcast_room_updated", "room": room_data},
             )
-        
+
         return Response({"status": "participant added"})
 
     @action(detail=True, methods=["post"])
     def remove_participant(self, request, pk=None):
         """Remove a participant from a group chat. Only admins can remove participants."""
         chat_room = self.get_object()
-        
+
         if not chat_room.is_group_chat:
-            raise ValidationError({"detail": "Cannot remove participants from direct chats."})
-        
+            raise ValidationError(
+                {"detail": "Cannot remove participants from direct chats."}
+            )
+
         # Check if requester is admin
         requester_participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user=request.user
         ).first()
         if not requester_participant or requester_participant.role != "admin":
             raise PermissionDenied("Only admins can remove participants.")
-        
+
         user_id = request.data.get("user_id")
         if not user_id:
             raise ValidationError({"user_id": "user_id is required."})
-        
+
         if int(user_id) == request.user.id:
-            raise ValidationError({"user_id": "Use the leave endpoint to leave the group."})
-        
+            raise ValidationError(
+                {"user_id": "Use the leave endpoint to leave the group."}
+            )
+
         participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user_id=user_id
         ).first()
         if not participant:
             raise ValidationError({"user_id": "User is not a participant."})
-        
+
         participant.delete()
-        
+
         # Broadcast participant removed event
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -375,40 +381,42 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 f"user_{user_id}",
                 {"type": "removed_from_room", "room_id": chat_room.id},
             )
-        
+
         return Response({"status": "participant removed"})
 
     @action(detail=True, methods=["post"])
     def promote_to_admin(self, request, pk=None):
         """Promote a member to admin. Only admins can promote."""
         chat_room = self.get_object()
-        
+
         if not chat_room.is_group_chat:
             raise ValidationError({"detail": "Admin roles only apply to group chats."})
-        
+
         # Check if requester is admin
         requester_participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user=request.user
         ).first()
         if not requester_participant or requester_participant.role != "admin":
             raise PermissionDenied("Only admins can promote members.")
-        
+
         user_id = request.data.get("user_id")
         if not user_id:
             raise ValidationError({"user_id": "user_id is required."})
-        
+
         participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user_id=user_id
         ).first()
         if not participant:
             raise ValidationError({"user_id": "User is not a participant."})
-        
+
         if participant.role == "admin":
-            return Response({"status": "user is already an admin"}, status=status.HTTP_200_OK)
-        
+            return Response(
+                {"status": "user is already an admin"}, status=status.HTTP_200_OK
+            )
+
         participant.role = "admin"
         participant.save()
-        
+
         # Broadcast role change
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -417,47 +425,51 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 f"chat_{chat_room.id}",
                 {"type": "broadcast_room_updated", "room": room_data},
             )
-        
+
         return Response({"status": "user promoted to admin"})
 
     @action(detail=True, methods=["post"])
     def demote_to_member(self, request, pk=None):
         """Demote an admin to member. Only admins can demote, and there must be at least one admin."""
         chat_room = self.get_object()
-        
+
         if not chat_room.is_group_chat:
             raise ValidationError({"detail": "Admin roles only apply to group chats."})
-        
+
         # Check if requester is admin
         requester_participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user=request.user
         ).first()
         if not requester_participant or requester_participant.role != "admin":
             raise PermissionDenied("Only admins can demote members.")
-        
+
         user_id = request.data.get("user_id")
         if not user_id:
             raise ValidationError({"user_id": "user_id is required."})
-        
+
         participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user_id=user_id
         ).first()
         if not participant:
             raise ValidationError({"user_id": "User is not a participant."})
-        
+
         if participant.role != "admin":
-            return Response({"status": "user is already a member"}, status=status.HTTP_200_OK)
-        
+            return Response(
+                {"status": "user is already a member"}, status=status.HTTP_200_OK
+            )
+
         # Check that there will still be at least one admin
         admin_count = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, role="admin"
         ).count()
         if admin_count <= 1:
-            raise ValidationError({"detail": "Cannot demote the last admin. Promote someone else first."})
-        
+            raise ValidationError(
+                {"detail": "Cannot demote the last admin. Promote someone else first."}
+            )
+
         participant.role = "member"
         participant.save()
-        
+
         # Broadcast role change
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -466,31 +478,31 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 f"chat_{chat_room.id}",
                 {"type": "broadcast_room_updated", "room": room_data},
             )
-        
+
         return Response({"status": "user demoted to member"})
 
     @action(detail=True, methods=["post"])
     def rename_group(self, request, pk=None):
         """Rename a group chat. Only admins can rename."""
         chat_room = self.get_object()
-        
+
         if not chat_room.is_group_chat:
             raise ValidationError({"detail": "Only group chats can be renamed."})
-        
+
         # Check if requester is admin
         requester_participant = ChatRoomParticipant.objects.filter(
             chat_room=chat_room, user=request.user
         ).first()
         if not requester_participant or requester_participant.role != "admin":
             raise PermissionDenied("Only admins can rename the group.")
-        
+
         new_name = request.data.get("name")
         if not new_name or not new_name.strip():
             raise ValidationError({"name": "Group name is required."})
-        
+
         chat_room.name = new_name.strip()
         chat_room.save()
-        
+
         # Broadcast room update
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -499,7 +511,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 f"chat_{chat_room.id}",
                 {"type": "broadcast_room_updated", "room": room_data},
             )
-        
+
         return Response({"status": "group renamed", "name": chat_room.name})
 
     def destroy(self, request, *args, **kwargs):
@@ -512,36 +524,47 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             leaving_participant = ChatRoomParticipant.objects.filter(
                 chat_room=chat_room, user=user
             ).first()
-            
+
             if not leaving_participant:
-                raise ValidationError({"detail": "You are not a participant in this chat."})
-            
+                raise ValidationError(
+                    {"detail": "You are not a participant in this chat."}
+                )
+
             is_admin = leaving_participant.role == "admin"
-            
+
             # Check if this is the last participant
-            remaining_count = ChatRoomParticipant.objects.filter(chat_room=chat_room).count()
-            
+            remaining_count = ChatRoomParticipant.objects.filter(
+                chat_room=chat_room
+            ).count()
+
             if remaining_count <= 1:
                 # Last participant leaving, delete the entire room
                 chat_room.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            
+
             # If leaving user is an admin, check if there are other admins
             if is_admin:
-                other_admins = ChatRoomParticipant.objects.filter(
-                    chat_room=chat_room, role="admin"
-                ).exclude(user=user).exists()
-                
+                other_admins = (
+                    ChatRoomParticipant.objects.filter(
+                        chat_room=chat_room, role="admin"
+                    )
+                    .exclude(user=user)
+                    .exists()
+                )
+
                 if not other_admins:
                     # No other admins, promote the oldest member
-                    oldest_member = ChatRoomParticipant.objects.filter(
-                        chat_room=chat_room
-                    ).exclude(user=user).order_by("joined_at").first()
-                    
+                    oldest_member = (
+                        ChatRoomParticipant.objects.filter(chat_room=chat_room)
+                        .exclude(user=user)
+                        .order_by("joined_at")
+                        .first()
+                    )
+
                     if oldest_member:
                         oldest_member.role = "admin"
                         oldest_member.save()
-                        
+
                         # Notify the new admin
                         channel_layer = get_channel_layer()
                         if channel_layer:
@@ -553,10 +576,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                                     "room_name": chat_room.name,
                                 },
                             )
-            
+
             # Remove the leaving participant
             leaving_participant.delete()
-            
+
             # Broadcast room update to remaining participants
             channel_layer = get_channel_layer()
             if channel_layer:
@@ -566,7 +589,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                     f"chat_{chat_room.id}",
                     {"type": "broadcast_room_updated", "room": room_data},
                 )
-            
+
             return Response({"status": "left group"}, status=status.HTTP_200_OK)
         else:
             # For 1:1 chats, delete the entire chat room
@@ -783,30 +806,32 @@ class NotificationViewSet(viewsets.ModelViewSet):
                 {"error": "chat_room_id is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         # Mark notifications as read
-        updated = self.get_queryset().filter(
-            chat_room_id=chat_room_id, is_read=False
-        ).update(is_read=True)
-        
-        # Also create read receipts for all unread messages in this room
-        unread_messages = Message.objects.filter(
-            chat_room_id=chat_room_id
-        ).exclude(
-            sender=request.user
-        ).exclude(
-            read_receipts__user=request.user
+        updated = (
+            self.get_queryset()
+            .filter(chat_room_id=chat_room_id, is_read=False)
+            .update(is_read=True)
         )
-        
+
+        # Also create read receipts for all unread messages in this room
+        unread_messages = (
+            Message.objects.filter(chat_room_id=chat_room_id)
+            .exclude(sender=request.user)
+            .exclude(read_receipts__user=request.user)
+        )
+
         read_receipts = [
             MessageReadReceipt(message=msg, user=request.user)
             for msg in unread_messages
         ]
         if read_receipts:
             MessageReadReceipt.objects.bulk_create(read_receipts, ignore_conflicts=True)
-        
-        return Response({
-            "status": "notifications marked as read",
-            "count": updated,
-            "messages_marked": len(read_receipts)
-        })
+
+        return Response(
+            {
+                "status": "notifications marked as read",
+                "count": updated,
+                "messages_marked": len(read_receipts),
+            }
+        )

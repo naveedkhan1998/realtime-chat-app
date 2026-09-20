@@ -161,7 +161,7 @@ export interface HuddleSfuSessionEvent {
 export interface HuddleSfuPublishAnswerEvent {
   type: 'huddle.sfu_publish_answer';
   room_id: number;
-  session_id?: string;  // User's session ID (returned from server)
+  session_id?: string; // User's session ID (returned from server)
   track_name: string;
   sdp_answer: RTCSessionDescriptionInit;
   tracks: Array<{ mid: string; trackName: string }>;
@@ -268,6 +268,7 @@ export interface CursorPosition {
 export interface HuddleParticipant {
   id: number;
   name: string;
+  avatar?: string | null;
 }
 
 export interface HuddleSignalPayload {

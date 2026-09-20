@@ -4,6 +4,11 @@ set -e
 
 echo "Entrypoint script starting..."
 
+# If command arguments are passed, execute them instead
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+fi
+
 # Check if we are in production or development
 # If DJANGO_DEBUG is missing, default to False (Production behavior)
 DEBUG=${DJANGO_DEBUG:-False}
@@ -15,7 +20,7 @@ if [ "$DEBUG" = "True" ] || [ "$DEBUG" = "true" ] || [ "$DEBUG" = "1" ]; then
     python3 manage.py migrate
     
     echo "Starting Django development server..."
-    python3 manage.py runserver 0.0.0.0:8000
+    exec python3 manage.py runserver 0.0.0.0:8000
 else
     # Production settings
     echo "Running in production mode..."

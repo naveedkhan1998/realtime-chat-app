@@ -110,20 +110,21 @@ export function useNotifications(activeChatId?: number) {
         const senderName = event.sender_name || 'Someone';
         const messagePreview = event.has_attachment
           ? '📎 Sent an attachment'
-          : event.message_content?.substring(0, 50) ||
-            'Sent you a message';
+          : event.message_content?.substring(0, 50) || 'Sent you a message';
 
-        showDesktopNotification(
-          senderName,
-          messagePreview,
-          () => {
-            // Navigate to the chat when notification is clicked
-            window.location.href = `/chat/${event.chat_room_id}`;
-          }
-        );
+        showDesktopNotification(senderName, messagePreview, () => {
+          // Navigate to the chat when notification is clicked
+          window.location.href = `/chat/${event.chat_room_id}`;
+        });
       }
     },
-    [currentUserId, activeChatId, soundEnabled, canShowDesktop, showDesktopNotification]
+    [
+      currentUserId,
+      activeChatId,
+      soundEnabled,
+      canShowDesktop,
+      showDesktopNotification,
+    ]
   );
 
   // Subscribe to new message notifications via WebSocket

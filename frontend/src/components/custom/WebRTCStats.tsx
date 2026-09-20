@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn, getAvatarUrl } from '@/lib/utils';
 
 // ============ TYPES ============
-interface SfuStats {
+export interface SfuStats {
   publish?: {
     connectionState: string;
     type: string;
@@ -55,7 +55,7 @@ interface SfuStats {
   timestamp?: number;
 }
 
-interface WebRTCStatsProps {
+export interface WebRTCStatsProps {
   connectionDetails: Record<number, ConnectionDetail>;
   connectedPeers: Array<{ id: number; name: string; avatar: string }>;
   isUsingSfu?: boolean;
@@ -63,7 +63,7 @@ interface WebRTCStatsProps {
   scrollable?: boolean;
 }
 
-interface ConnectionDetail {
+export interface ConnectionDetail {
   type: string;
   connectionPath: string;
   quality: string;
@@ -675,7 +675,7 @@ PeerStats.displayName = 'PeerStats';
 const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
   const publishQuality = sfuStats.publish?.quality || 'unknown';
   const subscribeQuality = sfuStats.subscribe?.quality || 'unknown';
-  
+
   // Overall quality is the worst of the two
   const overallQuality = useMemo(() => {
     const qualityOrder = ['poor', 'fair', 'good', 'excellent'];
@@ -705,7 +705,9 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Cloudflare SFU</h3>
-              <p className="text-xs text-muted-foreground">Selective Forwarding Unit</p>
+              <p className="text-xs text-muted-foreground">
+                Selective Forwarding Unit
+              </p>
             </div>
           </div>
           <QualityIndicator quality={overallQuality} />
@@ -726,7 +728,9 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 </div>
                 <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground">You</span>
+              <span className="text-[10px] font-medium text-muted-foreground">
+                You
+              </span>
             </div>
 
             {/* Connection line to SFU */}
@@ -748,7 +752,9 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 </div>
                 <div className="absolute w-3 h-3 bg-blue-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground">SFU</span>
+              <span className="text-[10px] font-medium text-muted-foreground">
+                SFU
+              </span>
             </div>
 
             {/* Connection line to peers */}
@@ -769,7 +775,9 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                   <Server className="w-5 h-5 text-indigo-500" />
                 </div>
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground">Peers</span>
+              <span className="text-[10px] font-medium text-muted-foreground">
+                Peers
+              </span>
             </div>
           </div>
         </div>
@@ -818,7 +826,9 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
         <div className="p-4 space-y-4 border rounded-xl bg-card border-border/50">
           <div className="flex items-center gap-2">
             <Download className="w-4 h-4 text-blue-500" />
-            <h4 className="font-medium text-foreground">Download (Subscribe)</h4>
+            <h4 className="font-medium text-foreground">
+              Download (Subscribe)
+            </h4>
             <Badge variant="outline" className="ml-auto text-xs">
               {sfuStats.subscribe.connectionState}
             </Badge>
@@ -852,7 +862,11 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 icon={AlertTriangle}
                 label="Packet Loss"
                 value={`${sfuStats.subscribe.audio.packetLossPercent.toFixed(2)}%`}
-                color={sfuStats.subscribe.audio.packetLossPercent > 2 ? 'text-red-500' : 'text-green-500'}
+                color={
+                  sfuStats.subscribe.audio.packetLossPercent > 2
+                    ? 'text-red-500'
+                    : 'text-green-500'
+                }
               />
             )}
             {sfuStats.subscribe.audio?.jitter !== undefined && (
@@ -900,7 +914,7 @@ function WebRTCStats({
   // SFU mode: show SFU stats
   if (isUsingSfu && sfuStats && (sfuStats.publish || sfuStats.subscribe)) {
     const content = <SfuStatsDisplay sfuStats={sfuStats} />;
-    
+
     if (scrollable) {
       return <ScrollArea className="max-h-[70vh] pr-4">{content}</ScrollArea>;
     }
