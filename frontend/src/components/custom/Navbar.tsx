@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { useTheme } from '@/hooks/useTheme';
 import { logOut } from '@/features/authSlice';
 import { useLogoutMutation } from '@/services/authApi';
-import { Menu, Moon, Sun, Home, User, LogOut, Group } from 'lucide-react';
+import { Menu, Moon, Sun, Home, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -72,16 +72,6 @@ const Navbar: React.FC = () => {
             }}
           >
             <User className="w-5 h-5" /> Chat
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex items-center justify-start gap-2"
-            onClick={() => {
-              navigate('/friends');
-              setIsMenuOpen(false); // Close menu after navigation
-            }}
-          >
-            <Group className="w-5 h-5" /> Friends
           </Button>
         </>
       ) : (

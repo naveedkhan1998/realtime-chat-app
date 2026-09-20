@@ -108,7 +108,7 @@ export default function HuddleBar() {
 
   return (
     <>
-      <div className="fixed bottom-16 sm:bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-xl pointer-events-auto">
+      <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-xl pointer-events-auto">
         <motion.div
           initial={{ y: 50, opacity: 0, scale: 0.95 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}

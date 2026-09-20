@@ -10,6 +10,9 @@ import {
   MicOff,
   Hash,
   PanelRight,
+  MoreVertical,
+  Info,
+  ShieldCheck,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -19,6 +22,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn, getAvatarUrl } from '@/lib/utils';
 import { ChatRoom } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
@@ -101,91 +110,107 @@ export default function ChatHeader({
 
   return (
     <>
-      <header className="relative z-20 flex items-center justify-between gap-3 px-3.5 sm:px-6 py-2.5 sm:py-3 border-b border-border/60 bg-card/70 backdrop-blur-xl shrink-0 shadow-sm">
-        {/* Left Side: Back button + Avatar + Channel/User Identity */}
-        <div className="flex items-center flex-1 gap-2.5 sm:gap-3 min-w-0">
+      <header className="relative z-20 flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-border/50 bg-card/85 dark:bg-card/90 backdrop-blur-2xl shrink-0 shadow-xs transition-colors">
+        {/* Left Side: Back button + Clickable Profile/Channel Identity */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           {isMobile && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setActiveChat(undefined)}
-              className="w-8 h-8 -ml-1.5 rounded-xl hover:bg-muted text-muted-foreground shrink-0"
+              className="w-9 h-9 -ml-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/70 active:scale-95 transition-all shrink-0"
               aria-label="Back to conversations list"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
 
-          {/* Identity Icon / Avatar */}
-          {isGroup ? (
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center text-primary font-bold shadow-inner shrink-0">
-              <Hash className="w-5 h-5 stroke-[2.5]" />
-            </div>
-          ) : (
-            <div className="relative shrink-0">
-              <Avatar className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-border/60 shadow-inner">
-                <AvatarImage
-                  src={getAvatarUrl(otherParticipant.avatar)}
-                  alt={otherParticipant.name}
-                  className="object-cover"
-                />
-                <AvatarFallback className="font-bold bg-primary/10 text-primary rounded-xl text-xs sm:text-sm">
-                  {otherParticipant.name?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              {isOnline && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-card shadow-sm shadow-emerald-500/50" />
-              )}
-            </div>
-          )}
+          {/* Interactive Profile / Channel Identity Area (tapping opens details) */}
+          <button
+            type="button"
+            onClick={onInfoClick}
+            className="flex items-center gap-2.5 sm:gap-3 min-w-0 text-left rounded-xl p-1 -m-1 hover:bg-muted/40 active:bg-muted/60 transition-colors group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            title="View conversation details"
+            aria-label="View conversation details"
+          >
+            {/* Identity Icon / Avatar */}
+            {isGroup ? (
+              <div className="relative shrink-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-indigo-500/20 border border-primary/25 flex items-center justify-center text-primary font-bold shadow-xs transition-transform group-hover:scale-102">
+                  <Hash className="w-5 h-5 stroke-[2.2]" />
+                </div>
+                {isOnline && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-card shadow-xs" />
+                )}
+              </div>
+            ) : (
+              <div className="relative shrink-0">
+                <Avatar className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border border-border/70 shadow-xs transition-transform group-hover:scale-102">
+                  <AvatarImage
+                    src={getAvatarUrl(otherParticipant.avatar)}
+                    alt={otherParticipant.name}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="font-bold bg-primary/10 text-primary rounded-2xl text-xs sm:text-sm">
+                    {otherParticipant.name?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                {isOnline && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-card shadow-xs shadow-emerald-500/50" />
+                )}
+              </div>
+            )}
 
-          {/* Title & Presence Subtitle */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm sm:text-base font-bold truncate text-foreground tracking-tight">
-                {isGroup
-                  ? `# ${activeRoom?.name || 'channel'}`
-                  : otherParticipant.name}
-              </h2>
-              {isHuddleActive && (
-                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 hidden xs:inline-flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  In Call
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              {isHuddleActive ? (
-                <span className="text-emerald-400 font-medium flex items-center gap-1">
-                  <Phone className="w-3 h-3 text-emerald-400" />
-                  {huddleUsers.length} in call
-                </span>
-              ) : huddleUsers.length > 0 ? (
-                <span className="text-emerald-400 font-medium flex items-center gap-1">
-                  <PhoneCall className="w-3 h-3 text-emerald-400 animate-pulse" />
-                  Voice call active ({huddleUsers.length})
-                </span>
-              ) : isOnline ? (
-                <span className="text-emerald-500 font-medium flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {isGroup ? `${activeMembersCount} active` : 'Active now'}
-                </span>
-              ) : (
-                <span className="text-muted-foreground/80">
+            {/* Title & Presence Subtitle */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-sm sm:text-base font-bold truncate text-foreground tracking-tight group-hover:text-primary transition-colors">
                   {isGroup
-                    ? `${activeRoom?.participants.length || 0} members`
-                    : 'Offline'}
-                </span>
-              )}
+                    ? `# ${activeRoom?.name || 'channel'}`
+                    : otherParticipant.name}
+                </h2>
+                {isHuddleActive && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 text-[10px] font-bold border border-emerald-500/30 hidden xs:inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    In Call
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+                {isHuddleActive ? (
+                  <span className="text-emerald-500 font-medium flex items-center gap-1 truncate">
+                    <Phone className="w-3 h-3 text-emerald-500 shrink-0" />
+                    {huddleUsers.length} in call
+                  </span>
+                ) : huddleUsers.length > 0 ? (
+                  <span className="text-emerald-500 font-medium flex items-center gap-1 truncate">
+                    <PhoneCall className="w-3 h-3 text-emerald-500 animate-pulse shrink-0" />
+                    Voice active ({huddleUsers.length})
+                  </span>
+                ) : isOnline ? (
+                  <span className="text-emerald-500 font-medium flex items-center gap-1 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    {isGroup
+                      ? `${activeMembersCount} online`
+                      : 'Active now'}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground/80 truncate">
+                    {isGroup
+                      ? `${activeRoom?.participants.length || 0} members`
+                      : 'Offline'}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          </button>
         </div>
 
-        {/* Right Side: Voice Call Controls + Live Stats + Details Drawer Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Active Speaking / In-call Avatars */}
-          {huddleUsers.length > 0 && (
+        {/* Right Side: Call Controls + Telemetry + Details Toggle */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Active Speaking / In-call Avatars (Desktop only) */}
+          {huddleUsers.length > 0 && !isMobile && (
             <div className="flex items-center -space-x-2 mr-1">
               <TooltipProvider delayDuration={150}>
                 {huddleUsers.slice(0, 3).map(p => {
@@ -195,7 +220,7 @@ export default function ChatHeader({
                       <TooltipTrigger asChild>
                         <Avatar
                           className={cn(
-                            'w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-background ring-2 transition-all duration-200',
+                            'w-7 h-7 sm:w-8 sm:h-8 rounded-xl border-2 border-background ring-2 transition-all duration-200',
                             isSpeaking
                               ? 'ring-emerald-500 ring-offset-1 scale-105'
                               : 'ring-purple-500/30'
@@ -217,52 +242,11 @@ export default function ChatHeader({
                 })}
               </TooltipProvider>
               {huddleUsers.length > 3 && (
-                <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-card border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-card border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground">
                   +{huddleUsers.length - 3}
                 </span>
               )}
             </div>
-          )}
-
-          {/* Connection Mode Badge */}
-          {isHuddleActive && huddleUsers.length > 0 && (
-            <span
-              className={cn(
-                'px-2 py-0.5 text-[10px] font-mono font-bold rounded-lg border hidden sm:inline-block',
-                isUsingSfu
-                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-              )}
-              title={
-                isUsingSfu
-                  ? 'Cloudflare SFU Multi-peer Routing'
-                  : 'Direct P2P Mesh WebRTC'
-              }
-            >
-              {isUsingSfu ? 'SFU' : 'P2P'}
-            </span>
-          )}
-
-          {/* Telemetry Stats Button */}
-          {hasActiveConnection && (
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors"
-                    onClick={() => setShowConnectionDetails(true)}
-                    aria-label="WebRTC Telemetry"
-                  >
-                    <Activity className="w-4 h-4 animate-pulse" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>WebRTC Telemetry</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           )}
 
           {/* Inline Mute Toggle if in call */}
@@ -305,26 +289,28 @@ export default function ChatHeader({
                   <Button
                     variant="destructive"
                     onClick={stopHuddle}
-                    className="h-9 px-4 rounded-xl font-semibold text-xs shadow-md shadow-destructive/25 gap-2 active:scale-95 transition-all"
+                    className="h-8 sm:h-9 px-2.5 sm:px-4 rounded-xl font-semibold text-xs shadow-sm shadow-destructive/25 gap-1.5 active:scale-95 transition-all"
                   >
-                    <PhoneOff className="w-4 h-4" />
-                    <span>End Call</span>
+                    <PhoneOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline">End Call</span>
                   </Button>
                 ) : huddleUsers.length > 0 ? (
                   <Button
                     onClick={startHuddle}
-                    className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/25 gap-2 active:scale-95 transition-all"
+                    className="h-8 sm:h-9 px-2.5 sm:px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-sm shadow-emerald-600/25 gap-1.5 active:scale-95 transition-all"
                   >
-                    <PhoneCall className="w-4 h-4 animate-bounce" />
+                    <PhoneCall className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />
                     <span>Join ({huddleUsers.length})</span>
                   </Button>
                 ) : (
                   <Button
                     onClick={startHuddle}
-                    className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/25 gap-2 active:scale-95 transition-all"
+                    variant="outline"
+                    className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 font-medium text-xs transition-all gap-1.5"
+                    aria-label="Start voice call"
                   >
-                    <Phone className="w-4 h-4" />
-                    <span>Call</span>
+                    <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Call</span>
                   </Button>
                 )}
               </TooltipTrigger>
@@ -333,7 +319,7 @@ export default function ChatHeader({
                   {isHuddleActive
                     ? 'End voice call'
                     : huddleUsers.length > 0
-                      ? `Join active voice call (${huddleUsers.length} in call)`
+                      ? `Join voice call (${huddleUsers.length} in call)`
                       : isGroup
                         ? 'Start group voice call'
                         : `Call ${otherParticipant.name}`}
@@ -342,7 +328,29 @@ export default function ChatHeader({
             </Tooltip>
           </TooltipProvider>
 
-          {/* Toggle Details Panel */}
+          {/* Desktop WebRTC Telemetry Stats Button */}
+          {hasActiveConnection && !isMobile && (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                    onClick={() => setShowConnectionDetails(true)}
+                    aria-label="WebRTC Telemetry"
+                  >
+                    <Activity className="w-4 h-4 animate-pulse" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>WebRTC Diagnostics</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Info Details Panel Toggle Button */}
           <TooltipProvider delayDuration={150}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -352,8 +360,8 @@ export default function ChatHeader({
                   className={cn(
                     'w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all',
                     isInfoOpen
-                      ? 'bg-primary/20 text-primary border border-primary/30 shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      ? 'bg-primary/15 text-primary border border-primary/25 shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/70'
                   )}
                   onClick={onInfoClick}
                   aria-label="Conversation details"
@@ -363,11 +371,39 @@ export default function ChatHeader({
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 <p>
-                  {isInfoOpen ? 'Hide Details' : 'Show Conversation Details'}
+                  {isInfoOpen ? 'Hide Details' : 'Conversation Details'}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {/* Mobile Overflow Menu */}
+          {isMobile && hasActiveConnection && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                <DropdownMenuItem
+                  onClick={() => setShowConnectionDetails(true)}
+                  className="gap-2 text-xs"
+                >
+                  <Activity className="w-4 h-4 text-emerald-500" />
+                  <span>Call Diagnostics</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onInfoClick} className="gap-2 text-xs">
+                  <Info className="w-4 h-4 text-primary" />
+                  <span>View Details</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </header>
 
@@ -477,9 +513,9 @@ export default function ChatHeader({
                   {isUsingSfu ? 'Cloudflare SFU' : 'Peer-to-Peer'}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-card border border-border/50 text-muted-foreground">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                   {connectedPeers.length} peer
-                  {connectedPeers.length !== 1 ? 's' : ''}
+                  {connectedPeers.length !== 1 ? 's' : ''} connected
                 </span>
               </div>
             </div>

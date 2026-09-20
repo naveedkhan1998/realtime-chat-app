@@ -20,7 +20,6 @@ import { useAppSelector } from './app/hooks';
 import HomePage from './pages/app/home-page';
 import ChatPage from './pages/app/chat-page';
 import NewChatPage from './pages/app/new-chat-page';
-import FriendsPage from './pages/app/friends-page';
 import ProfilePage from './pages/app/profile-page';
 import SettingsPage from './pages/app/settings-page';
 import NotificationsPage from './pages/app/notifications-page';
@@ -81,7 +80,10 @@ const App: React.FC = () => {
                 >
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/chat/:chatId" element={<ChatPage />} />
-                  <Route path="/friends" element={<FriendsPage />} />
+                  <Route
+                    path="/friends"
+                    element={<Navigate to="/chat" replace />}
+                  />
                   <Route path="/new-chat" element={<NewChatPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/settings" element={<SettingsPage />} />

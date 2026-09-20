@@ -2,7 +2,7 @@ import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import {
   MessageSquare,
   Radio,
-  Users,
+  User,
   Bell,
   Settings,
   Plus,
@@ -17,10 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 import ThemeSwitch from './ThemeSwitch';
 import { useAppSelector } from '@/app/hooks';
-import {
-  useGetNotificationsQuery,
-  useGetFriendRequestsQuery,
-} from '@/services/chatApi';
+import { useGetNotificationsQuery } from '@/services/chatApi';
 import { useHuddle } from '@/contexts/HuddleContext';
 import { cn, getAvatarUrl } from '@/lib/utils';
 
@@ -47,14 +44,11 @@ export default function NavigationRail({
   const { isHuddleActive } = useHuddle();
 
   const { data: notifications } = useGetNotificationsQuery();
-  const { data: friendRequests } = useGetFriendRequestsQuery();
 
   const unreadNotificationsCount =
     notifications?.filter(n => !n.is_read).length || 0;
-  const pendingRequestsCount = friendRequests?.length || 0;
 
   const isChatActive = location.pathname.startsWith('/chat');
-  const isFriendsActive = location.pathname === '/friends';
   const isNotificationsActive = location.pathname === '/notifications';
   const isSettingsActive = location.pathname === '/settings';
   const isProfileActive = location.pathname === '/profile';
@@ -65,7 +59,7 @@ export default function NavigationRail({
       <aside
         className={cn(
           'w-[68px] sm:w-[72px] h-full flex flex-col items-center justify-between py-3 px-2',
-          'bg-card/90 dark:bg-card/95 border-r border-border/60 backdrop-blur-xl',
+          'bg-card/95 dark:bg-card/98 border-r border-border/70 backdrop-blur-2xl shadow-xs',
           'select-none flex-shrink-0 z-30 transition-all duration-300',
           className
         )}
@@ -78,7 +72,8 @@ export default function NavigationRail({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => navigate('/chat')}
-                  className="group relative flex items-center justify-center w-12 h-12 rounded-[22px] hover:rounded-[14px] bg-gradient-to-tr from-primary to-indigo-600 text-white shadow-lg shadow-primary/25 transition-all duration-200"
+                  className="group relative flex items-center justify-center w-12 h-12 rounded-[20px] hover:rounded-[14px] bg-gradient-to-tr from-primary via-primary/95 to-indigo-600 text-white shadow-md shadow-primary/25 transition-all duration-200 active:scale-95"
+                  aria-label="Workspace Hub"
                 >
                   <Compass className="w-6 h-6 transition-transform duration-200 group-hover:rotate-45" />
                 </button>
@@ -104,8 +99,8 @@ export default function NavigationRail({
                       className={cn(
                         'absolute left-0 w-1 bg-primary rounded-r-full transition-all duration-200',
                         isChatActive && !isVoiceFilterActive
-                          ? 'h-9'
-                          : 'h-0 group-hover:h-5'
+                          ? 'h-8'
+                          : 'h-0 group-hover:h-4'
                       )}
                     />
 
@@ -117,12 +112,13 @@ export default function NavigationRail({
                         navigate('/chat');
                       }}
                       className={cn(
-                        'relative flex items-center justify-center w-12 h-12 rounded-[22px] transition-all duration-200',
+                        'relative flex items-center justify-center w-12 h-12 rounded-[20px] transition-all duration-200',
                         'group-hover:rounded-[14px]',
                         isChatActive && !isVoiceFilterActive
-                          ? 'bg-primary text-primary-foreground rounded-[14px] shadow-md shadow-primary/20'
+                          ? 'bg-primary text-primary-foreground rounded-[14px] shadow-sm shadow-primary/25'
                           : 'bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary'
                       )}
+                      aria-label="Conversations"
                     >
                       <MessageSquare className="w-5 h-5" />
                     </button>
@@ -144,8 +140,8 @@ export default function NavigationRail({
                       className={cn(
                         'absolute left-0 w-1 bg-emerald-500 rounded-r-full transition-all duration-200',
                         isVoiceFilterActive || isHuddleActive
-                          ? 'h-9'
-                          : 'h-0 group-hover:h-5'
+                          ? 'h-8'
+                          : 'h-0 group-hover:h-4'
                       )}
                     />
 
@@ -155,14 +151,15 @@ export default function NavigationRail({
                         if (!isChatActive) navigate('/chat');
                       }}
                       className={cn(
-                        'relative flex items-center justify-center w-12 h-12 rounded-[22px] transition-all duration-200',
+                        'relative flex items-center justify-center w-12 h-12 rounded-[20px] transition-all duration-200',
                         'group-hover:rounded-[14px]',
                         isVoiceFilterActive
-                          ? 'bg-emerald-600 text-white rounded-[14px] shadow-md shadow-emerald-600/25'
+                          ? 'bg-emerald-600 text-white rounded-[14px] shadow-sm shadow-emerald-600/25'
                           : isHuddleActive
                             ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30'
                             : 'bg-muted/40 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-500'
                       )}
+                      aria-label="Voice Huddles"
                     >
                       <Radio
                         className={cn(
@@ -173,7 +170,7 @@ export default function NavigationRail({
 
                       {/* Active Voice Badge */}
                       {activeVoiceCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-background">
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold text-white shadow-xs ring-2 ring-background">
                           {activeVoiceCount}
                         </span>
                       )}
@@ -188,7 +185,7 @@ export default function NavigationRail({
               </Tooltip>
             </TooltipProvider>
 
-            {/* 3. Connections & Friends */}
+            {/* 3. Notifications */}
             <TooltipProvider delayDuration={100}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -196,62 +193,25 @@ export default function NavigationRail({
                     <span
                       className={cn(
                         'absolute left-0 w-1 bg-primary rounded-r-full transition-all duration-200',
-                        isFriendsActive ? 'h-9' : 'h-0 group-hover:h-5'
-                      )}
-                    />
-
-                    <button
-                      onClick={() => navigate('/friends')}
-                      className={cn(
-                        'relative flex items-center justify-center w-12 h-12 rounded-[22px] transition-all duration-200',
-                        'group-hover:rounded-[14px]',
-                        isFriendsActive
-                          ? 'bg-primary text-primary-foreground rounded-[14px] shadow-md shadow-primary/20'
-                          : 'bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary'
-                      )}
-                    >
-                      <Users className="w-5 h-5" />
-
-                      {pendingRequestsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white ring-2 ring-background">
-                          {pendingRequestsCount}
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Friends & Connections
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* 4. Notifications */}
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="relative group w-full flex items-center justify-center">
-                    <span
-                      className={cn(
-                        'absolute left-0 w-1 bg-primary rounded-r-full transition-all duration-200',
-                        isNotificationsActive ? 'h-9' : 'h-0 group-hover:h-5'
+                        isNotificationsActive ? 'h-8' : 'h-0 group-hover:h-4'
                       )}
                     />
 
                     <button
                       onClick={() => navigate('/notifications')}
                       className={cn(
-                        'relative flex items-center justify-center w-12 h-12 rounded-[22px] transition-all duration-200',
+                        'relative flex items-center justify-center w-12 h-12 rounded-[20px] transition-all duration-200',
                         'group-hover:rounded-[14px]',
                         isNotificationsActive
-                          ? 'bg-primary text-primary-foreground rounded-[14px] shadow-md shadow-primary/20'
+                          ? 'bg-primary text-primary-foreground rounded-[14px] shadow-sm shadow-primary/25'
                           : 'bg-muted/40 text-muted-foreground hover:bg-primary/10 hover:text-primary'
                       )}
+                      aria-label="Notifications"
                     >
                       <Bell className="w-5 h-5" />
 
                       {unreadNotificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white ring-2 ring-background">
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white ring-2 ring-background shadow-xs">
                           {unreadNotificationsCount > 9
                             ? '9+'
                             : unreadNotificationsCount}
@@ -274,7 +234,8 @@ export default function NavigationRail({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => navigate('/new-chat')}
-                  className="flex items-center justify-center w-11 h-11 rounded-[20px] hover:rounded-[12px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-all duration-200"
+                  className="flex items-center justify-center w-11 h-11 rounded-[18px] hover:rounded-[12px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-all duration-200"
+                  aria-label="Start New Chat or Channel"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -305,6 +266,7 @@ export default function NavigationRail({
                       ? 'bg-muted text-foreground'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
+                  aria-label="Settings"
                 >
                   <Settings className="w-5 h-5" />
                 </NavLink>
@@ -328,8 +290,9 @@ export default function NavigationRail({
                         ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
                         : 'hover:ring-2 hover:ring-primary/40'
                     )}
+                    aria-label="View Profile"
                   >
-                    <Avatar className="w-10 h-10 border border-border shadow-sm">
+                    <Avatar className="w-10 h-10 border border-border/80 shadow-xs">
                       <AvatarImage
                         src={getAvatarUrl(user.avatar)}
                         alt={user.name}
@@ -351,9 +314,16 @@ export default function NavigationRail({
         </div>
       </aside>
 
-      {/* 2. Mobile Bottom Navigation Dock (Shown only on small screens when not inside a chat) */}
+      {/* 2. Mobile Bottom Navigation Dock (Shown on small screens when not inside an active chat) */}
       {isMobile && !activeChat && (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden h-14 bg-card/95 backdrop-blur-xl border-t border-border/80 flex items-center justify-around px-2 shadow-lg">
+        <nav
+          className={cn(
+            'fixed bottom-0 left-0 right-0 z-40 md:hidden',
+            'h-[calc(3.5rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)]',
+            'bg-card/95 dark:bg-card/98 backdrop-blur-2xl border-t border-border/70 shadow-lg',
+            'flex items-center justify-around px-3'
+          )}
+        >
           {/* Chats */}
           <button
             onClick={() => {
@@ -362,11 +332,12 @@ export default function NavigationRail({
               navigate('/chat');
             }}
             className={cn(
-              'flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors relative',
+              'flex flex-col items-center justify-center py-1 px-3.5 rounded-2xl transition-all duration-200 relative active:scale-95',
               isChatActive && !isVoiceFilterActive
-                ? 'text-primary'
+                ? 'text-primary font-semibold bg-primary/10 dark:bg-primary/15'
                 : 'text-muted-foreground hover:text-foreground'
             )}
+            aria-label="Conversations"
           >
             <MessageSquare className="w-5 h-5" />
             <span className="text-[10px] font-medium mt-0.5">Chats</span>
@@ -379,11 +350,12 @@ export default function NavigationRail({
               if (!isChatActive) navigate('/chat');
             }}
             className={cn(
-              'flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors relative',
+              'flex flex-col items-center justify-center py-1 px-3.5 rounded-2xl transition-all duration-200 relative active:scale-95',
               isVoiceFilterActive
-                ? 'text-emerald-500'
+                ? 'text-emerald-500 font-semibold bg-emerald-500/10 dark:bg-emerald-500/15'
                 : 'text-muted-foreground hover:text-emerald-500'
             )}
+            aria-label="Voice Huddles"
           >
             <Radio
               className={cn(
@@ -393,26 +365,7 @@ export default function NavigationRail({
             />
             <span className="text-[10px] font-medium mt-0.5">Voice</span>
             {activeVoiceCount > 0 && (
-              <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            )}
-          </button>
-
-          {/* Friends */}
-          <button
-            onClick={() => navigate('/friends')}
-            className={cn(
-              'flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors relative',
-              isFriendsActive
-                ? 'text-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Users className="w-5 h-5" />
-            <span className="text-[10px] font-medium mt-0.5">Friends</span>
-            {pendingRequestsCount > 0 && (
-              <span className="absolute top-1 right-2 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">
-                {pendingRequestsCount}
-              </span>
+              <span className="absolute top-1.5 right-3 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             )}
           </button>
 
@@ -420,16 +373,17 @@ export default function NavigationRail({
           <button
             onClick={() => navigate('/notifications')}
             className={cn(
-              'flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors relative',
+              'flex flex-col items-center justify-center py-1 px-3.5 rounded-2xl transition-all duration-200 relative active:scale-95',
               isNotificationsActive
-                ? 'text-primary'
+                ? 'text-primary font-semibold bg-primary/10 dark:bg-primary/15'
                 : 'text-muted-foreground hover:text-foreground'
             )}
+            aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />
             <span className="text-[10px] font-medium mt-0.5">Alerts</span>
             {unreadNotificationsCount > 0 && (
-              <span className="absolute top-1 right-2 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-white">
+              <span className="absolute top-1 right-2.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-xs">
                 {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
               </span>
             )}
@@ -439,21 +393,22 @@ export default function NavigationRail({
           <button
             onClick={() => navigate('/profile')}
             className={cn(
-              'flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors',
+              'flex flex-col items-center justify-center py-1 px-3.5 rounded-2xl transition-all duration-200 active:scale-95',
               isProfileActive
-                ? 'text-primary'
+                ? 'text-primary font-semibold bg-primary/10 dark:bg-primary/15'
                 : 'text-muted-foreground hover:text-foreground'
             )}
+            aria-label="Profile"
           >
             {user ? (
-              <Avatar className="w-5 h-5 border border-border">
+              <Avatar className="w-5 h-5 border border-border/70">
                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
                 <AvatarFallback className="text-[9px] font-bold bg-muted">
                   {user.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
             ) : (
-              <Users className="w-5 h-5" />
+              <User className="w-5 h-5" />
             )}
             <span className="text-[10px] font-medium mt-0.5">Profile</span>
           </button>

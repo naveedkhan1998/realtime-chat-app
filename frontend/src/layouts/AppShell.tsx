@@ -24,10 +24,6 @@ const routeMetadata: Record<string, { title: string; description: string }> = {
     title: 'Conversations',
     description: 'Stay in sync with every thread and team.',
   },
-  '/friends': {
-    title: 'Connections',
-    description: 'Manage the people you collaborate with.',
-  },
   '/new-chat': {
     title: 'Start Something New',
     description: 'Spin up a private or group space in seconds.',
@@ -76,7 +72,7 @@ export default function AppShell({ isMobile }: AppShellProps) {
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background/80 selection:bg-primary/60">
+    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background selection:bg-primary/40 selection:text-foreground">
       <BackgroundBlobs />
 
       <div className="relative z-10 flex h-[100dvh] w-full overflow-hidden p-0 gap-0">
@@ -87,7 +83,7 @@ export default function AppShell({ isMobile }: AppShellProps) {
           activeVoiceCount={activeVoiceRoomIds.length}
           isMobile={isMobile}
           activeChat={activeChat}
-          className="hidden md:flex border-r border-border/60 z-30 flex-shrink-0"
+          className="hidden md:flex border-r border-border/70 z-30 flex-shrink-0"
         />
 
         {/* Column 2: Channel & Conversation Lounge Sidebar */}
@@ -102,15 +98,17 @@ export default function AppShell({ isMobile }: AppShellProps) {
           onClearVoiceFilter={() => setIsVoiceFilterActive(false)}
           className={cn(
             isMobileChatList ? 'w-full translate-x-0 relative z-0' : '',
-            isMobile && !activeChat ? 'pb-14 md:pb-0' : ''
+            isMobile && !activeChat
+              ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-0'
+              : ''
           )}
           showCloseButton={!isMobileChatList}
         />
 
-        {/* Mobile Overlay */}
+        {/* Mobile Slide-Over Overlay */}
         <div
           className={cn(
-            'fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden transition-opacity duration-300',
+            'fixed inset-0 z-40 bg-background/80 backdrop-blur-md md:hidden transition-opacity duration-300',
             isMobile && isSidebarOpen && !isMobileChatList
               ? 'opacity-100 pointer-events-auto'
               : 'opacity-0 pointer-events-none'
@@ -118,13 +116,15 @@ export default function AppShell({ isMobile }: AppShellProps) {
           onClick={() => setIsSidebarOpen(false)}
         />
 
-        {/* Column 3: Main Central Stage (Chat Window, Friends, Settings, etc.) */}
+        {/* Column 3: Main Central Stage (Chat Window, Settings, etc.) */}
         <main
           className={cn(
             'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
-            'bg-background/50 backdrop-blur-xl',
+            'bg-card/40 dark:bg-card/50 backdrop-blur-xl',
             isMobileChatList ? 'hidden' : 'flex',
-            isMobile && !activeChat ? 'pb-14 md:pb-0' : ''
+            isMobile && !activeChat
+              ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-0'
+              : ''
           )}
         >
           <div className="flex-1 h-full overflow-hidden">
