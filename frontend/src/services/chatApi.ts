@@ -157,7 +157,10 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['ChatRooms'],
     }),
-    removeParticipant: builder.mutation<void, { roomId: number; userId: number }>({
+    removeParticipant: builder.mutation<
+      void,
+      { roomId: number; userId: number }
+    >({
       query: ({ roomId, userId }) => ({
         url: `chat/chat-rooms/${roomId}/remove_participant/`,
         method: 'POST',

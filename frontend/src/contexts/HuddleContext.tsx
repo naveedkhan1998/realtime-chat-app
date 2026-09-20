@@ -62,6 +62,12 @@ interface HuddleContextType {
   connectionDetails: Record<number, any>;
   isUsingSfu: boolean;
   sfuStats: SfuStats | null;
+  isMuted: boolean;
+  toggleMute: () => void;
+  isDeafened: boolean;
+  toggleDeafen: () => void;
+  speakingUserIds: number[];
+  volumeLevels: Record<number, number>;
 }
 
 const HuddleContext = createContext<HuddleContextType | undefined>(undefined);
@@ -74,14 +80,21 @@ export function useHuddle() {
   return context;
 }
 
-function HiddenHuddleAudio({ stream }: { stream: MediaStream }) {
+function HiddenHuddleAudio({
+  stream,
+  isDeafened,
+}: {
+  stream: MediaStream;
+  isDeafened: boolean;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.srcObject = stream;
+      audioRef.current.muted = isDeafened;
     }
-  }, [stream]);
-  return <audio ref={audioRef} autoPlay playsInline />;
+  }, [stream, isDeafened]);
+  return <audio ref={audioRef} autoPlay playsInline muted={isDeafened} />;
 }
 
 export function HuddleProvider({ children }: { children: ReactNode }) {
@@ -110,6 +123,14 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
   >({});
   const huddleJoinTimeRef = useRef<number>(0);
 
+  // Audio controls & active speaker detection
+  const [isMuted, setIsMuted] = useState(false);
+  const [isDeafened, setIsDeafened] = useState(false);
+  const [speakingUserIds, setSpeakingUserIds] = useState<number[]>([]);
+  const [volumeLevels, setVolumeLevels] = useState<Record<number, number>>({});
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analysersRef = useRef<Map<number, AnalyserNode>>(new Map());
+
   // SFU state
   const [isUsingSfu, setIsUsingSfu] = useState(false);
   const sfuSessionIdRef = useRef<string | null>(null);
@@ -125,32 +146,102 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
   const sfuSubscribePendingRef = useRef<boolean>(false);
 
   const refreshRemoteStreams = useCallback(() => {
-    setRemoteStreams(
-      Array.from(remoteStreamsRef.current.entries()).map(
-        ([userId, stream]) => ({ userId, stream })
-      )
+    const list = Array.from(remoteStreamsRef.current.entries()).map(
+      ([userId, stream]) => ({ userId, stream })
     );
+    setRemoteStreams(list);
+
+    // Attach analysers for remote audio streams
+    if (
+      audioContextRef.current &&
+      audioContextRef.current.state === 'running'
+    ) {
+      list.forEach(({ userId, stream }) => {
+        if (
+          !analysersRef.current.has(userId) &&
+          stream.getAudioTracks().length > 0
+        ) {
+          try {
+            const source =
+              audioContextRef.current!.createMediaStreamSource(stream);
+            const analyser = audioContextRef.current!.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.4;
+            source.connect(analyser);
+            analysersRef.current.set(userId, analyser);
+          } catch {
+            // Already connected or transient audio context error
+          }
+        }
+      });
+    }
   }, []);
 
-  // Listen for huddle participants from unified WebSocket
+  // Real-time active speaker & volume analyzer
+  useEffect(() => {
+    if (!isHuddleActive) {
+      setSpeakingUserIds([]);
+      setVolumeLevels({});
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (!audioContextRef.current) return;
+      const activeSpeakers: number[] = [];
+      const volumes: Record<number, number> = {};
+
+      analysersRef.current.forEach((analyser, uId) => {
+        if (user && uId === user.id && isMuted) {
+          volumes[uId] = 0;
+          return;
+        }
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / dataArray.length;
+        const normalized = Math.min(100, Math.round((avg / 128) * 100));
+        volumes[uId] = normalized;
+
+        if (normalized > 10) {
+          activeSpeakers.push(uId);
+        }
+      });
+
+      setSpeakingUserIds(prev => {
+        if (
+          prev.length === activeSpeakers.length &&
+          prev.every(id => activeSpeakers.includes(id))
+        ) {
+          return prev;
+        }
+        return activeSpeakers;
+      });
+      setVolumeLevels(volumes);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isHuddleActive, isMuted, user]);
+
+  // Listen for huddle participants from unified WebSocket across any room
   useEffect(() => {
     const ws = getUnifiedWebSocket();
     const handleParticipants = (event: ChatHuddleParticipantsEvent) => {
-      // Only process events for the active huddle room
-      if (huddleChatId && event.room_id === huddleChatId) {
-        dispatch(
-          setHuddleParticipants({
-            roomId: huddleChatId,
-            participants: event.participants,
-          })
-        );
-      }
+      dispatch(
+        setHuddleParticipants({
+          roomId: event.room_id,
+          participants: event.participants,
+        })
+      );
     };
     const unsubscribe = ws.on('chat.huddle_participants', handleParticipants);
     return () => {
       unsubscribe();
     };
-  }, [huddleChatId, dispatch]);
+  }, [dispatch]);
 
   const prevStatsRef = useRef<
     Map<number, { bytesSent: number; bytesReceived: number; timestamp: number }>
@@ -617,6 +708,29 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
           localAudioRef.current.srcObject = stream;
         }
 
+        // Initialize Web Audio API for active speaker detection
+        const AudioContextClass =
+          window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          try {
+            const ctx = new AudioContextClass();
+            if (ctx.state === 'suspended') {
+              await ctx.resume();
+            }
+            audioContextRef.current = ctx;
+            const source = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.4;
+            source.connect(analyser);
+            if (user) {
+              analysersRef.current.set(user.id, analyser);
+            }
+          } catch (e) {
+            console.warn('Could not initialize audio analyzer:', e);
+          }
+        }
+
         // Join huddle via unified WebSocket (no separate connection needed)
         const ws = getUnifiedWebSocket();
         ws.joinHuddle(chatId);
@@ -624,13 +738,39 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         setIsHuddleActive(true);
         setHuddleChatId(chatId);
         huddleJoinTimeRef.current = Date.now();
+        setIsMuted(false);
+        setIsDeafened(false);
       } catch (error) {
         console.error('❌ Failed to start huddle:', error);
-        alert('Failed to access microphone.');
+        alert(
+          'Failed to access microphone. Please check your browser audio permissions.'
+        );
       }
     },
     [isHuddleActive, user, accessToken]
   );
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => {
+      const next = !prev;
+      if (localStreamRef.current) {
+        localStreamRef.current.getAudioTracks().forEach(track => {
+          track.enabled = !next;
+        });
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleDeafen = useCallback(() => {
+    setIsDeafened(prev => {
+      const next = !prev;
+      if (next && !isMuted) {
+        toggleMute();
+      }
+      return next;
+    });
+  }, [isMuted, toggleMute]);
 
   const stopHuddle = useCallback(() => {
     if (isHuddleActive) {
@@ -658,6 +798,18 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
     remoteStreamsRef.current.clear();
     refreshRemoteStreams();
     setConnectionDetails({});
+
+    // Teardown Web Audio API
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analysersRef.current.clear();
+    setIsMuted(false);
+    setIsDeafened(false);
+    setSpeakingUserIds([]);
+    setVolumeLevels({});
+
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
@@ -1045,6 +1197,12 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
         connectionDetails,
         isUsingSfu,
         sfuStats,
+        isMuted,
+        toggleMute,
+        isDeafened,
+        toggleDeafen,
+        speakingUserIds,
+        volumeLevels,
       }}
     >
       {children}
@@ -1054,7 +1212,11 @@ export function HuddleProvider({ children }: { children: ReactNode }) {
       >
         <audio ref={localAudioRef} autoPlay muted playsInline />
         {remoteStreams.map(({ userId, stream }) => (
-          <HiddenHuddleAudio key={userId} stream={stream} />
+          <HiddenHuddleAudio
+            key={userId}
+            stream={stream}
+            isDeafened={isDeafened}
+          />
         ))}
       </div>
     </HuddleContext.Provider>

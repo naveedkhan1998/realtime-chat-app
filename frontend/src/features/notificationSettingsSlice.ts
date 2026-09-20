@@ -30,12 +30,16 @@ const getStorageKey = (key: string, userId: number | null): string => {
 };
 
 const getSoundEnabled = (userId: number | null): boolean => {
-  const stored = localStorage.getItem(getStorageKey('notificationSoundEnabled', userId));
+  const stored = localStorage.getItem(
+    getStorageKey('notificationSoundEnabled', userId)
+  );
   return stored !== 'false'; // Default to true
 };
 
 const getDesktopEnabled = (userId: number | null): boolean => {
-  const stored = localStorage.getItem(getStorageKey('desktopNotificationsEnabled', userId));
+  const stored = localStorage.getItem(
+    getStorageKey('desktopNotificationsEnabled', userId)
+  );
   if (stored === null) {
     // If no preference stored, default to true if permission is already granted
     return (

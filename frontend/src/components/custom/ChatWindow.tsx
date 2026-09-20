@@ -29,6 +29,7 @@ import ChatInput from './chat-page/ChatInput';
 import MessageList from './chat-page/MessageList';
 import { DeleteMessageDialog } from './chat-page/DeleteMessageDialog';
 import ChatInfoPanel from './chat-page/ChatInfoPanel';
+import ChatHuddleStage from './chat-page/ChatHuddleStage';
 import { useHuddle } from '@/contexts/HuddleContext';
 
 interface ChatWindowProps {
@@ -87,6 +88,12 @@ export default function ChatWindow({
     connectionDetails,
     isUsingSfu,
     sfuStats,
+    isMuted,
+    toggleMute,
+    isDeafened,
+    toggleDeafen,
+    speakingUserIds,
+    volumeLevels,
   } = useHuddle();
 
   // Simple loading state
@@ -404,13 +411,35 @@ export default function ChatWindow({
             isHuddleActive={isHuddleActiveInThisChat}
             startHuddle={() => startHuddle(activeChat)}
             stopHuddle={stopHuddle}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+            speakingUserIds={speakingUserIds}
             connectionDetails={connectionDetails}
             isUsingSfu={isUsingSfu}
             sfuStats={sfuStats}
             onInfoClick={() => setShowInfoPanel(!showInfoPanel)}
+            isInfoOpen={showInfoPanel}
           />
 
-          <div className="flex-1 pt-24 pb-20 overflow-hidden">
+          <ChatHuddleStage
+            roomId={activeChat}
+            participants={huddleUsers as any}
+            isInHuddle={isHuddleActiveInThisChat}
+            onJoinHuddle={() => startHuddle(activeChat)}
+            onLeaveHuddle={stopHuddle}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+            isDeafened={isDeafened}
+            onToggleDeafen={toggleDeafen}
+            speakingUserIds={speakingUserIds}
+            volumeLevels={volumeLevels}
+            connectionDetails={connectionDetails}
+            isUsingSfu={isUsingSfu}
+            sfuStats={sfuStats}
+            currentUserId={user.id}
+          />
+
+          <div className="flex-1 min-h-0 overflow-hidden relative">
             <MessageList
               messages={messages}
               user={user}
@@ -433,6 +462,13 @@ export default function ChatWindow({
             editingMessage={editingMessage}
             typingUsers={typingUsers as any}
             onSendMessage={handleSendMessage}
+            onCancelEditing={cancelEditing}
+            placeholder={
+              activeRoom?.is_group_chat
+                ? `Message #${activeRoom.name || 'channel'}`
+                : `Message ${otherParticipant?.name || 'chat'}`
+            }
+            isMobile={isMobile}
           />
 
           <DeleteMessageDialog

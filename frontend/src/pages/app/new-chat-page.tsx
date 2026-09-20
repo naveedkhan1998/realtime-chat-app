@@ -403,9 +403,9 @@ export default function NewChatPage() {
         ) : null}
 
         {/* Default state when no search */}
-        {!debouncedSearchQuery && friends.length === 0 && !friendshipsLoading && (
-          <div className="flex-1" />
-        )}
+        {!debouncedSearchQuery &&
+          friends.length === 0 &&
+          !friendshipsLoading && <div className="flex-1" />}
       </div>
     </div>
   );

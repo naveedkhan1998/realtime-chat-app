@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
+import NavigationRail from '@/components/custom/NavigationRail';
 import Sidebar from '@/components/custom/Sidebar';
+import HuddleBar from '@/components/custom/HuddleBar';
 import { cn } from '@/lib/utils';
 import { BackgroundBlobs } from '@/components/ui/background-blobs';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useAppSelector } from '@/app/hooks';
+import { selectActiveHuddleRoomIds } from '@/features/unifiedChatSlice';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -30,9 +34,6 @@ const routeMetadata: Record<string, { title: string; description: string }> = {
   },
 };
 
-// Note: WebSocket connection is now handled by AuthInitializer with the unified service.
-// This ensures a single connection for the entire app lifecycle.
-
 export default function AppShell({ isMobile }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,6 +49,9 @@ export default function AppShell({ isMobile }: AppShellProps) {
     description: 'Navigate your real-time collaboration hub.',
   };
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isVoiceFilterActive, setIsVoiceFilterActive] = useState(false);
+
+  const activeVoiceRoomIds = useAppSelector(selectActiveHuddleRoomIds);
 
   const isMobileChatList = isMobile && location.pathname === '/chat';
 
@@ -75,8 +79,18 @@ export default function AppShell({ isMobile }: AppShellProps) {
     <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background/80 selection:bg-primary/60">
       <BackgroundBlobs />
 
-      <div className="relative z-10 flex h-[100dvh] w-full max-w-[1920px] mx-auto p-0 lg:p-4 gap-4">
-        {/* Sidebar Container */}
+      <div className="relative z-10 flex h-[100dvh] w-full overflow-hidden p-0 gap-0">
+        {/* Column 1: Slim Icon Navigation Rail (Slack & Discord Architecture) */}
+        <NavigationRail
+          isVoiceFilterActive={isVoiceFilterActive}
+          onVoiceFilterToggle={() => setIsVoiceFilterActive(prev => !prev)}
+          activeVoiceCount={activeVoiceRoomIds.length}
+          isMobile={isMobile}
+          activeChat={activeChat}
+          className="hidden md:flex border-r border-border/60 z-30 flex-shrink-0"
+        />
+
+        {/* Column 2: Channel & Conversation Lounge Sidebar */}
         <Sidebar
           activeChat={activeChat}
           setActiveChat={handleSetActiveChat}
@@ -84,9 +98,12 @@ export default function AppShell({ isMobile }: AppShellProps) {
           isSidebarOpen={isMobileChatList || isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           metadata={metadata}
-          className={
-            isMobileChatList ? 'w-full translate-x-0 relative z-0' : ''
-          }
+          voiceFilterOnly={isVoiceFilterActive}
+          onClearVoiceFilter={() => setIsVoiceFilterActive(false)}
+          className={cn(
+            isMobileChatList ? 'w-full translate-x-0 relative z-0' : '',
+            isMobile && !activeChat ? 'pb-14 md:pb-0' : ''
+          )}
           showCloseButton={!isMobileChatList}
         />
 
@@ -101,13 +118,13 @@ export default function AppShell({ isMobile }: AppShellProps) {
           onClick={() => setIsSidebarOpen(false)}
         />
 
-        {/* Main Content Area */}
+        {/* Column 3: Main Central Stage (Chat Window, Friends, Settings, etc.) */}
         <main
           className={cn(
             'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
-            'lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl',
-            'bg-background/40 backdrop-blur-xl',
-            isMobileChatList ? 'hidden' : 'flex'
+            'bg-background/50 backdrop-blur-xl',
+            isMobileChatList ? 'hidden' : 'flex',
+            isMobile && !activeChat ? 'pb-14 md:pb-0' : ''
           )}
         >
           <div className="flex-1 h-full overflow-hidden">
@@ -121,6 +138,9 @@ export default function AppShell({ isMobile }: AppShellProps) {
           </div>
         </main>
       </div>
+
+      {/* Global Persistent Audio Huddle Dock */}
+      <HuddleBar />
     </div>
   );
 }

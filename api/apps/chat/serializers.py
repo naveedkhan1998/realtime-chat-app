@@ -99,6 +99,7 @@ class LastMessageSerializer(serializers.ModelSerializer):
 
 class ParticipantWithRoleSerializer(serializers.ModelSerializer):
     """Serializer for participant with role information."""
+
     id = serializers.IntegerField(source="user.id")
     name = serializers.CharField(source="user.name")
     avatar = serializers.ImageField(source="user.avatar")
@@ -142,7 +143,7 @@ class SimpleChatRoomSerializer(serializers.ModelSerializer):
         participant_records = ChatRoomParticipant.objects.filter(
             chat_room=obj
         ).select_related("user")[:4]
-        
+
         return ParticipantWithRoleSerializer(participant_records, many=True).data
 
     def get_last_message(self, obj):
