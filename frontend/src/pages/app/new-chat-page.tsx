@@ -348,13 +348,13 @@ export default function NewChatPage() {
           </div>
         )}
 
-        {/* Friends Section - Always visible when not searching */}
+        {/* Contacts Section - Visible when not searching */}
         {!debouncedSearchQuery || debouncedSearchQuery.length < 2 ? (
           <div className="flex flex-col flex-1 min-h-0">
             <div className="px-4 py-2 sm:px-6">
               <h2 className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-muted-foreground">
                 <Users2 className="w-3.5 h-3.5" />
-                Your Friends
+                Contacts
                 {friends.length > 0 && (
                   <Badge
                     variant="secondary"
@@ -392,9 +392,9 @@ export default function NewChatPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    icon={Users2}
-                    title="No friends yet"
-                    description="Add friends to quickly start conversations with them."
+                    icon={Search}
+                    title="Find people to chat with"
+                    description="Search for anyone by name or email above to start a conversation directly."
                   />
                 )}
               </div>

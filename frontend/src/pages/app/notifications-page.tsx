@@ -86,11 +86,8 @@ export default function NotificationsPage() {
     }
     if (notification.chat_room) {
       navigate(`/chat/${notification.chat_room}`);
-    } else if (
-      notification.content.toLowerCase().includes('friend') ||
-      notification.content.toLowerCase().includes('request')
-    ) {
-      navigate('/friends');
+    } else {
+      navigate('/chat');
     }
   };
 

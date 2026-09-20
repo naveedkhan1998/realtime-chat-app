@@ -143,14 +143,14 @@ function ChatInfoContent({
 
   return (
     <>
-      <div className="flex flex-col h-full bg-card/40 backdrop-blur-xl">
+      <div className="flex flex-col h-full bg-card/60 backdrop-blur-2xl">
         {/* Header Bar */}
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/60 shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-foreground">
               Conversation Details
             </h3>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted font-mono font-medium text-muted-foreground">
               #{room.id}
             </span>
           </div>
@@ -159,7 +159,7 @@ function ChatInfoContent({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
               aria-label="Close details"
             >
               <X className="w-4 h-4" />
@@ -169,20 +169,20 @@ function ChatInfoContent({
 
         {/* Scrollable Body */}
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6 pb-24 sm:pb-8">
+          <div className="p-4 space-y-5 pb-24 sm:pb-8">
             {/* Hero Profile Card */}
-            <div className="overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md shadow-sm">
+            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/80 dark:bg-card/90 backdrop-blur-md shadow-xs">
               {/* Cover Banner */}
               <div className="h-20 w-full bg-gradient-to-r from-primary/30 via-indigo-600/25 to-purple-600/30 relative" />
 
               <div className="px-4 pb-4 pt-0 -mt-10 text-center">
                 {room.is_group_chat ? (
-                  <div className="flex items-center justify-center w-20 h-20 mx-auto mb-3 rounded-2xl bg-primary/20 border-2 border-card text-primary shadow-xl shadow-primary/20">
-                    <Hash className="w-10 h-10 stroke-[2.5]" />
+                  <div className="flex items-center justify-center w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-primary/30 to-indigo-500/30 border-2 border-card text-primary shadow-lg">
+                    <Hash className="w-10 h-10 stroke-[2.2]" />
                   </div>
                 ) : otherParticipant ? (
                   <div className="relative w-20 h-20 mx-auto mb-3">
-                    <Avatar className="w-full h-full rounded-2xl border-2 border-card shadow-xl ring-2 ring-primary/20">
+                    <Avatar className="w-full h-full rounded-2xl border-2 border-card shadow-lg ring-2 ring-primary/20">
                       <AvatarImage
                         src={getAvatarUrl(otherParticipant.avatar)}
                         alt={otherParticipant.name}
@@ -193,7 +193,7 @@ function ChatInfoContent({
                       </AvatarFallback>
                     </Avatar>
                     {isOtherOnline && (
-                      <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-card shadow-sm shadow-emerald-500/50" />
+                      <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-card shadow-xs shadow-emerald-500/50" />
                     )}
                   </div>
                 ) : null}
@@ -227,7 +227,7 @@ function ChatInfoContent({
                           : 'Sound alerts muted for this chat.',
                       });
                     }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-card hover:bg-muted/50 border border-border/40 text-xs font-medium transition-colors"
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-card hover:bg-muted/60 border border-border/50 text-xs font-medium transition-all active:scale-95"
                   >
                     {isMutedLocally ? (
                       <BellOff className="w-4 h-4 text-amber-500 mb-1" />
@@ -242,7 +242,7 @@ function ChatInfoContent({
                   <button
                     type="button"
                     onClick={handleCopyRoomId}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-card hover:bg-muted/50 border border-border/40 text-xs font-medium transition-colors"
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-card hover:bg-muted/60 border border-border/50 text-xs font-medium transition-all active:scale-95"
                   >
                     <Copy className="w-4 h-4 text-muted-foreground mb-1" />
                     <span className="text-[10px] text-muted-foreground">
@@ -268,10 +268,10 @@ function ChatInfoContent({
                       }
                     }}
                     className={cn(
-                      'flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-medium transition-colors',
+                      'flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-medium transition-all active:scale-95',
                       isHuddleActive && huddleChatId === room.id
                         ? 'bg-destructive/10 hover:bg-destructive/20 border-destructive/30 text-destructive'
-                        : 'bg-card hover:bg-muted/50 border-border/40 text-muted-foreground hover:text-foreground'
+                        : 'bg-card hover:bg-muted/60 border-border/50 text-muted-foreground hover:text-foreground'
                     )}
                   >
                     {isHuddleActive && huddleChatId === room.id ? (
@@ -314,11 +314,11 @@ function ChatInfoContent({
                   </Badge>
                 </div>
 
-                <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-md overflow-hidden divide-y divide-border/30">
+                <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md overflow-hidden divide-y divide-border/30">
                   {room.participants.map((participant, index) => {
                     const isOnline = onlineUsers.includes(participant.id);
                     const isSelf = participant.id === user.id;
-                    const isRoomAdmin = index === 0; // First creator or admin
+                    const isRoomAdmin = index === 0;
 
                     return (
                       <div
@@ -378,7 +378,7 @@ function ChatInfoContent({
                 Shared Assets
               </h5>
 
-              <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-md p-3">
+              <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md p-3">
                 <Tabs defaultValue="media" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 mb-3 bg-muted/40 p-1 rounded-xl h-auto">
                     <TabsTrigger
@@ -399,7 +399,7 @@ function ChatInfoContent({
 
                   <TabsContent value="media" className="mt-0">
                     {mediaMessages.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-1.5">
+                      <div className="grid grid-cols-3 gap-2">
                         {mediaMessages.slice(0, 12).map(message => (
                           <div
                             key={message.id}
@@ -428,7 +428,7 @@ function ChatInfoContent({
                         {fileMessages.slice(0, 8).map(message => (
                           <div
                             key={message.id}
-                            className="flex items-center gap-2.5 p-2 rounded-xl bg-card border border-border/40 text-xs"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/40 text-xs"
                           >
                             <FileText className="w-4 h-4 text-primary shrink-0" />
                             <span className="truncate flex-1 font-medium text-foreground">
@@ -439,7 +439,7 @@ function ChatInfoContent({
                                 href={message.attachment}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                                 title="Download / Open file"
                               >
                                 <Download className="w-3.5 h-3.5" />
@@ -463,7 +463,7 @@ function ChatInfoContent({
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteDialog(true)}
-                className="w-full h-10 rounded-xl border-destructive/25 text-destructive hover:bg-destructive/10 hover:border-destructive/40 text-xs font-semibold gap-2 transition-all"
+                className="w-full h-11 rounded-xl border-destructive/25 text-destructive hover:bg-destructive/10 hover:border-destructive/40 text-xs font-semibold gap-2 transition-all active:scale-95"
               >
                 {room.is_group_chat ? (
                   <>
@@ -531,7 +531,7 @@ export default function ChatInfoPanel({
       <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
         <SheetContent
           side="right"
-          className="w-full p-0 sm:max-w-md border-border/60 bg-card/95 backdrop-blur-2xl"
+          className="w-full sm:max-w-md p-0 border-border/60 bg-card/95 backdrop-blur-2xl"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Chat Details</SheetTitle>

@@ -824,8 +824,8 @@ export default function Sidebar({
             </div>
           )}
 
-          {/* User Status Bar */}
-          <div className="flex items-center justify-between px-3 py-2.5">
+          {/* User Status Bar (Desktop only) */}
+          <div className="hidden md:flex items-center justify-between px-3 py-2.5">
             <Link
               to="/profile"
               onClick={() => isMobile && onClose()}
