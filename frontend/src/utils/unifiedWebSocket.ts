@@ -15,6 +15,7 @@
  */
 
 import { Message, ChatRoom } from '@/services/chatApi';
+import { getCookie, setCookie } from '@/utils/cookie';
 
 // ==================== Event Types ====================
 
@@ -300,14 +301,15 @@ class UnifiedWebSocketService {
   private socket: WebSocket | null = null;
   private connectionState: ConnectionState = 'disconnected';
   private token: string | null = null;
+  private isRefreshingToken = false;
 
   // Event callbacks organized by namespace
   private callbacks: Map<string, Set<AnyEventCallback>> = new Map();
 
   // Connection management
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 15;
   private baseReconnectInterval = 1000;
+  private maxReconnectDelay = 15000;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private isExplicitlyDisconnected = false;
 
@@ -341,57 +343,148 @@ class UnifiedWebSocketService {
     return UnifiedWebSocketService.instance;
   }
 
+  // ==================== Dynamic Token Getter & Refresher ====================
+
+  getToken(): string | null {
+    if (this.token) return this.token;
+    const cookieToken = getCookie('access_token');
+    if (cookieToken) {
+      this.token = cookieToken;
+      return cookieToken;
+    }
+    return null;
+  }
+
+  private async refreshAuthToken(): Promise<string | null> {
+    if (this.isRefreshingToken) return null;
+    this.isRefreshingToken = true;
+
+    try {
+      const refreshToken = getCookie('refresh_token');
+      if (!refreshToken) {
+        return null;
+      }
+
+      const apiBase =
+        import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
+      const url = `${apiBase.replace(/\/+$/, '')}/accounts/refresh_token/`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      if (data && data.access) {
+        setCookie('access_token', data.access, { expires: 1 });
+        if (data.refresh) {
+          setCookie('refresh_token', data.refresh, { expires: 7 });
+        }
+        this.token = data.access;
+        return data.access;
+      }
+      return null;
+    } catch (e) {
+      console.error('Failed to refresh WebSocket auth token:', e);
+      return null;
+    } finally {
+      this.isRefreshingToken = false;
+    }
+  }
+
   // ==================== Connection Management ====================
 
   private setupWindowListeners(): void {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('online', () => {
-      if (
-        this.connectionState === 'disconnected' &&
-        !this.isExplicitlyDisconnected &&
-        this.token
-      ) {
+      if (!this.isExplicitlyDisconnected) {
         if (import.meta.env.DEV)
-          console.log('🌐 Network online, reconnecting...');
+          console.log('🌐 Network online, reconnecting immediately...');
+        this.reconnectAttempts = 0;
         this.reconnect();
       }
     });
 
     window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        if (
-          this.connectionState === 'disconnected' &&
-          !this.isExplicitlyDisconnected &&
-          this.token
-        ) {
+      if (
+        document.visibilityState === 'visible' &&
+        !this.isExplicitlyDisconnected
+      ) {
+        const isSocketHealthy =
+          this.socket &&
+          this.socket.readyState === WebSocket.OPEN &&
+          this.connectionState === 'authenticated';
+
+        if (!isSocketHealthy) {
           if (import.meta.env.DEV)
-            console.log('👁️ App visible, reconnecting...');
+            console.log(
+              '👁️ Tab visible and socket unhealthy, forcing reconnect...'
+            );
+          this.reconnectAttempts = 0;
           this.reconnect();
-        } else if (this.connectionState === 'authenticated') {
-          // Send presence heartbeat when tab becomes visible
+        } else {
+          // Socket is open, refresh presence and verify liveness
           this.sendPresenceHeartbeat();
+          this.sendRaw({ type: 'ping' });
         }
       }
     });
   }
 
-  connect(token: string): void {
-    if (this.connectionState !== 'disconnected') {
+  connect(token?: string): void {
+    if (token) {
+      this.token = token;
+    }
+
+    const currentToken = this.getToken();
+    if (!currentToken) {
+      if (import.meta.env.DEV) console.log('Cannot connect: no token available');
+      return;
+    }
+
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING) &&
+      (this.connectionState === 'authenticated' ||
+        this.connectionState === 'connecting' ||
+        this.connectionState === 'authenticating')
+    ) {
       if (import.meta.env.DEV) console.log('Already connected or connecting');
       return;
     }
 
-    this.token = token;
     this.isExplicitlyDisconnected = false;
     this.setConnectionState('connecting');
 
-    const baseUrl = import.meta.env.VITE_BASE_API_URL;
+    const baseUrl =
+      import.meta.env.VITE_BASE_API_URL ||
+      (typeof window !== 'undefined' ? window.location.host : 'localhost:8000');
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    // No token in URL - we'll send it via first message
     const socketUrl = `${protocol}://${baseUrl}/ws/stream/`;
 
     try {
+      if (this.socket) {
+        this.socket.onopen = null;
+        this.socket.onmessage = null;
+        this.socket.onerror = null;
+        this.socket.onclose = null;
+        try {
+          this.socket.close();
+        } catch {
+          // ignore
+        }
+        this.socket = null;
+      }
+
       this.socket = new WebSocket(socketUrl);
 
       this.socket.onopen = () => {
@@ -399,8 +492,7 @@ class UnifiedWebSocketService {
           console.log('✅ WebSocket connected, authenticating...');
         this.setConnectionState('authenticating');
         this.reconnectAttempts = 0;
-        // Send authentication message
-        this.sendRaw({ type: 'auth', token: this.token });
+        this.sendRaw({ type: 'auth', token: this.getToken() });
       };
 
       this.socket.onmessage = event => {
@@ -412,12 +504,23 @@ class UnifiedWebSocketService {
         }
       };
 
-      this.socket.onclose = event => {
+      this.socket.onclose = async event => {
         this.cleanup();
         if (import.meta.env.DEV)
           console.log(`❌ WebSocket disconnected code=${event.code}`);
 
         if (!this.isExplicitlyDisconnected) {
+          if (event.code === 4001) {
+            // Token expired, attempt refresh before scheduling reconnect
+            if (import.meta.env.DEV)
+              console.log('🔄 Token rejected (4001), refreshing token...');
+            const newToken = await this.refreshAuthToken();
+            if (newToken) {
+              this.reconnectAttempts = 0;
+              this.connect(newToken);
+              return;
+            }
+          }
           this.scheduleReconnect();
         }
       };
@@ -441,8 +544,15 @@ class UnifiedWebSocketService {
       this.reconnectTimer = null;
     }
     if (this.socket) {
+      this.socket.onopen = null;
+      this.socket.onmessage = null;
+      this.socket.onerror = null;
       this.socket.onclose = null;
-      this.socket.close();
+      try {
+        this.socket.close();
+      } catch {
+        // ignore
+      }
       this.socket = null;
     }
     this.token = null;
@@ -458,35 +568,53 @@ class UnifiedWebSocketService {
     this.setConnectionState('disconnected');
   }
 
-  private reconnect(): void {
-    if (this.token) {
-      this.connect(this.token);
+  async reconnect(): Promise<void> {
+    if (this.isExplicitlyDisconnected) return;
+    this.cleanup();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    const token = this.getToken();
+    if (token) {
+      this.connect(token);
+    } else {
+      const refreshedToken = await this.refreshAuthToken();
+      if (refreshedToken) {
+        this.connect(refreshedToken);
+      } else {
+        this.setConnectionState('error');
+      }
     }
   }
 
-  private scheduleReconnect(): void {
-    if (this.reconnectTimer) return;
-
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnect attempts reached');
-      this.setConnectionState('error');
-      return;
+  private scheduleReconnect(immediate = false): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
 
-    const delay = Math.min(
-      this.baseReconnectInterval * Math.pow(1.5, this.reconnectAttempts),
-      30000
+    if (this.isExplicitlyDisconnected) return;
+
+    // Exponential backoff capped at 15s with jitter, keeps retrying indefinitely
+    const backoff = Math.min(
+      this.baseReconnectInterval *
+        Math.pow(1.5, Math.min(this.reconnectAttempts, 8)),
+      this.maxReconnectDelay
     );
+    const jitter = Math.random() * 1000;
+    const delay = immediate ? 0 : Math.round(backoff + jitter);
 
     if (import.meta.env.DEV)
       console.log(
         `🔄 Reconnecting in ${delay}ms (Attempt ${this.reconnectAttempts + 1})`
       );
 
-    this.reconnectTimer = setTimeout(() => {
+    this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
       this.reconnectAttempts++;
-      this.reconnect();
+      await this.reconnect();
     }, delay);
   }
 
@@ -571,14 +699,25 @@ class UnifiedWebSocketService {
     // Handle system messages
     if (eventType === 'auth.success') {
       this.setConnectionState('authenticated');
+      this.reconnectAttempts = 0;
       this.startHeartbeat();
       this.startPresenceRefresh();
       this.flushMessageQueue();
       // Re-subscribe to rooms that were previously subscribed
       this.resubscribeRooms();
     } else if (eventType === 'auth.error') {
-      this.setConnectionState('error');
-      this.socket?.close();
+      if (import.meta.env.DEV)
+        console.warn('🔒 WebSocket auth.error, attempting token refresh...');
+      this.refreshAuthToken().then(newToken => {
+        if (newToken) {
+          this.reconnectAttempts = 0;
+          this.reconnect();
+        } else {
+          this.setConnectionState('error');
+          this.socket?.close();
+        }
+      });
+      return;
     } else if (eventType === 'pong') {
       this.lastPongTime = Date.now();
     } else if (eventType === 'chat.subscribed') {
@@ -688,11 +827,9 @@ class UnifiedWebSocketService {
   }
 
   private resubscribeRooms(): void {
-    // Re-subscribe to previously subscribed rooms after reconnection
-    const rooms = Array.from(this.subscribedRooms);
-    this.subscribedRooms.clear();
-    rooms.forEach(roomId => {
-      this.subscribeToRoom(roomId);
+    // Re-subscribe to all tracked rooms after authentication
+    this.subscribedRooms.forEach(roomId => {
+      this.send({ type: 'chat.subscribe', room_id: roomId });
     });
 
     // Rejoin huddle if was active
@@ -704,20 +841,17 @@ class UnifiedWebSocketService {
   // ==================== Room Subscription ====================
 
   subscribeToRoom(roomId: number): void {
-    if (this.subscribedRooms.has(roomId)) {
-      if (import.meta.env.DEV)
-        console.log(`Already subscribed to room ${roomId}`);
-      return;
-    }
-    this.send({ type: 'chat.subscribe', room_id: roomId });
-    // Optimistically add to set (will be confirmed by server)
     this.subscribedRooms.add(roomId);
+    if (this.connectionState === 'authenticated') {
+      this.send({ type: 'chat.subscribe', room_id: roomId });
+    }
   }
 
   unsubscribeFromRoom(roomId: number): void {
-    if (!this.subscribedRooms.has(roomId)) return;
-    this.send({ type: 'chat.unsubscribe', room_id: roomId });
     this.subscribedRooms.delete(roomId);
+    if (this.connectionState === 'authenticated') {
+      this.send({ type: 'chat.unsubscribe', room_id: roomId });
+    }
   }
 
   getSubscribedRooms(): number[] {

@@ -129,19 +129,20 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         if self.active_huddle_room:
             await self._leave_huddle(self.active_huddle_room)
 
-        # Remove global presence
-        await self._set_global_presence(False)
+        # Remove global presence for this channel
+        is_still_online = await self._remove_channel_presence()
 
         # Leave groups
         if self.user_group:
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
         await self.channel_layer.group_discard(self.global_group, self.channel_name)
 
-        # Broadcast offline status
-        await self.channel_layer.group_send(
-            self.global_group,
-            {"type": "broadcast_user_offline", "user_id": self.user.id},
-        )
+        # Broadcast offline status only if no other connection remains
+        if not is_still_online:
+            await self.channel_layer.group_send(
+                self.global_group,
+                {"type": "broadcast_user_offline", "user_id": self.user.id},
+            )
 
     async def receive(self, text_data: str):
         """Route incoming messages by namespace prefix."""
@@ -232,7 +233,7 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.global_group, self.channel_name)
 
         # Set global presence
-        online_users = await self._set_global_presence(True)
+        online_users = await self._add_channel_presence()
 
         # Start heartbeat and presence refresh tasks
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
@@ -1055,42 +1056,55 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
             if is_in_room:
                 continue
 
-            is_online = await self._is_user_online(participant_id)
+            # Always create persistent notification for out-of-room participants
+            await self._create_notification(
+                user_id=participant_id,
+                chat_room_id=room_id,
+                content=f"New message from {self.user.name}",
+            )
 
-            if is_online:
-                # Send ephemeral notification with message preview
-                await self.channel_layer.group_send(
-                    f"user_{participant_id}",
-                    {
-                        "type": "new_message_notification",
-                        "chat_room_id": room_id,
-                        "sender_id": self.user.id,
-                        "sender_name": self.user.name,
-                        "message_content": (
-                            msg_content[:100] if msg_content else None
-                        ),  # Truncate for preview
-                        "has_attachment": bool(msg_attachment),
-                    },
-                )
-            else:
-                # Create persistent notification
-                await self._create_notification(
-                    user_id=participant_id,
-                    chat_room_id=room_id,
-                    content=f"New message from {self.user.name}",
-                )
+            # Also send real-time notification with message preview
+            await self.channel_layer.group_send(
+                f"user_{participant_id}",
+                {
+                    "type": "new_message_notification",
+                    "chat_room_id": room_id,
+                    "sender_id": self.user.id,
+                    "sender_name": self.user.name,
+                    "message_content": (
+                        msg_content[:100] if msg_content else None
+                    ),  # Truncate for preview
+                    "has_attachment": bool(msg_attachment),
+                },
+            )
 
     # ==================== REDIS OPERATIONS ====================
 
     @database_sync_to_async
-    def _set_global_presence(self, is_online: bool) -> List[int]:
+    def _add_channel_presence(self) -> List[int]:
         conn = get_redis_connection("default")
-        key = "global:online_users"
-        if is_online:
-            conn.sadd(key, self.user.id)
-        else:
-            conn.srem(key, self.user.id)
-        return [int(uid) for uid in conn.smembers(key)]
+        channels_key = f"user_channels:{self.user.id}"
+        global_key = "global:online_users"
+        pipe = conn.pipeline()
+        pipe.sadd(channels_key, self.channel_name)
+        pipe.expire(channels_key, GLOBAL_PRESENCE_TTL)
+        pipe.sadd(global_key, self.user.id)
+        pipe.smembers(global_key)
+        results = pipe.execute()
+        return [int(uid) for uid in results[3]]
+
+    @database_sync_to_async
+    def _remove_channel_presence(self) -> bool:
+        """Removes channel from user presence. Returns True if user is still online via another connection."""
+        conn = get_redis_connection("default")
+        channels_key = f"user_channels:{self.user.id}"
+        global_key = "global:online_users"
+        conn.srem(channels_key, self.channel_name)
+        remaining = conn.scard(channels_key)
+        if remaining == 0:
+            conn.srem(global_key, self.user.id)
+            return False
+        return True
 
     @database_sync_to_async
     def _get_global_online_users(self) -> List[int]:
@@ -1100,6 +1114,9 @@ class UnifiedConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _refresh_global_presence(self):
         conn = get_redis_connection("default")
+        channels_key = f"user_channels:{self.user.id}"
+        conn.sadd(channels_key, self.channel_name)
+        conn.expire(channels_key, GLOBAL_PRESENCE_TTL)
         conn.sadd("global:online_users", self.user.id)
 
     @database_sync_to_async

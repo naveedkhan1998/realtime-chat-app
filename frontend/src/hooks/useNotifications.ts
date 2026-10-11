@@ -19,6 +19,7 @@ import {
 import { selectUnreadRoomCount } from '@/features/unifiedChatSlice';
 import { useWebSocketEvent } from '@/hooks/useUnifiedWebSocket';
 import type { GlobalNewMessageNotificationEvent } from '@/utils/unifiedWebSocket';
+import { chatApi } from '@/services/chatApi';
 import {
   playNotificationSound,
   preloadNotificationSound,
@@ -33,6 +34,7 @@ const APP_ICON = '/apple-touch-icon.png';
  * Handles sound, desktop notifications, and title updates.
  */
 export function useNotifications(activeChatId?: number) {
+  const dispatch = useAppDispatch();
   const soundEnabled = useAppSelector(selectSoundEnabled);
   const canShowDesktop = useAppSelector(selectCanShowDesktopNotifications);
   const unreadCount = useAppSelector(selectUnreadRoomCount);
@@ -48,15 +50,16 @@ export function useNotifications(activeChatId?: number) {
 
   // Update document title based on unread count
   useEffect(() => {
+    const defaultTitle = originalTitleRef.current;
     if (unreadCount > 0) {
-      document.title = `(${unreadCount}) ${originalTitleRef.current}`;
+      document.title = `(${unreadCount}) ${defaultTitle}`;
     } else {
-      document.title = originalTitleRef.current;
+      document.title = defaultTitle;
     }
 
     // Cleanup: restore original title when component unmounts
     return () => {
-      document.title = originalTitleRef.current;
+      document.title = defaultTitle;
     };
   }, [unreadCount]);
 
@@ -97,6 +100,9 @@ export function useNotifications(activeChatId?: number) {
       // Don't notify for messages from the current user
       if (event.sender_id === currentUserId) return;
 
+      // Invalidate Notifications query so badge counters and notifications page update immediately
+      dispatch(chatApi.util.invalidateTags(['Notifications']));
+
       // Don't notify for the currently active chat
       if (event.chat_room_id === activeChatId) return;
 
@@ -119,6 +125,7 @@ export function useNotifications(activeChatId?: number) {
       }
     },
     [
+      dispatch,
       currentUserId,
       activeChatId,
       soundEnabled,
