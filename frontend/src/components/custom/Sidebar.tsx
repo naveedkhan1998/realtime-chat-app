@@ -6,17 +6,13 @@ import {
   LogOut,
   Search,
   X,
-  Sparkles,
   UserPlus,
   Headphones,
   Radio,
-  Hash,
-  MessageSquare,
   Mic,
   MicOff,
   PhoneOff,
   VolumeX,
-  ChevronDown,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -57,6 +53,7 @@ import type {
 import { useDebounce } from '@/utils/hooks';
 import { useHuddle } from '@/contexts/HuddleContext';
 import { cn, getAvatarUrl } from '@/lib/utils';
+import { Led, PresetKey, SectionLabel, channelNo } from '@/components/console';
 
 interface SidebarProps {
   activeChat: number | undefined;
@@ -77,10 +74,9 @@ export default function Sidebar({
   activeChat,
   setActiveChat,
   isMobile,
-  isSidebarOpen,
+  isSidebarOpen: _isSidebarOpen,
   onClose,
   className,
-  showCloseButton = true,
   voiceFilterOnly = false,
   onClearVoiceFilter,
 }: SidebarProps) {
@@ -127,7 +123,7 @@ export default function Sidebar({
 
   const { data: notifications } = useGetNotificationsQuery();
 
-  const { data: searchResults, isLoading: isSearchingUsers } =
+  const { data: searchResults } =
     useSearchUsersQuery(
       { query: debouncedSearchQuery },
       { skip: !debouncedSearchQuery }
@@ -313,256 +309,294 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-[300px] sm:w-[320px] flex-col transition-transform duration-300 ease-out md:relative md:translate-x-0 flex-shrink-0',
-        isMobile
-          ? isSidebarOpen
-            ? 'translate-x-0'
-            : '-translate-x-full'
-          : 'translate-x-0',
+        'w-full md:w-[310px] lg:w-[330px] flex flex-col flex-shrink-0 h-full overflow-hidden',
+        'bg-card md:rounded-xl md:shadow-panel z-20',
         className
       )}
     >
-      {/* Outer Shell */}
-      <div className="flex flex-col w-full h-full overflow-hidden border-r border-border/60 bg-card/80 dark:bg-card/90 backdrop-blur-2xl">
-        {/* Workspace Brand & Header */}
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/50 flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10 text-primary font-bold flex-shrink-0">
-              <Radio className="w-4 h-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold tracking-tight truncate text-foreground flex items-center gap-1.5">
-                Workspace Hub
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground opacity-60" />
-              </h2>
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                {activeVoiceRooms.length > 0 ? (
-                  <span className="text-emerald-500 font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {activeVoiceRooms.length} Active Voice
-                  </span>
-                ) : (
-                  'Realtime Collab'
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <NavLink to="/new-chat" onClick={() => isMobile && onClose()}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </NavLink>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  New Chat or Channel
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {isMobile && showCloseButton && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="w-8 h-8 rounded-full text-muted-foreground hover:bg-muted"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Search Input */}
-        <div className="px-3 pt-3 pb-1.5 flex-shrink-0">
-          <div className="relative flex items-center group">
-            <Search className="absolute w-3.5 h-3.5 transition-colors -translate-y-1/2 left-3 top-1/2 text-muted-foreground group-focus-within:text-primary pointer-events-none" />
-            <Input
-              placeholder="Jump to or search..."
-              className="h-9 text-xs transition-all border-border/40 pl-9 pr-8 bg-muted/40 hover:bg-muted/60 focus:bg-background focus:border-primary/30 rounded-xl placeholder:text-muted-foreground/60"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute -translate-y-1/2 right-2.5 top-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Category Filter Tabs */}
-        {!searchQuery && (
-          <div className="px-3 py-1 flex-shrink-0">
-            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-muted/40 border border-border/40 text-xs">
-              <button
-                onClick={() => {
-                  setActiveTab('all');
-                  if (onClearVoiceFilter) onClearVoiceFilter();
-                }}
-                className={cn(
-                  'flex-1 py-1 px-2 rounded-lg font-medium transition-all text-center flex items-center justify-center gap-1',
-                  activeTab === 'all'
-                    ? 'bg-background text-foreground shadow-sm font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                All
-              </button>
-
-              <button
-                onClick={() => {
-                  setActiveTab('channels');
-                  if (onClearVoiceFilter) onClearVoiceFilter();
-                }}
-                className={cn(
-                  'flex-1 py-1 px-1.5 rounded-lg font-medium transition-all text-center flex items-center justify-center gap-1',
-                  activeTab === 'channels'
-                    ? 'bg-background text-foreground shadow-sm font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Hash className="w-3 h-3 opacity-70" />
-                Channels
-              </button>
-
-              <button
-                onClick={() => {
-                  setActiveTab('direct');
-                  if (onClearVoiceFilter) onClearVoiceFilter();
-                }}
-                className={cn(
-                  'flex-1 py-1 px-1.5 rounded-lg font-medium transition-all text-center flex items-center justify-center gap-1',
-                  activeTab === 'direct'
-                    ? 'bg-background text-foreground shadow-sm font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <MessageSquare className="w-3 h-3 opacity-70" />
-                DMs
-              </button>
-
-              <button
-                onClick={() => setActiveTab('voice')}
-                className={cn(
-                  'flex-1 py-1 px-1.5 rounded-lg font-medium transition-all text-center flex items-center justify-center gap-1 relative',
-                  activeTab === 'voice'
-                    ? 'bg-emerald-500/15 text-emerald-500 font-semibold border border-emerald-500/30'
-                    : 'text-muted-foreground hover:text-emerald-500'
-                )}
-              >
-                <Radio className="w-3 h-3" />
-                Voice
-                {activeVoiceRooms.length > 0 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                )}
-              </button>
-            </div>
-
-            {voiceFilterOnly && activeTab === 'voice' && (
-              <div className="flex items-center justify-between mt-1.5 px-1 py-0.5 text-[11px] text-emerald-500 font-medium">
-                <span className="flex items-center gap-1">
-                  <Radio className="w-3 h-3 animate-pulse" />
-                  Showing Voice Lounges
+      {/* Console Channel Bank Header */}
+      <div className="flex items-center justify-between px-3.5 py-3 border-b border-border flex-shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Led tone={activeVoiceRooms.length > 0 ? 'live' : 'signal'} blink={activeVoiceRooms.length > 0} />
+          <div className="min-w-0">
+            <h2 className="label-engraved text-foreground tracking-[0.16em]">
+              CHANNEL BANK <span className="text-muted-foreground font-normal">/ RT-2</span>
+            </h2>
+            <p className="font-mono text-[10px] text-muted-foreground truncate">
+              {activeVoiceRooms.length > 0 ? (
+                <span className="text-live font-semibold">
+                  VOX ACTIVE: {activeVoiceRooms.length} STATION{activeVoiceRooms.length > 1 ? 'S' : ''}
                 </span>
-                {onClearVoiceFilter && (
-                  <button
-                    onClick={() => {
-                      onClearVoiceFilter();
-                      setActiveTab('all');
-                    }}
-                    className="underline text-muted-foreground hover:text-foreground"
-                  >
-                    Clear
-                  </button>
+              ) : (
+                `ONLINE: ${globalOnlineUsers.length} OPERATORS`
+              )}
+            </p>
+          </div>
+        </div>
+
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NavLink to="/new-chat" onClick={() => isMobile && onClose()}>
+                <button
+                  className="size-8 rounded-full key flex items-center justify-center text-foreground hover:bg-accent transition-all"
+                  aria-label="New Channel or DM"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <span className="font-mono text-xs">OPEN NEW CHANNEL</span>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      {/* Recessed Search Well */}
+      <div className="px-3 pt-2.5 pb-1 flex-shrink-0">
+        <div className="relative flex items-center group">
+          <Search className="absolute w-3.5 h-3.5 left-3 text-muted-foreground pointer-events-none group-focus-within:text-foreground" />
+          <Input
+            placeholder="FILTER FREQUENCIES..."
+            className="h-8 text-xs font-mono tracking-wide pl-8 pr-7 placeholder:text-muted-foreground/60 rounded-lg"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 text-muted-foreground hover:text-foreground p-0.5 rounded"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mode Rocker Tabs (ALL / CHN / DMS / VOX) */}
+      {!searchQuery && (
+        <div className="px-3 py-1 flex-shrink-0">
+          <div className="flex items-center gap-1 p-0.5 rounded-full bg-well shadow-well text-xs">
+            <button
+              onClick={() => {
+                setActiveTab('all');
+                if (onClearVoiceFilter) onClearVoiceFilter();
+              }}
+              className={cn(
+                'flex-1 py-1 rounded-full font-mono text-[10px] font-semibold tracking-wider transition-all text-center',
+                activeTab === 'all'
+                  ? 'bg-card text-foreground shadow-key'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              ALL
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('channels');
+                if (onClearVoiceFilter) onClearVoiceFilter();
+              }}
+              className={cn(
+                'flex-1 py-1 rounded-full font-mono text-[10px] font-semibold tracking-wider transition-all text-center',
+                activeTab === 'channels'
+                  ? 'bg-card text-foreground shadow-key'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              CHN
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('direct');
+                if (onClearVoiceFilter) onClearVoiceFilter();
+              }}
+              className={cn(
+                'flex-1 py-1 rounded-full font-mono text-[10px] font-semibold tracking-wider transition-all text-center',
+                activeTab === 'direct'
+                  ? 'bg-card text-foreground shadow-key'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              DMS
+            </button>
+
+            <button
+              onClick={() => setActiveTab('voice')}
+              className={cn(
+                'flex-1 py-1 rounded-full font-mono text-[10px] font-semibold tracking-wider transition-all text-center flex items-center justify-center gap-1',
+                activeTab === 'voice'
+                  ? 'bg-live text-live-foreground shadow-key'
+                  : 'text-muted-foreground hover:text-live'
+              )}
+            >
+              <Radio className="w-2.5 h-2.5" />
+              VOX
+              {activeVoiceRooms.length > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-live animate-ping" />
+              )}
+            </button>
+          </div>
+
+          {voiceFilterOnly && activeTab === 'voice' && (
+            <div className="flex items-center justify-between mt-1 px-1 text-[11px] font-mono text-live">
+              <span className="flex items-center gap-1">
+                <Led tone="live" blink />
+                SHOWING ACTIVE VOX ONLY
+              </span>
+              {onClearVoiceFilter && (
+                <button
+                  onClick={() => {
+                    onClearVoiceFilter();
+                    setActiveTab('all');
+                  }}
+                  className="underline text-muted-foreground hover:text-foreground"
+                >
+                  RESET
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Main Channel List */}
+      <div className="flex-1 px-2 py-1.5 overflow-y-auto custom-scrollbar space-y-3">
+        {chatRoomsLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <p className="font-mono text-xs">SYNCHRONIZING CHANNELS...</p>
+          </div>
+        ) : chatRoomsError ? (
+          <div className="p-4 text-center">
+            <p className="font-mono text-xs text-destructive">LINK ERROR: CANNOT LOAD CHANNELS</p>
+          </div>
+        ) : (
+          <div className="space-y-3 pb-2">
+            {/* Active Voice Section */}
+            {(activeVoiceRooms.length > 0 || activeTab === 'voice') && (
+              <div className="space-y-1.5">
+                <SectionLabel count={activeVoiceRooms.length} tone="live">
+                  ACTIVE VOICE STATIONS
+                </SectionLabel>
+
+                {activeVoiceRooms.length === 0 ? (
+                  <div className="p-3 text-center rounded-lg bg-well shadow-well my-1">
+                    <p className="font-mono text-xs text-muted-foreground">
+                      NO ACTIVE TRANSMISSIONS
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                      Select a channel to broadcast
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {activeVoiceRooms.map(room => (
+                      <ActiveVoiceLoungeCard
+                        key={room.id}
+                        room={room}
+                        isCurrentHuddle={huddleChatId === room.id}
+                        currentUserId={user.id}
+                        speakingUserIds={speakingUserIds}
+                        onSelect={() => {
+                          setActiveChat(room.id);
+                          navigate(`/chat/${room.id}`);
+                          if (isMobile) onClose();
+                        }}
+                        onJoinHuddle={() => {
+                          setActiveChat(room.id);
+                          navigate(`/chat/${room.id}`);
+                          startHuddle(room.id);
+                          if (isMobile) onClose();
+                        }}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Main Conversation & Voice Lounges List */}
-        <div className="flex-1 px-2 py-1 overflow-y-auto custom-scrollbar">
-          {chatRoomsLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <p className="text-xs">Loading conversations...</p>
-            </div>
-          ) : chatRoomsError ? (
-            <div className="p-4 text-center">
-              <p className="text-xs text-destructive">Failed to load chats</p>
-            </div>
-          ) : (
-            <div className="space-y-3 pb-2">
-              {/* Active Voice Lounges Section */}
-              {(activeVoiceRooms.length > 0 || activeTab === 'voice') && (
-                <div className="space-y-1 pt-1">
-                  <div className="flex items-center justify-between px-2 py-1">
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-500 flex items-center gap-1.5">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      Active Voice Lounges ({activeVoiceRooms.length})
-                    </span>
+            {/* Search Results */}
+            {searchQuery && (
+              <div className="space-y-1">
+                <SectionLabel>SEARCH RESULTS</SectionLabel>
+                {filteredChatRooms?.map(room => (
+                  <ConversationRow
+                    key={room.id}
+                    room={room}
+                    active={activeChat === room.id}
+                    currentUserId={user.id}
+                    onlineUsers={globalOnlineUsers}
+                    huddleChatId={isHuddleActive ? huddleChatId : null}
+                    speakingUserIds={speakingUserIds}
+                    onSelect={() => {
+                      setActiveChat(room.id);
+                      navigate(`/chat/${room.id}`);
+                      if (isMobile) onClose();
+                      setSearchQuery('');
+                    }}
+                  />
+                ))}
+
+                {/* New Users Match */}
+                {potentialNewChats.length > 0 && (
+                  <div className="pt-2">
+                    <SectionLabel>NEW RECIPIENTS</SectionLabel>
+                    {potentialNewChats.map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => handleCreateChat(u.id)}
+                        className="flex items-center w-full gap-2 p-2 text-left rounded-lg hover:bg-well transition-colors group"
+                      >
+                        <Avatar className="w-7 h-7 border border-border">
+                          <AvatarImage
+                            src={getAvatarUrl(u.avatar)}
+                            alt={u.name}
+                          />
+                          <AvatarFallback className="text-[10px] font-bold">
+                            {u.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-foreground truncate">
+                            {u.name}
+                          </p>
+                          <p className="font-mono text-[10px] text-muted-foreground flex items-center gap-1">
+                            <UserPlus className="w-2.5 h-2.5 text-primary" />
+                            CONNECT
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
+                )}
+              </div>
+            )}
 
-                  {activeVoiceRooms.length === 0 ? (
-                    <div className="p-3 text-center rounded-xl bg-muted/20 border border-border/40 my-1">
-                      <Radio className="w-5 h-5 mx-auto mb-1 text-muted-foreground/60" />
-                      <p className="text-xs font-medium text-muted-foreground">
-                        No active voice calls right now
-                      </p>
-                      <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-                        Open any chat to start an audio huddle
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {activeVoiceRooms.map(room => (
-                        <ActiveVoiceLoungeCard
-                          key={room.id}
-                          room={room}
-                          isCurrentHuddle={huddleChatId === room.id}
-                          currentUserId={user.id}
-                          speakingUserIds={speakingUserIds}
-                          onSelect={() => {
-                            setActiveChat(room.id);
-                            navigate(`/chat/${room.id}`);
-                            if (isMobile) onClose();
-                          }}
-                          onJoinHuddle={() => {
-                            setActiveChat(room.id);
-                            navigate(`/chat/${room.id}`);
-                            startHuddle(room.id);
-                            if (isMobile) onClose();
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Search Results State */}
-              {searchQuery && (
+            {/* Group Channels List */}
+            {!searchQuery &&
+              (activeTab === 'all' || activeTab === 'channels') &&
+              channelRooms.length > 0 && (
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground px-2">
-                    Search Results
-                  </span>
-                  {filteredChatRooms?.map(room => (
+                  <SectionLabel
+                    count={channelRooms.length}
+                    action={
+                      <NavLink
+                        to="/new-chat"
+                        onClick={() => isMobile && onClose()}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </NavLink>
+                    }
+                  >
+                    GROUP CHANNELS
+                  </SectionLabel>
+
+                  {channelRooms.map(room => (
                     <ConversationRow
                       key={room.id}
                       room={room}
@@ -575,350 +609,170 @@ export default function Sidebar({
                         setActiveChat(room.id);
                         navigate(`/chat/${room.id}`);
                         if (isMobile) onClose();
-                        setSearchQuery('');
                       }}
                     />
                   ))}
-
-                  {/* Potential New People */}
-                  {potentialNewChats.length > 0 && (
-                    <div className="pt-2">
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground px-2">
-                        Start New Chat
-                      </span>
-                      {potentialNewChats.map(u => (
-                        <button
-                          key={u.id}
-                          onClick={() => handleCreateChat(u.id)}
-                          className="flex items-center w-full gap-2.5 p-2 text-left rounded-xl hover:bg-muted/60 transition-colors group"
-                        >
-                          <Avatar className="w-8 h-8 border border-border">
-                            <AvatarImage
-                              src={getAvatarUrl(u.avatar)}
-                              alt={u.name}
-                            />
-                            <AvatarFallback className="text-xs bg-muted">
-                              {u.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-foreground truncate">
-                              {u.name}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                              <UserPlus className="w-3 h-3 text-primary" />
-                              Start Conversation
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {filteredChatRooms?.length === 0 &&
-                    potentialNewChats.length === 0 &&
-                    !isSearchingUsers && (
-                      <p className="text-center text-xs text-muted-foreground py-6">
-                        No results found for "{searchQuery}"
-                      </p>
-                    )}
                 </div>
               )}
 
-              {/* Group Channels List */}
-              {!searchQuery &&
-                (activeTab === 'all' || activeTab === 'channels') &&
-                channelRooms.length > 0 && (
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between px-2 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Hash className="w-3 h-3" />
-                        Channels ({channelRooms.length})
-                      </span>
+            {/* Direct Messages List */}
+            {!searchQuery &&
+              (activeTab === 'all' || activeTab === 'direct') &&
+              directRooms.length > 0 && (
+                <div className="space-y-1">
+                  <SectionLabel
+                    count={directRooms.length}
+                    action={
                       <NavLink
                         to="/new-chat"
                         onClick={() => isMobile && onClose()}
-                        className="hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3 h-3" />
                       </NavLink>
-                    </div>
+                    }
+                  >
+                    DIRECT CONTACTS
+                  </SectionLabel>
 
-                    {channelRooms.map(room => (
-                      <ConversationRow
-                        key={room.id}
-                        room={room}
-                        active={activeChat === room.id}
-                        currentUserId={user.id}
-                        onlineUsers={globalOnlineUsers}
-                        huddleChatId={isHuddleActive ? huddleChatId : null}
-                        speakingUserIds={speakingUserIds}
-                        onSelect={() => {
-                          setActiveChat(room.id);
-                          navigate(`/chat/${room.id}`);
-                          if (isMobile) onClose();
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-              {/* Direct Messages List */}
-              {!searchQuery &&
-                (activeTab === 'all' || activeTab === 'direct') &&
-                directRooms.length > 0 && (
-                  <div className="space-y-0.5 pt-1">
-                    <div className="flex items-center justify-between px-2 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" />
-                        Direct Messages ({directRooms.length})
-                      </span>
-                      <NavLink
-                        to="/new-chat"
-                        onClick={() => isMobile && onClose()}
-                        className="hover:text-foreground"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </NavLink>
-                    </div>
-
-                    {directRooms.map(room => (
-                      <ConversationRow
-                        key={room.id}
-                        room={room}
-                        active={activeChat === room.id}
-                        currentUserId={user.id}
-                        onlineUsers={globalOnlineUsers}
-                        huddleChatId={isHuddleActive ? huddleChatId : null}
-                        speakingUserIds={speakingUserIds}
-                        onSelect={() => {
-                          setActiveChat(room.id);
-                          navigate(`/chat/${room.id}`);
-                          if (isMobile) onClose();
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-              {/* Empty State */}
-              {!searchQuery &&
-                (!chatRooms || chatRooms.length === 0) &&
-                activeTab !== 'voice' && (
-                  <div className="flex flex-col items-center justify-center px-4 py-10 text-center text-muted-foreground space-y-2">
-                    <Sparkles className="w-8 h-8 text-primary/60" />
-                    <p className="text-xs font-semibold">
-                      No conversations yet
-                    </p>
-                    <NavLink
-                      to="/new-chat"
-                      onClick={() => isMobile && onClose()}
-                    >
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs mt-1"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Start Chat
-                      </Button>
-                    </NavLink>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
-
-        {/* Discord-Style Bottom Bar: Voice Status + User Profile */}
-        <div className="flex-shrink-0 flex flex-col border-t border-border/60 bg-card/95 dark:bg-card/95">
-          {/* Active Voice Connected Bar (Shown when user is in a call) */}
-          {isHuddleActive && huddleChatId && (
-            <div className="flex items-center justify-between px-3 py-2 bg-emerald-950/40 dark:bg-emerald-950/60 border-b border-emerald-500/25">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex-shrink-0">
-                  <Radio className="w-3.5 h-3.5 animate-pulse" />
+                  {directRooms.map(room => (
+                    <ConversationRow
+                      key={room.id}
+                      room={room}
+                      active={activeChat === room.id}
+                      currentUserId={user.id}
+                      onlineUsers={globalOnlineUsers}
+                      huddleChatId={isHuddleActive ? huddleChatId : null}
+                      speakingUserIds={speakingUserIds}
+                      onSelect={() => {
+                        setActiveChat(room.id);
+                        navigate(`/chat/${room.id}`);
+                        if (isMobile) onClose();
+                      }}
+                    />
+                  ))}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-emerald-400 flex items-center gap-1 truncate">
-                    Voice Connected
-                  </p>
-                  <p className="text-[10px] text-muted-foreground truncate">
-                    {currentHuddleRoom?.name || 'Active Huddle'} •{' '}
-                    <span className="text-emerald-500/80 font-mono">
-                      {isUsingSfu ? 'SFU' : 'Mesh'}
-                    </span>
-                  </p>
+              )}
+
+            {/* Empty State */}
+            {!searchQuery &&
+              (!chatRooms || chatRooms.length === 0) &&
+              activeTab !== 'voice' && (
+                <div className="flex flex-col items-center justify-center px-4 py-8 text-center text-muted-foreground space-y-2">
+                  <p className="font-mono text-xs">NO CHANNELS CONFIGURED</p>
+                  <NavLink
+                    to="/new-chat"
+                    onClick={() => isMobile && onClose()}
+                  >
+                    <Button size="sm" variant="default" className="text-xs mt-1">
+                      <Plus className="w-3 h-3 mr-1" />
+                      CREATE CHANNEL
+                    </Button>
+                  </NavLink>
                 </div>
-              </div>
+              )}
+          </div>
+        )}
+      </div>
 
-              {/* Fast Inline Call Controls */}
-              <div className="flex items-center gap-1">
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={toggleMute}
-                        className={cn(
-                          'flex items-center justify-center w-7 h-7 rounded-lg transition-colors',
-                          isMuted
-                            ? 'bg-destructive/20 text-destructive'
-                            : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
-                        )}
-                      >
-                        {isMuted ? (
-                          <MicOff className="w-3.5 h-3.5" />
-                        ) : (
-                          <Mic className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      {isMuted
-                        ? 'Unmute (Ctrl+Shift+M)'
-                        : 'Mute (Ctrl+Shift+M)'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={toggleDeafen}
-                        className={cn(
-                          'flex items-center justify-center w-7 h-7 rounded-lg transition-colors',
-                          isDeafened
-                            ? 'bg-destructive/20 text-destructive'
-                            : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
-                        )}
-                      >
-                        {isDeafened ? (
-                          <VolumeX className="w-3.5 h-3.5" />
-                        ) : (
-                          <Headphones className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      {isDeafened ? 'Undeafen' : 'Deafen'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={stopHuddle}
-                        className="flex items-center justify-center w-7 h-7 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive hover:text-white transition-colors"
-                      >
-                        <PhoneOff className="w-3.5 h-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      Disconnect Huddle
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          )}
-
-          {/* User Status Bar (Desktop only) */}
-          <div className="hidden md:flex items-center justify-between px-3 py-2.5">
-            <Link
-              to="/profile"
-              onClick={() => isMobile && onClose()}
-              className="flex items-center gap-2.5 min-w-0 group hover:opacity-90 transition-opacity"
-            >
-              <div className="relative flex-shrink-0">
-                <Avatar className="w-8 h-8 border border-border">
-                  <AvatarImage
-                    src={getAvatarUrl(user.avatar)}
-                    alt={user.name}
-                  />
-                  <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
-                    {user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
-              </div>
+      {/* Hardware Transceiver Status Strip */}
+      <div className="flex-shrink-0 flex flex-col border-t border-border bg-card">
+        {/* Live Audio Strip */}
+        {isHuddleActive && huddleChatId && (
+          <div className="flex items-center justify-between px-3 py-1.5 bg-live/10 border-b border-live/30">
+            <div className="flex items-center gap-2 min-w-0">
+              <Led tone="live" blink />
               <div className="min-w-0">
-                <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                  {user.name}
+                <p className="font-mono text-[10px] font-bold text-live uppercase tracking-wider truncate">
+                  ON AIR · {isUsingSfu ? 'SFU' : 'MESH'}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate">
-                  Online
+                  {currentHuddleRoom?.name || 'Voice Station'}
                 </p>
               </div>
-            </Link>
-
-            {/* Quick Micro Mute & Settings Controls */}
-            <div className="flex items-center gap-0.5">
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={toggleMute}
-                      className={cn(
-                        'flex items-center justify-center w-7 h-7 rounded-lg transition-colors',
-                        isMuted
-                          ? 'bg-destructive/15 text-destructive'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      )}
-                    >
-                      {isMuted ? (
-                        <MicOff className="w-3.5 h-3.5" />
-                      ) : (
-                        <Mic className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {isMuted ? 'Unmute' : 'Mute'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={toggleDeafen}
-                      className={cn(
-                        'flex items-center justify-center w-7 h-7 rounded-lg transition-colors',
-                        isDeafened
-                          ? 'bg-destructive/15 text-destructive'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      )}
-                    >
-                      {isDeafened ? (
-                        <VolumeX className="w-3.5 h-3.5" />
-                      ) : (
-                        <Headphones className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {isDeafened ? 'Undeafen' : 'Deafen'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Log Out</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
+
+            {/* Tactile Audio Controls */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleMute}
+                className={cn(
+                  'size-6 rounded-md flex items-center justify-center transition-all',
+                  isMuted ? 'bg-destructive text-destructive-foreground' : 'key text-live'
+                )}
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+              </button>
+
+              <button
+                onClick={toggleDeafen}
+                className={cn(
+                  'size-6 rounded-md flex items-center justify-center transition-all',
+                  isDeafened ? 'bg-destructive text-destructive-foreground' : 'key text-live'
+                )}
+                title={isDeafened ? 'Undeafen' : 'Deafen'}
+              >
+                {isDeafened ? <VolumeX className="w-3 h-3" /> : <Headphones className="w-3 h-3" />}
+              </button>
+
+              <button
+                onClick={stopHuddle}
+                className="size-6 rounded-md bg-destructive text-destructive-foreground flex items-center justify-center"
+                title="Disconnect"
+              >
+                <PhoneOff className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Operator Profile Strip */}
+        <div className="flex items-center justify-between px-3 py-2">
+          <Link
+            to="/profile"
+            onClick={() => isMobile && onClose()}
+            className="flex items-center gap-2 min-w-0 group hover:opacity-90"
+          >
+            <div className="relative flex-shrink-0">
+              <Avatar className="w-7 h-7 border border-border">
+                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
+                <AvatarFallback className="font-mono text-[10px] font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <Led tone="live" className="absolute -bottom-0.5 -right-0.5 ring-1 ring-card" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                {user.name}
+              </p>
+              <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">
+                OP·{channelNo(user.id)} · READY
+              </p>
+            </div>
+          </Link>
+
+          {/* Quick Hardware Actions */}
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={toggleMute}
+              className={cn(
+                'size-7 rounded-md key flex items-center justify-center transition-colors',
+                isMuted ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'
+              )}
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="size-7 rounded-md key flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+              title="Log Out Operator"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -960,10 +814,10 @@ function ActiveVoiceLoungeCard({
   return (
     <div
       className={cn(
-        'group relative flex flex-col gap-2 p-2.5 rounded-xl transition-all duration-200 border',
+        'group relative flex flex-col gap-1.5 p-2 rounded-lg transition-all border',
         isCurrentHuddle
-          ? 'bg-emerald-500/10 border-emerald-500/40 shadow-sm'
-          : 'bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20'
+          ? 'bg-live/15 border-live/40 shadow-sm'
+          : 'bg-live/5 hover:bg-live/10 border-live/20'
       )}
     >
       <div
@@ -971,41 +825,37 @@ function ActiveVoiceLoungeCard({
         onClick={onSelect}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <div className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-500 flex-shrink-0">
-            <Radio className="w-3.5 h-3.5 animate-pulse" />
-          </div>
+          <Led tone="live" blink={isCurrentHuddle} />
           <div className="min-w-0">
-            <p className="text-xs font-bold text-foreground truncate group-hover:text-emerald-500 transition-colors">
+            <p className="font-mono text-xs font-bold text-foreground truncate">
               {title}
             </p>
-            <p className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {participantCount} in huddle
+            <p className="font-mono text-[9px] text-live tracking-wide">
+              LIVE · {participantCount} CONNECTED
             </p>
           </div>
         </div>
 
         {isCurrentHuddle ? (
-          <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-white font-bold text-[10px] tracking-wide">
-            Connected
+          <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-live text-live-foreground uppercase tracking-wider">
+            CONNECTED
           </span>
         ) : (
-          <Button
-            size="sm"
+          <button
             onClick={e => {
               e.stopPropagation();
               onJoinHuddle();
             }}
-            className="h-6 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] shadow-none"
+            className="h-6 px-2.5 rounded-full bg-live text-live-foreground font-mono text-[10px] font-bold uppercase shadow-key active:translate-y-px"
           >
-            Join
-          </Button>
+            TUNE IN
+          </button>
         )}
       </div>
 
-      {/* Participant Avatar Cluster */}
+      {/* Participant avatars */}
       {roomHuddleParticipants.length > 0 && (
-        <div className="flex items-center gap-1 pl-1">
+        <div className="flex items-center gap-1 pl-4">
           <div className="flex -space-x-1.5 overflow-hidden">
             {roomHuddleParticipants.slice(0, 5).map(p => {
               const isSpeaking = speakingUserIds.includes(p.id);
@@ -1015,13 +865,13 @@ function ActiveVoiceLoungeCard({
                     className={cn(
                       'w-5 h-5 border ring-1 transition-all',
                       isSpeaking
-                        ? 'ring-emerald-400 border-emerald-500'
+                        ? 'ring-live border-live animate-pulse'
                         : 'ring-card border-card'
                     )}
                   >
                     <AvatarImage src={getAvatarUrl(p.avatar)} alt={p.name} />
-                    <AvatarFallback className="text-[9px] font-bold bg-muted">
-                      {p.name.charAt(0)}
+                    <AvatarFallback className="text-[8px] font-bold font-mono">
+                      {p.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </div>
@@ -1029,7 +879,7 @@ function ActiveVoiceLoungeCard({
             })}
           </div>
           {roomHuddleParticipants.length > 5 && (
-            <span className="text-[9px] font-semibold text-muted-foreground pl-1">
+            <span className="font-mono text-[9px] text-muted-foreground pl-1">
               +{roomHuddleParticipants.length - 5}
             </span>
           )}
@@ -1082,7 +932,6 @@ function ConversationRow({
   const isUserInRoomHuddle = huddleChatId === room.id;
   const hasActiveHuddle = isRoomHuddleActive || isUserInRoomHuddle;
 
-  // Check if anyone in this room is currently speaking
   const isAnyoneSpeaking = roomHuddleParticipants.some(p =>
     speakingUserIds.includes(p.id)
   );
@@ -1090,14 +939,11 @@ function ConversationRow({
   const getLastMessagePreview = () => {
     if (hasActiveHuddle) {
       return (
-        <span className="flex items-center gap-1.5 text-emerald-500 font-semibold">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-          </span>
+        <span className="font-mono text-live font-semibold flex items-center gap-1">
+          <Led tone="live" blink={isAnyoneSpeaking} />
           {isUserInRoomHuddle
-            ? 'Connected in Huddle'
-            : `Voice Huddle (${roomHuddleParticipants.length})`}
+            ? 'ON AIR [SELF]'
+            : `VOX LIVE (${roomHuddleParticipants.length})`}
         </span>
       );
     }
@@ -1106,117 +952,86 @@ function ConversationRow({
       const isOwnMessage = room.last_message.sender.id === currentUserId;
       const content = room.last_message.content;
       const truncated =
-        content.length > 30 ? content.substring(0, 30) + '...' : content;
+        content.length > 28 ? content.substring(0, 28) + '...' : content;
 
       return (
         <>
-          {isOwnMessage && <span className="opacity-60">You: </span>}
+          {isOwnMessage && <span className="text-muted-foreground/60">YOU: </span>}
           {truncated}
         </>
       );
     }
 
     if (room.is_group_chat) {
-      return `${room.participants.length} members`;
+      return `${room.participants.length} MEMBERS`;
     }
 
-    return 'Click to chat';
+    return 'READY';
   };
 
   return (
     <button
       onClick={onSelect}
       className={cn(
-        'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 text-left group relative overflow-hidden',
+        'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all text-left group relative',
         active
-          ? 'bg-primary/10 text-primary font-medium border border-primary/20 shadow-sm'
+          ? 'bg-well shadow-well text-foreground font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:bg-primary before:rounded-r-full'
           : hasActiveHuddle
-            ? 'bg-emerald-500/10 border border-emerald-500/20 text-foreground'
-            : 'hover:bg-muted/50 border border-transparent text-muted-foreground hover:text-foreground'
+            ? 'bg-live/5 hover:bg-live/10 text-foreground'
+            : 'hover:bg-accent/60 text-muted-foreground hover:text-foreground'
       )}
     >
-      {active && (
-        <div className="absolute left-0 w-1 h-5 -translate-y-1/2 rounded-r-full top-1/2 bg-primary" />
-      )}
-
-      {/* Avatar or Channel Icon */}
+      {/* Preset Key or Avatar */}
       <div className="relative flex-shrink-0">
         {room.is_group_chat ? (
-          <div
-            className={cn(
-              'w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-all',
-              active
-                ? 'bg-primary text-primary-foreground'
-                : hasActiveHuddle
-                  ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40'
-                  : 'bg-muted text-muted-foreground group-hover:text-foreground'
-            )}
-          >
-            <Hash className="w-4 h-4" />
-          </div>
+          <PresetKey
+            name={title}
+            active={active}
+            live={hasActiveHuddle}
+            size="sm"
+          />
         ) : (
-          <Avatar
-            className={cn(
-              'w-8 h-8 border transition-all',
-              isAnyoneSpeaking
-                ? 'ring-2 ring-emerald-400 border-emerald-500 animate-pulse'
-                : active
-                  ? 'border-primary ring-2 ring-primary/20'
-                  : 'border-border'
+          <div className="relative">
+            <Avatar className={cn('w-7 h-7 border border-border')}>
+              <AvatarImage src={getAvatarUrl(avatar)} alt={title} />
+              <AvatarFallback className="font-mono text-[10px] font-bold">
+                {title?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {isOnline && (
+              <Led tone="live" className="absolute -bottom-0.5 -right-0.5 ring-1 ring-card" />
             )}
-          >
-            <AvatarImage src={getAvatarUrl(avatar)} alt={title} />
-            <AvatarFallback className="text-xs font-bold bg-muted">
-              {title?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-        )}
-
-        {isOnline && !room.is_group_chat && !hasActiveHuddle && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 rounded-full border-background" />
-        )}
-
-        {hasActiveHuddle && (
-          <span className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-3.5 h-3.5 bg-emerald-500 border border-background rounded-full text-white">
-            <Radio className="w-2 h-2" />
-          </span>
+          </div>
         )}
       </div>
 
-      {/* Room Details */}
+      {/* Details */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-0.5">
+        <div className="flex items-center justify-between">
           <span
             className={cn(
-              'text-xs font-semibold truncate transition-colors',
-              active ? 'text-primary' : 'text-foreground'
+              'text-xs truncate transition-colors font-medium',
+              active ? 'text-foreground font-bold' : 'text-foreground'
             )}
           >
             {title}
           </span>
 
-          {hasActiveHuddle && (
-            <span className="flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-500 font-bold text-[9px]">
-              <Radio className="w-2.5 h-2.5 animate-pulse" />
-              Live
-            </span>
-          )}
-
-          {hasUnread && !hasActiveHuddle && (
-            <span className="px-1.5 py-0.2 text-[9px] font-bold text-white bg-primary rounded-full">
-              New
-            </span>
-          )}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {hasActiveHuddle && (
+              <span className="font-mono text-[9px] text-live font-bold px-1 rounded bg-live/15">
+                VOX
+              </span>
+            )}
+            {hasUnread && !hasActiveHuddle && (
+              <span className="h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground font-mono text-[9px] font-bold flex items-center justify-center">
+                {room.unread_count && room.unread_count > 1 ? room.unread_count : '·'}
+              </span>
+            )}
+          </div>
         </div>
 
-        <p
-          className={cn(
-            'text-[11px] truncate transition-colors',
-            active ? 'text-primary/80' : 'text-muted-foreground',
-            hasUnread && 'font-semibold text-foreground',
-            hasActiveHuddle && 'text-emerald-500 font-medium'
-          )}
-        >
+        <p className="font-mono text-[10.5px] truncate text-muted-foreground mt-0.5">
           {getLastMessagePreview()}
         </p>
       </div>

@@ -15,14 +15,15 @@ import {
   MessageSquarePlus,
   Bell,
   Radio,
-  Sparkles,
-  Shield,
-  Zap,
+  Cpu,
+  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAvatarUrl } from '@/lib/utils';
 import { Helmet } from 'react-helmet-async';
+import { BrandMark } from '@/components/console/BrandMark';
+import { Lcd, LcdClock, Led, channelNo } from '@/components/console';
 
 export default function ChatPage() {
   const dispatch = useAppDispatch();
@@ -62,7 +63,7 @@ export default function ChatPage() {
 
   const pageTitle = activeRoom
     ? `${activeRoom.name || 'Chat'} | MNK Chat`
-    : 'Conversations | MNK Chat';
+    : 'Console | MNK Chat';
 
   // Subscribe to the active chat room using the unified WebSocket
   useRoomSubscription(activeChat ?? null);
@@ -70,7 +71,7 @@ export default function ChatPage() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col flex-1 w-full h-full">
+    <div className="flex flex-col flex-1 w-full h-full bg-card overflow-hidden">
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
@@ -83,80 +84,104 @@ export default function ChatPage() {
           activeRoom={activeRoom}
         />
       ) : (
-        <div className="relative flex flex-col items-center justify-center h-full p-6 sm:p-10 overflow-y-auto text-center custom-scrollbar">
-          {/* Decorative ambient background glows */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="relative flex flex-col items-center justify-center h-full p-4 sm:p-8 overflow-y-auto custom-scrollbar">
+          {/* Hardware Perforation / Grille Accents */}
+          <div className="absolute inset-x-8 top-8 h-8 grille opacity-30 pointer-events-none" />
 
-          <div className="relative z-10 max-w-lg w-full space-y-8 my-auto py-8">
-            {/* User Greeting Hero */}
-            <div className="space-y-4 text-center">
-              <div className="relative inline-block">
-                <Avatar className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl border-2 border-border/80 shadow-xl ring-4 ring-primary/10">
-                  <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
-                  <AvatarFallback className="text-2xl font-bold bg-primary/15 text-primary rounded-3xl">
-                    {user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-1.5 shadow-md border border-border">
-                  <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+          <div className="relative z-10 max-w-lg w-full space-y-6 my-auto py-6">
+            {/* Status Panel Header */}
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <BrandMark size={32} />
+                <span className="font-mono text-xs font-bold uppercase tracking-widest text-foreground">
+                  TRANSCEIVER READY
+                </span>
+              </div>
+              <Lcd className="px-2.5 py-1 text-xs">
+                <LcdClock />
+              </Lcd>
+            </div>
+
+            {/* Operator Card */}
+            <div className="panel p-5 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Avatar className="w-14 h-14 border border-border shadow-md">
+                    <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
+                    <AvatarFallback className="font-mono text-base font-bold bg-well">
+                      {user.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Led tone="live" className="absolute bottom-0 right-0 ring-2 ring-card" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="display-wide text-xl font-bold text-foreground truncate">
+                      {user.name}
+                    </h2>
+                  </div>
+                  <p className="font-mono text-[11px] text-muted-foreground mt-0.5 tracking-wider">
+                    OPERATOR ID: OP·{channelNo(user.id)} · SYSTEM NOMINAL
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                  Welcome back, <span className="text-primary">{user.name}</span>
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-sm mx-auto">
-                  Pick a conversation from the sidebar or start something new right away.
-                </p>
+              <div className="ticks h-2 opacity-50" />
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Hardware bus connected. Select a frequency from the channel bank or initialize a new transmission patch.
+              </p>
+
+              {/* Action Keys */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <Button
+                  onClick={() => navigate('/new-chat')}
+                  variant="default"
+                  className="h-10 font-mono text-xs tracking-wider gap-2 shadow-key"
+                >
+                  <MessageSquarePlus className="w-4 h-4" />
+                  <span>PATCH NEW CHANNEL</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/notifications')}
+                  className="h-10 font-mono text-xs tracking-wider gap-2 shadow-key"
+                >
+                  <Bell className="w-4 h-4 text-primary" />
+                  <span>SIGNALS LOG</span>
+                </Button>
               </div>
             </div>
 
-            {/* Quick Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
-              <Button
-                onClick={() => navigate('/new-chat')}
-                className="h-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20 gap-2.5 font-semibold text-sm active:scale-95 transition-all"
-              >
-                <MessageSquarePlus className="w-4 h-4" />
-                <span>New Conversation</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate('/notifications')}
-                className="h-12 rounded-2xl border-border/80 bg-card/80 hover:bg-card hover:border-border text-foreground gap-2.5 font-semibold text-sm active:scale-95 transition-all"
-              >
-                <Bell className="w-4 h-4 text-primary" />
-                <span>View Activity</span>
-              </Button>
-            </div>
-
-            {/* Feature Highlights Grid */}
-            <div className="grid grid-cols-3 gap-2.5 pt-2 max-w-md mx-auto text-left">
-              <div className="p-3 rounded-2xl bg-card/60 dark:bg-card/40 border border-border/60 backdrop-blur-md">
-                <Zap className="w-4 h-4 text-primary mb-1.5" />
-                <p className="text-xs font-bold text-foreground">Instant Sync</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Unified WebSocket feed
-                </p>
+            {/* Module Specs Bar */}
+            <div className="grid grid-cols-3 gap-2 text-left">
+              <div className="p-2.5 rounded-lg bg-well shadow-well">
+                <div className="flex items-center justify-between mb-1">
+                  <Cpu className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-mono text-[9px] text-muted-foreground">BUS 01</span>
+                </div>
+                <p className="font-mono text-[11px] font-bold text-foreground">WS / DISPATCH</p>
+                <p className="font-mono text-[9px] text-muted-foreground">LOW LATENCY</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-card/60 dark:bg-card/40 border border-border/60 backdrop-blur-md">
-                <Radio className="w-4 h-4 text-emerald-500 mb-1.5" />
-                <p className="text-xs font-bold text-foreground">Voice Calls</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Low latency WebRTC
-                </p>
+              <div className="p-2.5 rounded-lg bg-well shadow-well">
+                <div className="flex items-center justify-between mb-1">
+                  <Radio className="w-3.5 h-3.5 text-live" />
+                  <span className="font-mono text-[9px] text-muted-foreground">VOX 02</span>
+                </div>
+                <p className="font-mono text-[11px] font-bold text-foreground">WEBRTC SFU</p>
+                <p className="font-mono text-[9px] text-muted-foreground">VOICE HUDDLES</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-card/60 dark:bg-card/40 border border-border/60 backdrop-blur-md">
-                <Shield className="w-4 h-4 text-indigo-500 mb-1.5" />
-                <p className="text-xs font-bold text-foreground">Realtime Media</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Photos, docs & files
-                </p>
+              <div className="p-2.5 rounded-lg bg-well shadow-well">
+                <div className="flex items-center justify-between mb-1">
+                  <Layers className="w-3.5 h-3.5 text-foreground" />
+                  <span className="font-mono text-[9px] text-muted-foreground">MEM 03</span>
+                </div>
+                <p className="font-mono text-[11px] font-bold text-foreground">RTK CACHE</p>
+                <p className="font-mono text-[9px] text-muted-foreground">SYNC PERSIST</p>
               </div>
             </div>
           </div>

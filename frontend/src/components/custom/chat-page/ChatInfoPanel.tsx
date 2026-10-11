@@ -2,24 +2,16 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   X,
-  Users,
-  Image,
   LogOut,
   Trash2,
-  Loader2,
   FileText,
-  Hash,
-  Crown,
   Phone,
   PhoneOff,
   Bell,
   BellOff,
   Copy,
-  Download,
 } from 'lucide-react';
 import { useHuddle } from '@/contexts/HuddleContext';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
@@ -45,9 +37,10 @@ import {
   useDeleteChatRoomMutation,
 } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
-import { cn, getAvatarUrl } from '@/lib/utils';
+import { getAvatarUrl, cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { MessageAttachment } from './MessageAttachment';
+import { PresetKey, SectionLabel, Led, channelNo } from '@/components/console';
 
 interface ChatInfoPanelProps {
   room: ChatRoom;
@@ -116,17 +109,17 @@ function ChatInfoContent({
     try {
       await deleteChatRoom({ id: room.id }).unwrap();
       toast({
-        title: room.is_group_chat ? 'Left group' : 'Conversation deleted',
+        title: room.is_group_chat ? 'Channel exited' : 'Channel purged',
         description: room.is_group_chat
-          ? 'You have left the group conversation.'
-          : 'The conversation has been deleted.',
+          ? 'You have exited the channel.'
+          : 'Channel data purged.',
       });
       onClose();
       navigate('/chat');
     } catch {
       toast({
         title: 'Error',
-        description: 'Failed to delete conversation.',
+        description: 'Failed to purge channel.',
         variant: 'destructive',
       });
     }
@@ -136,185 +129,155 @@ function ChatInfoContent({
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(room.id.toString());
     toast({
-      title: 'Copied',
-      description: `Room ID #${room.id} copied to clipboard.`,
+      title: 'COPIED TO CLIPBOARD',
+      description: `Channel ID CH·${channelNo(room.id)} copied.`,
     });
   };
 
   return (
     <>
-      <div className="flex flex-col h-full bg-card/60 backdrop-blur-2xl">
+      <div className="flex flex-col h-full bg-card">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/60 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-foreground">
-              Conversation Details
-            </h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted font-mono font-medium text-muted-foreground">
-              #{room.id}
+            <span className="label-engraved text-foreground">
+              CHANNEL PARAMETERS
+            </span>
+            <span className="font-mono text-2xs px-1.5 py-0.5 rounded bg-well text-muted-foreground">
+              CH·{channelNo(room.id)}
             </span>
           </div>
           {showCloseButton && (
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-              aria-label="Close details"
+              className="size-7 rounded-md key flex items-center justify-center text-muted-foreground hover:text-foreground"
+              aria-label="Close parameters"
             >
-              <X className="w-4 h-4" />
-            </Button>
+              <X className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
 
         {/* Scrollable Body */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-5 pb-24 sm:pb-8">
-            {/* Hero Profile Card */}
-            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/80 dark:bg-card/90 backdrop-blur-md shadow-xs">
-              {/* Cover Banner */}
-              <div className="h-20 w-full bg-gradient-to-r from-primary/30 via-indigo-600/25 to-purple-600/30 relative" />
-
-              <div className="px-4 pb-4 pt-0 -mt-10 text-center">
+        <ScrollArea className="flex-1 custom-scrollbar">
+          <div className="p-4 space-y-4 pb-20 sm:pb-8">
+            {/* Identity Card */}
+            <div className="panel p-4 text-center">
+              <div className="flex justify-center mb-2.5">
                 {room.is_group_chat ? (
-                  <div className="flex items-center justify-center w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-primary/30 to-indigo-500/30 border-2 border-card text-primary shadow-lg">
-                    <Hash className="w-10 h-10 stroke-[2.2]" />
-                  </div>
+                  <PresetKey name={room.name} size="xl" />
                 ) : otherParticipant ? (
-                  <div className="relative w-20 h-20 mx-auto mb-3">
-                    <Avatar className="w-full h-full rounded-2xl border-2 border-card shadow-lg ring-2 ring-primary/20">
+                  <div className="relative">
+                    <Avatar className="w-16 h-16 rounded-xl border border-border shadow-md">
                       <AvatarImage
                         src={getAvatarUrl(otherParticipant.avatar)}
                         alt={otherParticipant.name}
                         className="object-cover"
                       />
-                      <AvatarFallback className="text-2xl font-bold bg-primary/15 text-primary rounded-2xl">
-                        {otherParticipant.name.charAt(0)}
+                      <AvatarFallback className="font-mono text-xl font-bold bg-well">
+                        {otherParticipant.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     {isOtherOnline && (
-                      <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-card shadow-xs shadow-emerald-500/50" />
+                      <Led tone="live" className="absolute -bottom-1 -right-1 ring-2 ring-card" />
                     )}
                   </div>
                 ) : null}
+              </div>
 
-                <h4 className="text-base font-bold text-foreground truncate">
-                  {room.is_group_chat
-                    ? `# ${room.name || 'group-channel'}`
-                    : otherParticipant?.name}
-                </h4>
+              <h4 className="display-wide text-base font-bold text-foreground truncate">
+                {room.is_group_chat
+                  ? room.name || 'Group Channel'
+                  : otherParticipant?.name}
+              </h4>
 
-                <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                  {room.is_group_chat
-                    ? `${room.participants.length} total participants`
-                    : isOtherOnline
-                      ? 'Active now in workspace'
-                      : 'Offline'}
-                </p>
+              <p className="font-mono text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">
+                {room.is_group_chat
+                  ? `${room.participants.length} CONNECTED OPERATORS`
+                  : isOtherOnline
+                    ? 'ONLINE · READY'
+                    : 'OFFLINE'}
+              </p>
 
-                {/* Quick Action Toolbar */}
-                <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-border/40">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMutedLocally(!isMutedLocally);
-                      toast({
-                        title: isMutedLocally
-                          ? 'Unmuted'
-                          : 'Notifications Muted',
-                        description: isMutedLocally
-                          ? 'Sound alerts re-enabled for this chat.'
-                          : 'Sound alerts muted for this chat.',
-                      });
-                    }}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-card hover:bg-muted/60 border border-border/50 text-xs font-medium transition-all active:scale-95"
-                  >
-                    {isMutedLocally ? (
-                      <BellOff className="w-4 h-4 text-amber-500 mb-1" />
-                    ) : (
-                      <Bell className="w-4 h-4 text-muted-foreground mb-1" />
-                    )}
-                    <span className="text-[10px] text-muted-foreground">
-                      {isMutedLocally ? 'Muted' : 'Mute'}
-                    </span>
-                  </button>
+              {/* Hardware Quick Action Keys */}
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMutedLocally(!isMutedLocally);
+                    toast({
+                      title: isMutedLocally ? 'ALERTS ENABLED' : 'ALERTS SILENCED',
+                      description: isMutedLocally
+                        ? 'Audible notifications active.'
+                        : 'Notifications muted for this channel.',
+                    });
+                  }}
+                  className="flex flex-col items-center justify-center p-2 rounded-lg key text-xs transition-all"
+                >
+                  {isMutedLocally ? (
+                    <BellOff className="w-3.5 h-3.5 text-primary mb-1" />
+                  ) : (
+                    <Bell className="w-3.5 h-3.5 text-muted-foreground mb-1" />
+                  )}
+                  <span className="font-mono text-[9px] uppercase tracking-wider">
+                    {isMutedLocally ? 'MUTED' : 'ALERTS'}
+                  </span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={handleCopyRoomId}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-card hover:bg-muted/60 border border-border/50 text-xs font-medium transition-all active:scale-95"
-                  >
-                    <Copy className="w-4 h-4 text-muted-foreground mb-1" />
-                    <span className="text-[10px] text-muted-foreground">
-                      Copy ID
-                    </span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={handleCopyRoomId}
+                  className="flex flex-col items-center justify-center p-2 rounded-lg key text-xs transition-all"
+                >
+                  <Copy className="w-3.5 h-3.5 text-muted-foreground mb-1" />
+                  <span className="font-mono text-[9px] uppercase tracking-wider">
+                    FREQ ID
+                  </span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isHuddleActive && huddleChatId === room.id) {
-                        stopHuddle();
-                        toast({
-                          title: 'Call Ended',
-                          description: 'Disconnected from audio call.',
-                        });
-                      } else {
-                        startHuddle(room.id);
-                        toast({
-                          title: 'Starting Call',
-                          description: `Connecting to audio call in #${room.name || 'room'}...`,
-                        });
-                      }
-                    }}
-                    className={cn(
-                      'flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-medium transition-all active:scale-95',
-                      isHuddleActive && huddleChatId === room.id
-                        ? 'bg-destructive/10 hover:bg-destructive/20 border-destructive/30 text-destructive'
-                        : 'bg-card hover:bg-muted/60 border-border/50 text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {isHuddleActive && huddleChatId === room.id ? (
-                      <>
-                        <PhoneOff className="w-4 h-4 text-destructive mb-1" />
-                        <span className="text-[10px] text-destructive font-semibold">
-                          End Call
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Phone className="w-4 h-4 text-emerald-500 mb-1" />
-                        <span className="text-[10px] text-muted-foreground">
-                          Call
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isHuddleActive && huddleChatId === room.id) {
+                      stopHuddle();
+                    } else {
+                      startHuddle(room.id);
+                    }
+                  }}
+                  className={cn(
+                    'flex flex-col items-center justify-center p-2 rounded-lg text-xs transition-all',
+                    isHuddleActive && huddleChatId === room.id
+                      ? 'bg-destructive text-destructive-foreground shadow-key font-bold'
+                      : 'key text-live'
+                  )}
+                >
+                  {isHuddleActive && huddleChatId === room.id ? (
+                    <>
+                      <PhoneOff className="w-3.5 h-3.5 mb-1" />
+                      <span className="font-mono text-[9px] uppercase tracking-wider">
+                        DISCONNECT
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Phone className="w-3.5 h-3.5 mb-1" />
+                      <span className="font-mono text-[9px] uppercase tracking-wider">
+                        VOX
+                      </span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Participants Section (for group chats) */}
+            {/* Participants Section */}
             {room.is_group_chat && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <h5 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    <Users className="w-3.5 h-3.5 text-primary" />
-                    Members — {room.participants.length}
-                  </h5>
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] px-1.5 py-0 border-border/50 text-muted-foreground"
-                  >
-                    {
-                      room.participants.filter(p => onlineUsers.includes(p.id))
-                        .length
-                    }{' '}
-                    Online
-                  </Badge>
-                </div>
+              <div className="space-y-2">
+                <SectionLabel count={room.participants.length}>
+                  STATION OPERATORS
+                </SectionLabel>
 
-                <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md overflow-hidden divide-y divide-border/30">
+                <div className="panel divide-y divide-border overflow-hidden">
                   {room.participants.map((participant, index) => {
                     const isOnline = onlineUsers.includes(participant.id);
                     const isSelf = participant.id === user.id;
@@ -323,46 +286,39 @@ function ChatInfoContent({
                     return (
                       <div
                         key={participant.id}
-                        className="flex items-center gap-3 px-3.5 py-2.5 hover:bg-muted/30 transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 hover:bg-well transition-colors"
                       >
                         <div className="relative shrink-0">
-                          <Avatar className="w-8 h-8 rounded-xl border border-border/60">
+                          <Avatar className="w-7 h-7 border border-border">
                             <AvatarImage
                               src={getAvatarUrl(participant.avatar)}
                               alt={participant.name}
                               className="object-cover"
                             />
-                            <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary rounded-xl">
-                              {participant.name.charAt(0)}
+                            <AvatarFallback className="font-mono text-[9px] font-bold">
+                              {participant.name.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           {isOnline && (
-                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+                            <Led tone="live" className="absolute -bottom-0.5 -right-0.5 ring-1 ring-card" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-semibold truncate text-foreground flex items-center gap-1">
+                          <p className="font-mono text-xs font-semibold truncate text-foreground flex items-center gap-1">
                             <span>{participant.name}</span>
                             {isSelf && (
                               <span className="text-[10px] text-muted-foreground font-normal">
-                                (you)
+                                (YOU)
                               </span>
                             )}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground/70 truncate">
-                            {isOnline ? 'Online' : 'Offline'}
                           </p>
                         </div>
 
                         {isRoomAdmin && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] py-0 px-1.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 gap-1 shrink-0"
-                          >
-                            <Crown className="w-2.5 h-2.5" />
-                            Admin
-                          </Badge>
+                          <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-well text-primary border border-border">
+                            HOST
+                          </span>
                         )}
                       </div>
                     );
@@ -371,39 +327,28 @@ function ChatInfoContent({
               </div>
             )}
 
-            {/* Shared Media & Files */}
-            <div className="space-y-2.5">
-              <h5 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-                <Image className="w-3.5 h-3.5 text-primary" />
-                Shared Assets
-              </h5>
+            {/* Shared Media Tabs */}
+            <div className="space-y-2">
+              <SectionLabel>SHARED LOGS & MEDIA</SectionLabel>
 
-              <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-md p-3">
+              <div className="panel p-3">
                 <Tabs defaultValue="media" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-3 bg-muted/40 p-1 rounded-xl h-auto">
-                    <TabsTrigger
-                      value="media"
-                      className="text-xs py-1.5 rounded-lg data-[state=active]:bg-card"
-                    >
-                      <Image className="w-3.5 h-3.5 mr-1.5" />
-                      Media ({mediaMessages.length})
+                  <TabsList className="w-full grid grid-cols-2 mb-2.5">
+                    <TabsTrigger value="media" className="font-mono text-xs">
+                      MEDIA ({mediaMessages.length})
                     </TabsTrigger>
-                    <TabsTrigger
-                      value="files"
-                      className="text-xs py-1.5 rounded-lg data-[state=active]:bg-card"
-                    >
-                      <FileText className="w-3.5 h-3.5 mr-1.5" />
-                      Files ({fileMessages.length})
+                    <TabsTrigger value="files" className="font-mono text-xs">
+                      FILES ({fileMessages.length})
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="media" className="mt-0">
                     {mediaMessages.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        {mediaMessages.slice(0, 12).map(message => (
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {mediaMessages.slice(0, 9).map(message => (
                           <div
                             key={message.id}
-                            className="aspect-square rounded-xl overflow-hidden border border-border/40 shadow-inner group relative"
+                            className="aspect-square rounded-md overflow-hidden border border-border bg-well relative"
                           >
                             {message.attachment && (
                               <MessageAttachment
@@ -416,98 +361,87 @@ function ChatInfoContent({
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground text-xs">
-                        No photos or videos shared yet
-                      </div>
+                      <p className="text-center py-6 font-mono text-xs text-muted-foreground">
+                        NO MEDIA LOGGED
+                      </p>
                     )}
                   </TabsContent>
 
                   <TabsContent value="files" className="mt-0">
                     {fileMessages.length > 0 ? (
-                      <div className="space-y-2">
-                        {fileMessages.slice(0, 8).map(message => (
+                      <div className="space-y-1.5">
+                        {fileMessages.slice(0, 6).map(message => (
                           <div
                             key={message.id}
-                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/40 text-xs"
+                            className="p-2 rounded bg-well shadow-well flex items-center gap-2"
                           >
-                            <FileText className="w-4 h-4 text-primary shrink-0" />
-                            <span className="truncate flex-1 font-medium text-foreground">
-                              {message.content || 'Document attachment'}
+                            <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <span className="font-mono text-xs truncate flex-1 text-foreground">
+                              {message.content || 'File payload'}
                             </span>
-                            {message.attachment && (
-                              <a
-                                href={message.attachment}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                title="Download / Open file"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                              </a>
-                            )}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground text-xs">
-                        No documents or files shared yet
-                      </div>
+                      <p className="text-center py-6 font-mono text-xs text-muted-foreground">
+                        NO DOCUMENTS LOGGED
+                      </p>
                     )}
                   </TabsContent>
                 </Tabs>
               </div>
             </div>
 
-            {/* Danger Zone: Leave / Delete Conversation */}
+            {/* Danger Zone */}
             <div className="pt-2">
-              <Button
-                variant="outline"
+              <button
+                type="button"
                 onClick={() => setShowDeleteDialog(true)}
-                className="w-full h-11 rounded-xl border-destructive/25 text-destructive hover:bg-destructive/10 hover:border-destructive/40 text-xs font-semibold gap-2 transition-all active:scale-95"
+                className="w-full h-10 rounded-lg key flex items-center justify-center gap-2 text-destructive hover:bg-destructive/10 transition-colors font-mono text-xs font-bold"
               >
                 {room.is_group_chat ? (
                   <>
                     <LogOut className="w-3.5 h-3.5" />
-                    Leave Group Channel
+                    <span>EXIT CHANNEL</span>
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete Direct Message
+                    <span>PURGE CHANNEL LOG</span>
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </ScrollArea>
       </div>
 
-      {/* Delete Confirmation Alert Dialog */}
+      {/* Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl">
+        <AlertDialogContent className="bg-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">
-              {room.is_group_chat ? 'Leave Group?' : 'Delete Conversation?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground text-sm">
+            <div className="flex items-center gap-2">
+              <Led tone="danger" blink />
+              <AlertDialogTitle className="label-engraved text-destructive">
+                {room.is_group_chat ? 'EXIT CHANNEL' : 'PURGE CHANNEL LOG'}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="font-mono text-xs text-muted-foreground mt-1">
               {room.is_group_chat
-                ? 'Are you sure you want to leave this group channel? You will no longer receive messages or audio huddle notifications.'
-                : 'Are you sure you want to delete this conversation? This will remove the message history from your workspace.'}
+                ? 'Are you sure you want to exit this group channel?'
+                : 'Are you sure you want to purge this direct channel history? This cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-border/60 text-xs">
-              Cancel
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="font-mono text-xs h-9">
+              ABORT
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteChat}
               disabled={isDeleting}
-              className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-semibold"
+              className="bg-destructive text-destructive-foreground font-mono text-xs h-9 font-bold hover:brightness-105"
             >
-              {isDeleting ? (
-                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              ) : null}
-              {room.is_group_chat ? 'Leave Group' : 'Delete Chat'}
+              {isDeleting ? 'PURGING...' : 'CONFIRM'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -525,16 +459,14 @@ export default function ChatInfoPanel({
   isOpen,
   messages,
 }: ChatInfoPanelProps) {
-  // Mobile: slide-in Sheet from right
+  if (!isOpen) return null;
+
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-md p-0 border-border/60 bg-card/95 backdrop-blur-2xl"
-        >
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-card">
           <SheetHeader className="sr-only">
-            <SheetTitle>Chat Details</SheetTitle>
+            <SheetTitle>Channel Parameters</SheetTitle>
           </SheetHeader>
           <ChatInfoContent
             room={room}
@@ -549,11 +481,8 @@ export default function ChatInfoPanel({
     );
   }
 
-  // Desktop: Integrated right-hand 4th column sidebar
-  if (!isOpen) return null;
-
   return (
-    <aside className="flex flex-col h-full overflow-hidden border-l border-border/60 bg-card/50 backdrop-blur-2xl w-80 shrink-0 z-10 transition-all duration-200">
+    <aside className="w-[320px] lg:w-[340px] flex-shrink-0 h-full border-l border-border bg-card">
       <ChatInfoContent
         room={room}
         user={user}

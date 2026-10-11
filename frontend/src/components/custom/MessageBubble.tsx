@@ -69,8 +69,8 @@ function MessageBubble({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
-        title: 'Copied',
-        description: 'Message copied to clipboard.',
+        title: 'COPIED TO CLIPBOARD',
+        description: 'Message text copied.',
       });
     }
     setShowMobileDrawer(false);
@@ -93,10 +93,10 @@ function MessageBubble({
     <>
       <div
         className={cn(
-          'group relative flex w-full gap-2 px-1 sm:px-2 py-0.5 transition-colors rounded-xl',
+          'group relative flex w-full gap-2 px-2 py-0.5 transition-colors rounded-xl',
           isSent ? 'flex-row-reverse' : 'flex-row',
-          isConsecutive ? 'mt-0.5' : 'mt-2.5 sm:mt-3',
-          isPending && 'opacity-70'
+          isConsecutive ? 'pt-0.5' : 'pt-2.5 sm:pt-3',
+          isPending && 'opacity-65'
         )}
       >
         {/* Avatar Area */}
@@ -106,17 +106,10 @@ function MessageBubble({
             !showAvatar && 'invisible'
           )}
         >
-          <Avatar
-            className={cn(
-              'h-7 w-7 sm:h-8 sm:w-8 rounded-xl border shadow-xs transition-transform hover:scale-105',
-              isSent
-                ? 'border-primary/30 ring-1 ring-primary/20'
-                : 'border-border/60'
-            )}
-          >
+          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg border border-border shadow-xs">
             <AvatarImage src={getAvatarUrl(displayAvatar)} alt={displayName} />
-            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary rounded-xl">
-              {displayName.charAt(0)}
+            <AvatarFallback className="font-mono text-[10px] font-bold bg-well">
+              {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </div>
@@ -124,15 +117,15 @@ function MessageBubble({
         {/* Message Content Container */}
         <div
           className={cn(
-            'flex max-w-[88%] sm:max-w-[75%] md:max-w-[70%] flex-col min-w-0',
+            'flex max-w-[85%] sm:max-w-[75%] md:max-w-[70%] flex-col min-w-0',
             isSent ? 'items-end' : 'items-start'
           )}
         >
-          {/* Sender Name in Group Chats (shown on non-consecutive received messages) */}
+          {/* Sender Name in Group Chats */}
           {!isSent && !isConsecutive && (
-            <span className="ml-1 text-[11px] font-bold text-primary/80 mb-0.5 flex items-center gap-1.5">
+            <span className="ml-1 font-mono text-[11px] font-bold text-foreground/80 mb-0.5 flex items-center gap-1.5">
               <span>{displayName}</span>
-              <span className="text-[9px] font-normal text-muted-foreground/50 font-mono">
+              <span className="text-[9px] font-normal text-muted-foreground/60 font-mono">
                 {formattedTime}
               </span>
             </span>
@@ -148,7 +141,7 @@ function MessageBubble({
             {!isPending && (
               <div
                 className={cn(
-                  'hidden sm:flex absolute -top-4 items-center gap-0.5 p-1 rounded-xl bg-card/95 dark:bg-card/90 backdrop-blur-xl border border-border/80 shadow-md opacity-0 group-hover:opacity-100 transition-all duration-150 z-20',
+                  'hidden sm:flex absolute -top-4 items-center gap-0.5 p-0.5 rounded-lg bg-card border border-border shadow-panel opacity-0 group-hover:opacity-100 transition-all duration-150 z-20',
                   isSent ? 'right-2' : 'left-2'
                 )}
               >
@@ -157,12 +150,12 @@ function MessageBubble({
                   <button
                     type="button"
                     onClick={handleCopyText}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-well transition-colors"
                     title="Copy message"
                     aria-label="Copy message"
                   >
                     {copied ? (
-                      <Check className="w-3 h-3 text-emerald-500" />
+                      <Check className="w-3 h-3 text-live" />
                     ) : (
                       <Copy className="w-3 h-3" />
                     )}
@@ -174,7 +167,7 @@ function MessageBubble({
                   <button
                     type="button"
                     onClick={() => onEdit(message)}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                    className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-well transition-colors"
                     title="Edit message"
                     aria-label="Edit message"
                   >
@@ -187,7 +180,7 @@ function MessageBubble({
                   <button
                     type="button"
                     onClick={() => onDelete(message)}
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-well transition-colors"
                     title="Delete message"
                     aria-label="Delete message"
                   >
@@ -200,7 +193,6 @@ function MessageBubble({
             {/* Bubble Container */}
             <div
               onClick={() => {
-                // On mobile, tap can also open options
                 if (window.innerWidth < 640) {
                   setShowMobileDrawer(true);
                 }
@@ -208,11 +200,10 @@ function MessageBubble({
               className={cn(
                 'relative px-3.5 sm:px-4 py-2 sm:py-2.5 text-sm transition-all duration-150 overflow-hidden leading-relaxed break-words cursor-pointer sm:cursor-default select-text',
                 isSent
-                  ? 'bg-gradient-to-r from-primary to-indigo-600 text-white shadow-xs'
-                  : 'bg-card/90 dark:bg-card/95 border border-border/70 text-foreground shadow-xs backdrop-blur-md',
+                  ? 'bg-foreground text-background shadow-key'
+                  : 'bg-card text-foreground shadow-panel border border-border/50',
                 isEditing &&
                   'ring-2 ring-primary ring-offset-2 ring-offset-background',
-                // Responsive Tail Logic
                 'rounded-2xl',
                 isSent && showAvatar && 'rounded-br-xs',
                 !isSent && showAvatar && 'rounded-bl-xs',
@@ -236,7 +227,7 @@ function MessageBubble({
                 <p
                   className={cn(
                     'text-[13.5px] sm:text-[14px] leading-relaxed select-text whitespace-pre-wrap',
-                    isSent ? 'text-white' : 'text-foreground/95'
+                    isSent ? 'text-background' : 'text-foreground'
                   )}
                 >
                   {message.content}
@@ -246,16 +237,16 @@ function MessageBubble({
               {/* Timestamp & Receipts Footer */}
               <div
                 className={cn(
-                  'flex items-center gap-1.5 mt-1 select-none text-[10px]',
+                  'flex items-center gap-1.5 mt-1 select-none font-mono text-[10px]',
                   isSent
-                    ? 'justify-end text-white/75'
+                    ? 'justify-end text-background/70'
                     : 'justify-start text-muted-foreground/75'
                 )}
               >
                 <span>{formattedTime}</span>
                 {edited && (
-                  <span className="text-[9px] opacity-75 uppercase tracking-wider font-medium">
-                    Edited
+                  <span className="text-[9px] uppercase tracking-wider font-medium">
+                    EDITED
                   </span>
                 )}
                 {isSent && (
@@ -263,7 +254,7 @@ function MessageBubble({
                     {isPending ? (
                       <Clock className="w-3 h-3 opacity-80 animate-pulse" />
                     ) : (
-                      <CheckCheck className="w-3.5 h-3.5 text-cyan-200" />
+                      <CheckCheck className="w-3.5 h-3.5 text-primary" />
                     )}
                   </span>
                 )}
@@ -277,14 +268,14 @@ function MessageBubble({
       <Drawer open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
         <DrawerContent className="pb-6">
           <DrawerHeader className="text-left pb-2">
-            <DrawerTitle className="text-sm font-bold flex items-center justify-between">
-              <span>Message Options</span>
-              <span className="text-xs font-normal text-muted-foreground font-mono">
+            <DrawerTitle className="label-engraved flex items-center justify-between">
+              <span>MESSAGE OPTIONS</span>
+              <span className="font-mono text-xs text-muted-foreground font-normal">
                 {formattedTime}
               </span>
             </DrawerTitle>
-            <DrawerDescription className="text-xs text-muted-foreground truncate">
-              Sent by {isSent ? 'You' : displayName} • {fullDate}
+            <DrawerDescription className="font-mono text-xs text-muted-foreground truncate">
+              FROM: {isSent ? 'SELF' : displayName} · {fullDate}
             </DrawerDescription>
           </DrawerHeader>
 
@@ -293,11 +284,11 @@ function MessageBubble({
             {message.content && (
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 h-11 rounded-xl text-sm font-medium"
+                className="w-full justify-start gap-3 h-10 font-mono text-xs"
                 onClick={() => handleCopyText()}
               >
                 <Copy className="w-4 h-4 text-muted-foreground" />
-                <span>Copy Message Text</span>
+                <span>COPY TRANSMISSION TEXT</span>
               </Button>
             )}
 
@@ -305,29 +296,29 @@ function MessageBubble({
             {isOwnMessage && onEdit && (
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 h-11 rounded-xl text-sm font-medium text-primary hover:text-primary hover:bg-primary/10"
+                className="w-full justify-start gap-3 h-10 font-mono text-xs text-primary hover:text-primary"
                 onClick={() => {
                   setShowMobileDrawer(false);
                   onEdit(message);
                 }}
               >
                 <Pencil className="w-4 h-4 text-primary" />
-                <span>Edit Message</span>
+                <span>EDIT TRANSMISSION</span>
               </Button>
             )}
 
             {/* Delete option */}
             {isOwnMessage && onDelete && (
               <Button
-                variant="outline"
-                className="w-full justify-start gap-3 h-11 rounded-xl text-sm font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                variant="destructive"
+                className="w-full justify-start gap-3 h-10 font-mono text-xs"
                 onClick={() => {
                   setShowMobileDrawer(false);
                   onDelete(message);
                 }}
               >
-                <Trash2 className="w-4 h-4 text-destructive" />
-                <span>Delete Message</span>
+                <Trash2 className="w-4 h-4" />
+                <span>DELETE TRANSMISSION</span>
               </Button>
             )}
           </div>

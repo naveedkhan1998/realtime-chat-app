@@ -1,27 +1,35 @@
 import { Outlet, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { BackgroundBlobs } from '@/components/ui/background-blobs';
+import ThemeSwitch from '@/components/custom/ThemeSwitch';
 
 export default function AuthLayout() {
   return (
-    <div className="relative flex min-h-[100dvh] w-full items-center justify-center bg-background/80 p-4 md:p-8">
-      <BackgroundBlobs />
-
-      <header className="absolute left-4 top-4 z-50 md:left-8 md:top-8">
+    <div className="relative flex min-h-[100dvh] w-full flex-col justify-between bg-background text-foreground p-4 sm:p-6 md:p-8">
+      {/* Top Header Strip */}
+      <header className="flex items-center justify-between w-full max-w-6xl mx-auto z-20">
         <Link
           to="/"
-          className="group flex items-center gap-2 rounded-full border border-white/10 bg-background/50 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-md transition-all hover:bg-background/80 hover:text-foreground hover:pr-5"
+          className="key font-mono text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span>Back</span>
+          <ArrowLeft className="size-3.5" />
+          <span>ESC / BACK</span>
         </Link>
+
+        <ThemeSwitch variant="ghost" size="sm" showLabel={false} />
       </header>
 
-      <div className="relative z-10 flex w-full max-w-6xl items-center justify-center py-12 md:py-0">
+      {/* Main Container */}
+      <div className="relative z-10 flex w-full max-w-5xl mx-auto items-center justify-center py-6 sm:py-8 my-auto">
         <main className="w-full">
           <Outlet />
         </main>
       </div>
+
+      {/* Subtle Hardware Baseline */}
+      <footer className="w-full max-w-6xl mx-auto flex items-center justify-between text-2xs font-mono text-muted-foreground/60 pt-4 border-t border-border/50">
+        <div>TERMINAL AUTHENTICATION GATEWAY &middot; TLS 1.3</div>
+        <div>MODEL RT-2</div>
+      </footer>
     </div>
   );
 }

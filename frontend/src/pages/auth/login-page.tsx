@@ -1,130 +1,119 @@
 import LoginRegistration from '@/components/custom/LoginRegistration';
-import { motion } from 'framer-motion';
-import { Code2, Zap, Database } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { BrandMark } from '@/components/console/BrandMark';
+import { Led, LcdClock, LevelMeter } from '@/components/console';
+import { ShieldCheck, Radio, Server, Cpu } from 'lucide-react';
 
 export default function LoginPage() {
   return (
-    <div className="grid items-center h-full gap-4 lg:grid-cols-2 lg:gap-12">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
       <Helmet>
-        <title>Login | MNK Chat</title>
-        <meta name="description" content="Login to MNK Chat Application" />
+        <title>Terminal Access | MNK Chat</title>
+        <meta
+          name="description"
+          content="Operator terminal sign-in and registration for MNK Chat Console."
+        />
       </Helmet>
-      {/* Left Side - Visuals */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className="hidden lg:flex flex-col justify-between h-full rounded-[2.5rem] bg-card/30 border border-border p-12 relative overflow-hidden backdrop-blur-3xl"
-      >
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20 mix-blend-overlay" />
-        <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 rounded-full w-96 h-96 bg-primary/20 blur-[100px]" />
-        <div className="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 rounded-full w-80 h-80 bg-secondary/20 blur-[100px]" />
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="flex items-center justify-center w-12 h-12 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-primary to-violet-600 shadow-primary/20">
-              <img
-                src="/apple-touch-icon.png"
-                alt="Logo"
-                className="object-cover w-full h-full"
-              />
+      {/* Left Column - Console Status & Instrument Deck */}
+      <div className="lg:col-span-6 panel p-6 sm:p-8 border-2 border-border bg-card shadow-panel rounded-2xl flex flex-col justify-between relative overflow-hidden">
+        <div className="screw absolute top-3 left-3" />
+        <div className="screw absolute top-3 right-3" />
+        <div className="screw absolute bottom-3 left-3" />
+        <div className="screw absolute bottom-3 right-3" />
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <BrandMark size={36} wordmark />
+            <div className="flex items-center gap-2 font-mono text-2xs">
+              <span className="text-muted-foreground">GATEWAY</span>
+              <Led tone="live" blink />
             </div>
-            <span className="text-2xl font-bold tracking-tight">MNK Chat</span>
           </div>
 
-          <h1 className="mb-6 text-5xl font-bold leading-tight">
-            Real-time Chat <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-500">
-              Portfolio Demo.
-            </span>
-          </h1>
-          <p className="max-w-md text-lg text-muted-foreground">
-            Explore this full-stack showcase featuring Django Channels, Redis,
-            and React. Built to demonstrate scalable real-time architecture.
+          {/* Amber LCD Telemetry Readout */}
+          <div className="lcd p-4 rounded-xl space-y-3">
+            <div className="flex items-center justify-between font-mono text-2xs text-primary/80 border-b border-primary/20 pb-1.5">
+              <span>SEC·NET: ENCRYPTED</span>
+              <LcdClock />
+            </div>
+
+            <div className="space-y-1 font-mono text-xs text-primary">
+              <div className="font-bold tracking-wider">
+                &gt; AWAITING OPERATOR CREDENTIALS
+              </div>
+              <div className="text-2xs opacity-80">
+                &gt; CARRIER: SECURE WEBSOCKET [WSS]
+              </div>
+              <div className="text-2xs opacity-80">
+                &gt; PROTOCOL: DJANGO CHANNELS / ASGI
+              </div>
+            </div>
+
+            <div className="pt-1 flex items-center gap-2">
+              <span className="font-mono text-[9px] text-primary/70">SIG</span>
+              <div className="flex-1">
+                <LevelMeter level={0.85} bars={14} />
+              </div>
+            </div>
+          </div>
+
+          {/* Instrument Specs */}
+          <div className="space-y-2 pt-2">
+            <div className="font-mono text-2xs text-muted-foreground uppercase font-bold tracking-wider">
+              TELEMETRY SPECIFICATIONS
+            </div>
+            <div className="grid grid-cols-2 gap-2 font-mono text-2xs">
+              <div className="p-2.5 rounded-lg border border-border bg-well flex items-center gap-2">
+                <ShieldCheck className="size-3.5 text-primary shrink-0" />
+                <span className="text-muted-foreground truncate">TLS 1.3 CIPHER</span>
+              </div>
+              <div className="p-2.5 rounded-lg border border-border bg-well flex items-center gap-2">
+                <Radio className="size-3.5 text-live shrink-0" />
+                <span className="text-muted-foreground truncate">OPUS 48 kHz VOX</span>
+              </div>
+              <div className="p-2.5 rounded-lg border border-border bg-well flex items-center gap-2">
+                <Server className="size-3.5 text-foreground shrink-0" />
+                <span className="text-muted-foreground truncate">REDIS PUB/SUB</span>
+              </div>
+              <div className="p-2.5 rounded-lg border border-border bg-well flex items-center gap-2">
+                <Cpu className="size-3.5 text-foreground shrink-0" />
+                <span className="text-muted-foreground truncate">REACT 18 VIRT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Speaker Grille & Station Tag */}
+        <div className="pt-6 mt-6 border-t border-border flex items-center justify-between">
+          <div className="grille h-8 w-28 rounded border border-border" />
+          <span className="font-mono text-2xs text-muted-foreground">
+            TERMINAL MODEL RT-2
+          </span>
+        </div>
+      </div>
+
+      {/* Right Column - Authentication Module */}
+      <div className="lg:col-span-6 panel p-6 sm:p-8 border-2 border-border bg-card shadow-panel rounded-2xl flex flex-col justify-center relative">
+        <div className="screw absolute top-3 left-3" />
+        <div className="screw absolute top-3 right-3" />
+        <div className="screw absolute bottom-3 left-3" />
+        <div className="screw absolute bottom-3 right-3" />
+
+        <div className="mb-6">
+          <div className="label-engraved text-primary font-bold mb-1">
+            &sect;00 / ACCESS AUTHORIZATION
+          </div>
+          <h2 className="display-wide text-2xl font-bold tracking-tight text-foreground">
+            OPERATOR ENTRY
+          </h2>
+          <p className="font-mono text-xs text-muted-foreground mt-1">
+            Authorize credentials to tune into station channels and voice huddles
           </p>
         </div>
 
-        <div className="relative z-10 grid gap-6 mt-12">
-          <FeatureRow
-            icon={Zap}
-            title="WebSocket Powered"
-            desc="Instant messaging using Django Channels & Redis"
-            delay={0.2}
-          />
-          <FeatureRow
-            icon={Code2}
-            title="Modern Frontend"
-            desc="React, TypeScript, and Tailwind CSS"
-            delay={0.3}
-          />
-          <FeatureRow
-            icon={Database}
-            title="Full Stack"
-            desc="PostgreSQL database with DRF API"
-            delay={0.4}
-          />
-        </div>
-
-        <div className="relative z-10 pt-8 mt-12 border-t border-border">
-          <p className="text-sm text-muted-foreground">
-            "Feel free to create an account and test the real-time capabilities.
-            This is a personal learning project."
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Right Side - Form */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="flex flex-col justify-center w-full max-w-md mx-auto"
-      >
-        <div className="mb-8 text-center lg:text-left">
-          <h2 className="mb-2 text-3xl font-bold">Welcome Back</h2>
-          <p className="text-muted-foreground">
-            Sign in or register to start chatting.
-          </p>
-        </div>
-
-        <div className="p-6 border shadow-2xl bg-card/80 backdrop-blur-xl border-border shadow-primary/5 rounded-3xl md:p-8">
-          <LoginRegistration />
-        </div>
-
-        <p className="mt-8 text-sm text-center text-muted-foreground">
-          This is a demo environment. Data may be reset periodically.
-        </p>
-      </motion.div>
+        <LoginRegistration />
+      </div>
     </div>
-  );
-}
-
-function FeatureRow({
-  icon: Icon,
-  title,
-  desc,
-  delay,
-}: {
-  icon: any;
-  title: string;
-  desc: string;
-  delay: number;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.5 }}
-      className="flex items-start gap-4 p-4 transition-colors border rounded-2xl bg-card/50 border-border backdrop-blur-md hover:bg-accent/50"
-    >
-      <div className="p-2 mt-1 rounded-lg bg-primary/10 text-primary">
-        <Icon className="w-5 h-5" />
-      </div>
-      <div>
-        <h3 className="font-semibold text-foreground">{title}</h3>
-        <p className="text-sm text-muted-foreground">{desc}</p>
-      </div>
-    </motion.div>
   );
 }

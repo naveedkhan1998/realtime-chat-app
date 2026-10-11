@@ -5,8 +5,6 @@ import {
   Smile,
   Image as ImageIcon,
   FileText,
-  Pencil,
-  X,
   Check,
 } from 'lucide-react';
 import {
@@ -35,6 +33,7 @@ import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import imageCompression from 'browser-image-compression';
 import { useTheme } from '@/hooks/useTheme';
 import { AttachmentPreview } from './AttachmentPreview';
+import { Kbd, Led } from '@/components/console';
 
 interface ChatInputProps {
   register: UseFormRegister<{ message: string }>;
@@ -98,7 +97,7 @@ export default function ChatInput({
     if (!textarea) return;
 
     textarea.style.height = 'auto';
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 160);
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 36), 160);
     textarea.style.height = `${newHeight}px`;
   }, [messageValue]);
 
@@ -108,7 +107,6 @@ export default function ChatInput({
       onCancelEditing();
       return;
     }
-    // Desktop: Enter sends, Shift+Enter new line. Mobile: user taps Send button.
     if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -117,7 +115,7 @@ export default function ChatInput({
 
   const processFile = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+      alert('File size exceeds 10MB limit');
       return;
     }
 
@@ -140,116 +138,111 @@ export default function ChatInput({
     }
 
     setSelectedFile(processedFile);
-    setShowMobileAttachDrawer(false);
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    await processFile(file);
-  };
-
-  const handlePaste = async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        const file = items[i].getAsFile();
-        if (file) {
-          e.preventDefault();
-          await processFile(file);
-          return;
-        }
-      }
+    if (file) {
+      processFile(file);
     }
+    e.target.value = '';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isDragging) setIsDragging(true);
+    setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
     setIsDragging(false);
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      await processFile(file);
+      processFile(file);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file') {
+        const file = items[i].getAsFile();
+        if (file) {
+          processFile(file);
+          break;
+        }
+      }
     }
   };
 
   const clearFile = () => {
     setSelectedFile(null);
-    if (imageInputRef.current) imageInputRef.current.value = '';
-    if (docInputRef.current) docInputRef.current.value = '';
   };
 
-  const onEmojiClick = (emojiData: EmojiClickData) => {
-    const currentMessage = watch('message') || '';
-    setValue('message', currentMessage + emojiData.emoji);
-    setShowEmojiPicker(false);
-    setShowMobileEmojiDrawer(false);
-    textareaRef.current?.focus();
-  };
+  const handleSubmit = (e?: React.BaseSyntheticEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = messageValue?.trim() || '';
+    if (!trimmed && !selectedFile) return;
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    const content = watch('message');
-    if (!content?.trim() && !selectedFile) return;
-
-    onSendMessage(content, selectedFile || undefined);
+    onSendMessage(trimmed, selectedFile || undefined);
+    setValue('message', '');
     clearFile();
     setShowEmojiPicker(false);
-    setShowMobileEmojiDrawer(false);
 
-    // Reset height
     if (textareaRef.current) {
-      textareaRef.current.style.height = '40px';
+      textareaRef.current.style.height = 'auto';
     }
   };
 
-  const hasContent = Boolean(watch('message')?.trim() || selectedFile);
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    const current = messageValue || '';
+    setValue('message', current + emojiData.emoji);
+    if (isMobile) {
+      setShowMobileEmojiDrawer(false);
+    }
+  };
+
+  const hasContent = Boolean(messageValue?.trim() || selectedFile);
 
   return (
-    <div className="relative z-20 flex-shrink-0 w-full px-2.5 sm:px-6 py-2 sm:py-3 border-t border-border/40 bg-background/80 dark:bg-background/90 backdrop-blur-xl pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-3.5 transition-all">
-      <div className="relative w-full max-w-4xl mx-auto">
-        {/* Animated Typing Indicator */}
-        {typingUsers.length > 0 && (
-          <div className="absolute -top-7 left-2 flex items-center gap-2 px-3 py-1 rounded-full bg-card/95 backdrop-blur-md border border-border/80 text-[11px] font-medium text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2 z-10">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-foreground/90 font-medium truncate max-w-[240px]">
-              {typingUsers.length === 1
-                ? `${typingUsers[0].name} is typing...`
-                : `${typingUsers.map(u => u.name).slice(0, 2).join(', ')} and others are typing...`}
+    <div className="relative px-3 sm:px-4 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:pb-3 pt-1 bg-card">
+      {/* Typing Indicator Status Line */}
+      <div className="h-4 sm:h-5 px-1 flex items-center justify-between mb-1">
+        {typingUsers.length > 0 ? (
+          <div className="flex items-center gap-1.5 font-mono text-[10.5px] text-primary font-medium animate-pulse">
+            <Led tone="signal" blink />
+            <span>
+              {typingUsers.map(u => u.name).join(', ')}{' '}
+              {typingUsers.length > 1 ? 'ARE TRANSMITTING...' : 'IS TRANSMITTING...'}
             </span>
           </div>
+        ) : (
+          <div />
         )}
+      </div>
 
-        {/* Desktop Emoji Picker Popover */}
+      <div className="relative max-w-4xl mx-auto w-full">
+        {/* Desktop Emoji Picker */}
         {!isMobile && showEmojiPicker && (
           <div
             ref={emojiPickerRef}
-            className="absolute right-4 bottom-[calc(100%+10px)] z-50 shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-border/80 bg-popover"
+            className="absolute right-2 bottom-[calc(100%+8px)] z-50 rounded-xl overflow-hidden shadow-lift border border-border bg-popover"
           >
             <EmojiPicker
               onEmojiClick={onEmojiClick}
               theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
               lazyLoadEmojis={true}
-              width={340}
-              height={380}
+              width={320}
+              height={360}
             />
           </div>
         )}
@@ -262,9 +255,9 @@ export default function ChatInput({
           >
             <DrawerContent className="max-h-[60vh] pb-6">
               <DrawerHeader className="text-left pb-2">
-                <DrawerTitle className="text-sm font-bold">Pick an Emoji</DrawerTitle>
+                <DrawerTitle className="label-engraved">SELECT SYMBOL</DrawerTitle>
                 <DrawerDescription className="sr-only">
-                  Select an emoji to insert into your message
+                  Select an emoji symbol
                 </DrawerDescription>
               </DrawerHeader>
               <div className="flex justify-center px-2">
@@ -273,14 +266,14 @@ export default function ChatInput({
                   theme={theme === 'dark' ? Theme.DARK : Theme.LIGHT}
                   lazyLoadEmojis={true}
                   width="100%"
-                  height={320}
+                  height={300}
                 />
               </div>
             </DrawerContent>
           </Drawer>
         )}
 
-        {/* Hidden File Inputs */}
+        {/* Hidden Inputs */}
         <input
           type="file"
           ref={imageInputRef}
@@ -296,128 +289,110 @@ export default function ChatInput({
           accept=".pdf,.doc,.docx,.txt"
         />
 
-        {/* Elevated Floating Input Island */}
+        {/* Recessed Transmit Deck (Input Well) */}
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            'relative flex flex-col w-full rounded-2xl sm:rounded-3xl border transition-all duration-200 overflow-hidden',
-            'bg-card/90 dark:bg-card/95 shadow-md hover:shadow-lg backdrop-blur-2xl',
+            'relative flex flex-col w-full rounded-xl bg-well shadow-well border transition-all duration-150 overflow-hidden',
             isDragging
-              ? 'border-dashed border-2 border-primary bg-primary/5 ring-4 ring-primary/10'
-              : 'border-border/80 dark:border-border/70 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20'
+              ? 'border-dashed border-2 border-primary bg-primary/10'
+              : 'border-border/60 focus-within:border-primary/60'
           )}
         >
           {/* Drag Overlay */}
           {isDragging && (
-            <div className="absolute inset-0 z-30 flex items-center justify-center gap-2 bg-card/90 backdrop-blur-sm pointer-events-none">
-              <Paperclip className="w-5 h-5 text-primary animate-bounce" />
-              <span className="text-sm font-semibold text-primary">Drop file here to upload</span>
+            <div className="absolute inset-0 z-30 flex items-center justify-center gap-2 bg-well/90 pointer-events-none">
+              <Paperclip className="w-4 h-4 text-primary animate-bounce" />
+              <span className="font-mono text-xs font-bold text-primary">
+                DROP PACKET TO ATTACH
+              </span>
             </div>
           )}
 
-          {/* Editing Message Banner */}
+          {/* Editing Mode Banner */}
           {editingMessage && (
-            <div className="flex items-center justify-between px-3.5 sm:px-4 py-2 bg-primary/10 border-b border-primary/20 text-xs animate-in fade-in slide-in-from-top-1">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0">
-                  <Pencil className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-primary mr-1.5">Editing message</span>
-                  <span className="text-muted-foreground truncate inline-block max-w-[150px] sm:max-w-[420px] align-bottom">
-                    {editingMessage.content}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between px-3 py-1.5 bg-primary/15 border-b border-primary/20 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <Led tone="signal" />
+                <span className="font-mono text-2xs uppercase tracking-wider font-bold text-primary">
+                  EDITING TRANSMISSION:
+                </span>
+                <span className="font-mono text-xs text-muted-foreground truncate max-w-[280px]">
+                  {editingMessage.content}
+                </span>
               </div>
               {onCancelEditing && (
                 <button
                   type="button"
                   onClick={onCancelEditing}
-                  className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted/80 transition-colors shrink-0"
+                  className="font-mono text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
-                  <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-background/80 text-[10px] font-mono border border-border/80">
-                    ESC
-                  </span>
-                  <X className="w-3.5 h-3.5" />
-                  <span>Cancel</span>
+                  <Kbd>ESC</Kbd>
+                  <span>CANCEL</span>
                 </button>
               )}
             </div>
           )}
 
-          {/* Staged File Preview Tray */}
+          {/* Staged File Tray */}
           {selectedFile && (
-            <div className="p-2 sm:p-2.5 border-b border-border/40 bg-muted/20">
+            <div className="p-2 border-b border-border/40 bg-card/60">
               <AttachmentPreview file={selectedFile} onRemove={clearFile} />
             </div>
           )}
 
-          {/* Main Input Controls Row */}
+          {/* Controls Bar */}
           <form
             onSubmit={handleSubmit}
-            className="flex items-end gap-1 sm:gap-2 p-1.5 sm:p-2.5"
+            className="flex items-end gap-1.5 p-1.5 sm:p-2"
           >
-            {/* Attachment Button */}
+            {/* Attachment Key */}
             {isMobile ? (
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="icon"
                 onClick={() => setShowMobileAttachDrawer(true)}
-                className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors active:scale-95"
+                className="size-9 shrink-0 rounded-lg key flex items-center justify-center p-0 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
                 aria-label="Add attachment"
               >
-                <Paperclip className="w-4.5 h-4.5" />
-              </Button>
+                <Paperclip className="size-4 shrink-0" />
+              </button>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors active:scale-95"
+                    className="size-9 shrink-0 rounded-lg key flex items-center justify-center p-0 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
                     aria-label="Add attachment"
                   >
-                    <Paperclip className="w-4.5 h-4.5" />
-                  </Button>
+                    <Paperclip className="size-4 shrink-0" />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
                   side="top"
-                  className="w-52 mb-1.5 rounded-2xl p-1.5 shadow-xl border-border/80"
+                  className="w-48 mb-1"
                 >
                   <DropdownMenuItem
                     onClick={() => imageInputRef.current?.click()}
-                    className="gap-2.5 p-2.5 rounded-xl cursor-pointer text-xs font-medium"
+                    className="gap-2 font-mono text-xs cursor-pointer"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                      <ImageIcon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">Photos & Videos</p>
-                      <p className="text-[10px] text-muted-foreground">Images or video clips</p>
-                    </div>
+                    <ImageIcon className="w-4 h-4 text-primary" />
+                    <span>PHOTO / VIDEO</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => docInputRef.current?.click()}
-                    className="gap-2.5 p-2.5 rounded-xl cursor-pointer text-xs font-medium"
+                    className="gap-2 font-mono text-xs cursor-pointer"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">Documents & Files</p>
-                      <p className="text-[10px] text-muted-foreground">PDF, Word, or plain text</p>
-                    </div>
+                    <FileText className="w-4 h-4 text-foreground" />
+                    <span>DOCUMENT FILE</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
 
-            {/* Multiline Auto-resizing Textarea */}
+            {/* Textarea */}
             <textarea
               {...restRegister}
               ref={e => {
@@ -426,21 +401,29 @@ export default function ChatInput({
               }}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder={placeholder || 'Type a message...'}
-              className="flex-1 min-h-[38px] sm:min-h-[40px] max-h-[160px] py-2 px-1.5 sm:px-3 border-0 bg-transparent focus:ring-0 focus:outline-none placeholder:text-muted-foreground/60 resize-none text-[16px] sm:text-sm leading-relaxed scrollbar-thin"
+              onFocus={() => {
+                if (isMobile) {
+                  setTimeout(() => {
+                    textareaRef.current?.scrollIntoView({
+                      block: 'nearest',
+                      inline: 'nearest',
+                    });
+                  }, 100);
+                }
+              }}
+              placeholder={placeholder || 'Type message payload...'}
+              className="flex-1 min-h-[36px] max-h-[160px] py-2 px-2.5 border-0 bg-transparent focus:outline-none placeholder:text-muted-foreground/60 resize-none text-[16px] sm:text-sm leading-normal"
               autoComplete="off"
               rows={1}
             />
 
-            {/* Action Buttons: Emoji & Submit */}
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 pb-0.5">
-              <Button
+            {/* Emoji & Send Keys */}
+            <div className="flex items-center gap-1 shrink-0">
+              <button
                 type="button"
-                variant="ghost"
-                size="icon"
                 className={cn(
-                  'w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl transition-colors text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-95',
-                  (showEmojiPicker || showMobileEmojiDrawer) && 'text-primary bg-primary/10'
+                  'size-9 shrink-0 rounded-lg key flex items-center justify-center p-0 text-muted-foreground hover:text-foreground transition-all',
+                  (showEmojiPicker || showMobileEmojiDrawer) && 'bg-accent text-foreground'
                 )}
                 onClick={() => {
                   if (isMobile) {
@@ -449,93 +432,83 @@ export default function ChatInput({
                     setShowEmojiPicker(!showEmojiPicker);
                   }
                 }}
-                aria-label="Insert emoji"
+                aria-label="Insert emoji symbol"
               >
-                <Smile className="w-5 h-5" />
-              </Button>
+                <Smile className="size-4 shrink-0" />
+              </button>
 
-              <Button
+              <button
                 type="submit"
-                size="icon"
                 className={cn(
-                  'h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl transition-all duration-200 flex-shrink-0 active:scale-90',
+                  'h-9 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 active:translate-y-px',
                   hasContent
-                    ? 'bg-gradient-to-tr from-primary to-indigo-600 text-white shadow-md shadow-primary/30 hover:opacity-95'
-                    : 'bg-muted/50 text-muted-foreground/35 cursor-not-allowed'
+                    ? 'key-signal shadow-key'
+                    : 'bg-muted text-muted-foreground/40 cursor-not-allowed'
                 )}
                 disabled={!hasContent}
-                aria-label={editingMessage ? 'Save changes' : 'Send message'}
+                aria-label={editingMessage ? 'Save changes' : 'Transmit payload'}
               >
                 {editingMessage ? (
-                  <Check className="w-4.5 h-4.5 stroke-[2.5]" />
+                  <Check className="size-3.5" />
                 ) : (
-                  <Send className="w-4.5 h-4.5 ml-0.5" />
+                  <>
+                    <Send className="size-3.5" />
+                    <span className="hidden sm:inline-block">TX</span>
+                  </>
                 )}
-              </Button>
+              </button>
             </div>
           </form>
         </div>
 
-        {/* Desktop Helper Shortcuts */}
+        {/* Desktop Helper hints */}
         {!isMobile && (
-          <div className="flex items-center justify-between px-3 pt-1.5 text-[10px] text-muted-foreground/60 select-none">
+          <div className="flex items-center justify-between px-2 pt-1 font-mono text-[10px] text-muted-foreground/60 select-none">
             <span>
-              <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-[9px] border border-border/40">Enter ↵</kbd> to send
-              <span className="mx-1.5">•</span>
-              <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-[9px] border border-border/40">Shift + Enter</kbd> for new line
+              <Kbd>Enter ↵</Kbd> transmit <span className="mx-1">·</span> <Kbd>Shift + Enter</Kbd> newline
             </span>
             {selectedFile && (
-              <span className="text-primary font-medium">1 file attached</span>
+              <span className="text-primary font-bold">1 PACKET STAGED</span>
             )}
           </div>
         )}
 
-        {/* Mobile Attachment Action Drawer */}
+        {/* Mobile Attachment Drawer */}
         <Drawer
           open={showMobileAttachDrawer}
           onOpenChange={setShowMobileAttachDrawer}
         >
           <DrawerContent className="pb-8">
             <DrawerHeader className="text-left pb-2">
-              <DrawerTitle className="text-sm font-bold">Add Attachment</DrawerTitle>
-              <DrawerDescription className="text-xs text-muted-foreground">
-                Share photos, videos or documents with your conversation
+              <DrawerTitle className="label-engraved">ATTACH MEDIA PACKET</DrawerTitle>
+              <DrawerDescription className="font-mono text-xs text-muted-foreground">
+                Select document or image to transmit
               </DrawerDescription>
             </DrawerHeader>
 
-            <div className="px-4 py-2 space-y-2.5">
+            <div className="px-4 py-2 space-y-2">
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 h-14 rounded-2xl text-sm font-medium border-border/80 hover:bg-muted/60"
+                className="w-full justify-start gap-3 h-12 font-mono text-xs"
                 onClick={() => {
                   setShowMobileAttachDrawer(false);
                   setTimeout(() => imageInputRef.current?.click(), 150);
                 }}
               >
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-                  <ImageIcon className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Photos & Videos</p>
-                  <p className="text-[11px] text-muted-foreground">JPG, PNG, GIF, MP4, WebM</p>
-                </div>
+                <ImageIcon className="w-4 h-4 text-primary" />
+                <span>PHOTOS & VIDEOS</span>
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 h-14 rounded-2xl text-sm font-medium border-border/80 hover:bg-muted/60"
+                className="w-full justify-start gap-3 h-12 font-mono text-xs"
                 onClick={() => {
                   setShowMobileAttachDrawer(false);
                   setTimeout(() => docInputRef.current?.click(), 150);
                 }}
               >
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Documents & Files</p>
-                  <p className="text-[11px] text-muted-foreground">PDF, Word, Excel, plain text</p>
-                </div>
+                <FileText className="w-4 h-4" />
+                <span>DOCUMENTS & FILES</span>
               </Button>
             </div>
           </DrawerContent>
