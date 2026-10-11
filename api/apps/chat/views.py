@@ -710,35 +710,31 @@ class MessageViewSet(viewsets.ModelViewSet):
             if is_in_room:
                 continue
 
-            # Check if user is online globally
-            is_online = redis_conn.sismember("global:online_users", participant_id)
+            # Always create or update persistent notification in DB for out-of-room participants
+            Notification.objects.update_or_create(
+                user_id=participant_id,
+                chat_room_id=chat_room.id,
+                is_read=False,
+                defaults={
+                    "content": f"New message from {sender.name}",
+                    "created_at": timezone.now(),
+                },
+            )
 
-            if is_online:
-                # Send ephemeral notification via WebSocket with message preview
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{participant_id}",
-                    {
-                        "type": "new_message_notification",
-                        "chat_room_id": chat_room.id,
-                        "sender_id": sender.id,
-                        "sender_name": sender.name,
-                        "message_content": (
-                            message.content[:100] if message.content else None
-                        ),
-                        "has_attachment": bool(message.attachment),
-                    },
-                )
-            else:
-                # Create persistent notification for offline user
-                Notification.objects.update_or_create(
-                    user_id=participant_id,
-                    chat_room_id=chat_room.id,
-                    is_read=False,
-                    defaults={
-                        "content": f"New message from {sender.name}",
-                        "created_at": timezone.now(),
-                    },
-                )
+            # Send real-time notification via WebSocket with message preview
+            async_to_sync(channel_layer.group_send)(
+                f"user_{participant_id}",
+                {
+                    "type": "new_message_notification",
+                    "chat_room_id": chat_room.id,
+                    "sender_id": sender.id,
+                    "sender_name": sender.name,
+                    "message_content": (
+                        message.content[:100] if message.content else None
+                    ),
+                    "has_attachment": bool(message.attachment),
+                },
+            )
 
 
 ### Message Read Receipt Views ###

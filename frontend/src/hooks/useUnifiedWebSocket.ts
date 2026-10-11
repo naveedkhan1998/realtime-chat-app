@@ -75,19 +75,9 @@ export function useUnifiedWebSocket(token: string | null) {
   const dispatch = useDispatch<AppDispatch>();
   const ws = useRef(getUnifiedWebSocket());
   const [connectionState, setConnectionState] =
-    useState<ConnectionState>('disconnected');
+    useState<ConnectionState>(ws.current.getConnectionState());
 
   useEffect(() => {
-    if (!token) {
-      ws.current.disconnect();
-      dispatch(setConnected(false));
-      dispatch(setAuthenticated(false));
-      return;
-    }
-
-    // Connect to WebSocket
-    ws.current.connect(token);
-
     // Listen for connection state changes
     const unsubscribeState = ws.current.onConnectionStateChange(state => {
       setConnectionState(state);
@@ -100,6 +90,20 @@ export function useUnifiedWebSocket(token: string | null) {
       );
       dispatch(setAuthenticated(state === 'authenticated'));
     });
+
+    if (!token) {
+      const activeToken = ws.current.getToken();
+      if (activeToken) {
+        ws.current.connect(activeToken);
+      } else {
+        ws.current.disconnect();
+        dispatch(setConnected(false));
+        dispatch(setAuthenticated(false));
+      }
+    } else {
+      // Connect to WebSocket
+      ws.current.connect(token);
+    }
 
     // Set up event handlers
     const unsubscribers: Array<() => void> = [];
@@ -124,9 +128,6 @@ export function useUnifiedWebSocket(token: string | null) {
       })
     );
 
-    // Note: global.new_message_notification is handled by Sidebar.tsx
-    // which has access to activeChat and can skip notifications for the current chat
-
     return () => {
       unsubscribers.forEach(unsub => unsub());
       unsubscribeState();
@@ -137,6 +138,7 @@ export function useUnifiedWebSocket(token: string | null) {
     connectionState,
     isConnected: connectionState === 'authenticated',
     disconnect: () => ws.current.disconnect(),
+    reconnect: () => ws.current.reconnect(),
   };
 }
 
@@ -152,13 +154,24 @@ export function useRoomSubscription(roomId: number | null) {
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
-    if (!roomId || !ws.current.isAuthenticated()) {
+    if (!roomId) {
       setIsSubscribed(false);
       return;
     }
 
-    // Subscribe to room
-    ws.current.subscribeToRoom(roomId);
+    const wsInstance = ws.current;
+
+    // Subscribe to room in Unified WebSocket service
+    wsInstance.subscribeToRoom(roomId);
+
+    // Watch connection state changes to re-verify subscription upon reconnect/auth
+    const unsubscribeState = wsInstance.onConnectionStateChange(state => {
+      if (state === 'authenticated') {
+        wsInstance.subscribeToRoom(roomId);
+      } else if (state === 'disconnected' || state === 'error') {
+        setIsSubscribed(false);
+      }
+    });
 
     const unsubscribers: Array<() => void> = [];
 
@@ -320,9 +333,10 @@ export function useRoomSubscription(roomId: number | null) {
     return () => {
       // Unsubscribe from room
       if (roomId) {
-        ws.current.unsubscribeFromRoom(roomId);
+        wsInstance.unsubscribeFromRoom(roomId);
       }
       unsubscribers.forEach(unsub => unsub());
+      unsubscribeState();
       setIsSubscribed(false);
     };
   }, [roomId, dispatch]);
@@ -538,12 +552,14 @@ export function useWebSocketEvent<T extends UnifiedWebSocketEvent['type']>(
   callback: (event: Extract<UnifiedWebSocketEvent, { type: T }>) => void
 ) {
   const ws = useRef(getUnifiedWebSocket());
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
 
   useEffect(() => {
-    const unsubscribe = ws.current.on(
-      eventType,
-      callback as (event: UnifiedWebSocketEvent) => void
-    );
+    const wsInstance = ws.current;
+    const unsubscribe = wsInstance.on(eventType, event => {
+      callbackRef.current(event as Extract<UnifiedWebSocketEvent, { type: T }>);
+    });
     return unsubscribe;
-  }, [eventType, callback]);
+  }, [eventType]);
 }
