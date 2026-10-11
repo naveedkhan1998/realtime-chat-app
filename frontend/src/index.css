@@ -2,77 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   MNK Chat — "Analog Console" design system
+   Surfaces are modeled on physical hardware:
+     chassis (background) → panel (card) → well (sunken input/readout)
+   One signal colour (orange) for intent, one live colour (green) for voice,
+   and an LCD screen colour for realtime readouts.
+   See frontend/DESIGN.md for usage guidelines.
+   ========================================================================== */
+
 @layer base {
   :root {
-    /* Executive Modern Aurora - Light Theme */
-    --background: 224 25% 97%; /* Crisp Porcelain Slate */
-    --foreground: 224 71% 8%; /* Deep Obsidian */
+    /* Ceramic — light */
+    --background: 40 11% 87%; /* chassis   #e3e0d9 */
+    --foreground: 40 9% 10%; /* ink       #1c1b18 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 8%;
+    --card: 45 22% 95.5%; /* panel     #f6f4ef */
+    --card-foreground: 40 9% 10%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 8%;
+    --popover: 45 22% 97%;
+    --popover-foreground: 40 9% 10%;
 
-    /* Vibrant Indigo Primary */
-    --primary: 250 84% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 19 100% 52%; /* signal orange #ff5c0a */
+    --primary-foreground: 40 9% 8%;
 
-    /* Crisp Slate Secondary */
-    --secondary: 220 14% 94%;
-    --secondary-foreground: 224 71% 10%;
+    --secondary: 40 12% 90.5%;
+    --secondary-foreground: 40 9% 12%;
 
-    /* Soft Muted */
-    --muted: 220 14% 93%;
-    --muted-foreground: 220 12% 44%;
+    --muted: 40 11% 90%;
+    --muted-foreground: 36 6% 38%;
 
-    /* Indigo Accent */
-    --accent: 250 84% 96%;
-    --accent-foreground: 250 84% 45%;
+    --accent: 40 14% 89%;
+    --accent-foreground: 40 9% 10%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 4 78% 48%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 250 84% 58%;
+    --border: 38 9% 77%;
+    --input: 38 9% 74%;
+    --ring: 19 100% 52%;
 
-    --radius: 1rem;
+    --well: 40 10% 83.5%;
+    --live: 142 64% 34%;
+    --live-foreground: 0 0% 100%;
+    --lcd: 80 6% 11%;
+    --lcd-foreground: 24 100% 60%;
+    --lcd-dim: 24 30% 26%;
+
+    --radius: 0.875rem;
+
+    --shadow-key:
+      inset 0 1px 0 hsl(0 0% 100% / 0.75), 0 1px 0 hsl(36 8% 62%),
+      0 2px 4px -1px hsl(36 10% 20% / 0.18);
+    --shadow-key-pressed:
+      inset 0 1px 2px hsl(36 10% 20% / 0.22), 0 0 0 hsl(0 0% 0% / 0);
+    --shadow-panel:
+      0 0 0 1px hsl(var(--border)), inset 0 1px 0 hsl(0 0% 100% / 0.8),
+      0 10px 28px -20px hsl(36 10% 20% / 0.35);
+    --shadow-well:
+      inset 0 1px 3px hsl(36 10% 20% / 0.16), inset 0 0 0 1px hsl(var(--border));
+    --shadow-lift:
+      0 0 0 1px hsl(var(--border)), 0 18px 40px -18px hsl(36 10% 15% / 0.4),
+      0 4px 10px -4px hsl(36 10% 15% / 0.15);
+
+    --grille: hsl(40 9% 10% / 0.16);
+    --noise-opacity: 0.05;
   }
 
   .dark {
-    /* Obsidian Indigo - High Contrast Dark Theme */
-    --background: 224 45% 6%; /* Deep Space Slate #090d16 */
-    --foreground: 210 25% 98%;
+    /* Graphite — dark */
+    --background: 45 4% 6.5%; /* chassis   #121110 */
+    --foreground: 42 20% 90%; /* bone      #ece8df */
 
-    --card: 224 40% 10%; /* Elevated Card Surface #0f172a */
-    --card-foreground: 210 25% 98%;
+    --card: 45 4% 10%; /* panel     #1b1a18 */
+    --card-foreground: 42 20% 90%;
 
-    --popover: 224 40% 10%;
-    --popover-foreground: 210 25% 98%;
+    --popover: 45 4% 12%;
+    --popover-foreground: 42 20% 90%;
 
-    /* Luminous Indigo Primary */
-    --primary: 250 85% 64%;
-    --primary-foreground: 0 0% 100%; /* Crisp white text for maximum readability */
+    --primary: 19 100% 56%;
+    --primary-foreground: 40 9% 7%;
 
-    /* Secondary Surface */
-    --secondary: 224 30% 15%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 45 4% 15%;
+    --secondary-foreground: 42 18% 88%;
 
-    /* Deep Muted */
-    --muted: 224 30% 13%;
-    --muted-foreground: 215 20% 65%; /* Legible slate */
+    --muted: 45 4% 14%;
+    --muted-foreground: 40 6% 58%;
 
-    /* Indigo Accent */
-    --accent: 250 40% 18%;
-    --accent-foreground: 250 90% 80%;
+    --accent: 45 4% 16%;
+    --accent-foreground: 42 20% 92%;
 
-    --destructive: 0 75% 55%;
+    --destructive: 4 80% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 224 25% 18%;
-    --input: 224 25% 18%;
-    --ring: 250 85% 64%;
+    --border: 45 4% 18.5%;
+    --input: 45 4% 21%;
+    --ring: 19 100% 56%;
+
+    --well: 45 5% 5%;
+    --live: 138 60% 50%;
+    --live-foreground: 140 40% 6%;
+    --lcd: 60 5% 3.5%;
+    --lcd-foreground: 24 100% 60%;
+    --lcd-dim: 24 35% 20%;
+
+    --shadow-key:
+      inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 1px 0 hsl(0 0% 0% / 0.7),
+      0 2px 5px -1px hsl(0 0% 0% / 0.55);
+    --shadow-key-pressed: inset 0 1px 3px hsl(0 0% 0% / 0.7);
+    --shadow-panel:
+      0 0 0 1px hsl(var(--border)), inset 0 1px 0 hsl(0 0% 100% / 0.035),
+      0 12px 30px -20px hsl(0 0% 0% / 0.9);
+    --shadow-well:
+      inset 0 1px 3px hsl(0 0% 0% / 0.6), inset 0 0 0 1px hsl(var(--border));
+    --shadow-lift:
+      0 0 0 1px hsl(var(--border)), 0 24px 48px -16px hsl(0 0% 0% / 0.8),
+      0 4px 12px -4px hsl(0 0% 0% / 0.5);
+
+    --grille: hsl(42 20% 90% / 0.1);
+    --noise-opacity: 0.035;
   }
 }
 
@@ -80,78 +128,242 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings:
-      'rlig' 1,
+      'ss01' 1,
       'calt' 1;
+    font-variation-settings: 'wdth' 100;
+  }
+  /* Subtle powder-coat grain over the whole chassis */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: var(--noise-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.85);
+    color: hsl(var(--primary-foreground));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 }
 
-/* Premium Glassmorphism & Audio Utilities */
+@layer components {
+  /* ---- Surfaces ---------------------------------------------------------- */
+  .panel {
+    @apply rounded-xl bg-card text-card-foreground shadow-panel;
+  }
+  .well {
+    @apply rounded-lg bg-well shadow-well;
+  }
+
+  /* ---- Tactile key (button skin) ---------------------------------------- */
+  .key {
+    @apply bg-card text-foreground shadow-key transition-[transform,box-shadow,background-color] duration-100;
+  }
+  .key:active,
+  .key[data-pressed='true'],
+  .key[aria-pressed='true'] {
+    @apply translate-y-px shadow-key-pressed;
+  }
+  .key-signal {
+    @apply bg-primary text-primary-foreground transition-[transform,box-shadow,background-color] duration-100;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.35),
+      0 1px 0 hsl(19 90% 34%),
+      0 3px 8px -2px hsl(19 100% 40% / 0.45);
+  }
+  .key-signal:active {
+    @apply translate-y-px;
+    box-shadow: inset 0 1px 3px hsl(19 90% 25% / 0.5);
+  }
+  .key-ink {
+    @apply bg-foreground text-background transition-[transform,box-shadow] duration-100;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.12),
+      0 1px 0 hsl(0 0% 0% / 0.5),
+      0 3px 8px -3px hsl(0 0% 0% / 0.45);
+  }
+  .key-ink:active {
+    @apply translate-y-px;
+    box-shadow: inset 0 1px 3px hsl(0 0% 0% / 0.5);
+  }
+
+  /* ---- LCD readout ------------------------------------------------------- */
+  .lcd {
+    @apply rounded-md bg-lcd text-lcd-foreground font-mono;
+    box-shadow:
+      inset 0 1px 4px hsl(0 0% 0% / 0.6),
+      inset 0 0 0 1px hsl(0 0% 0% / 0.5),
+      0 1px 0 hsl(0 0% 100% / 0.25);
+    text-shadow: 0 0 6px hsl(var(--lcd-foreground) / 0.45);
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.025) 50%, transparent 50%),
+      linear-gradient(180deg, hsl(0 0% 100% / 0.05), transparent 40%);
+    background-size:
+      100% 3px,
+      100% 100%;
+  }
+  .dark .lcd {
+    box-shadow:
+      inset 0 1px 4px hsl(0 0% 0% / 0.9),
+      inset 0 0 0 1px hsl(0 0% 100% / 0.04);
+  }
+  .lcd-dot {
+    @apply font-dot font-bold tracking-wider;
+  }
+
+  /* ---- Engraved / silkscreened labels ----------------------------------- */
+  .label-engraved {
+    @apply font-mono text-2xs font-medium uppercase tracking-[0.14em] text-muted-foreground;
+  }
+  .display-wide {
+    font-variation-settings: 'wdth' 125;
+    @apply font-extrabold tracking-[-0.02em];
+  }
+  .display-condensed {
+    font-variation-settings: 'wdth' 72;
+  }
+
+  /* ---- LED indicator ----------------------------------------------------- */
+  .led {
+    @apply inline-block size-2 shrink-0 rounded-full;
+    background: hsl(var(--muted-foreground) / 0.35);
+    box-shadow: inset 0 1px 1px hsl(0 0% 0% / 0.35);
+  }
+  .led-signal {
+    background: hsl(var(--primary));
+    box-shadow:
+      0 0 0 2px hsl(var(--primary) / 0.18),
+      0 0 8px hsl(var(--primary) / 0.7);
+  }
+  .led-live {
+    background: hsl(var(--live));
+    box-shadow:
+      0 0 0 2px hsl(var(--live) / 0.18),
+      0 0 8px hsl(var(--live) / 0.7);
+  }
+  .led-danger {
+    background: hsl(var(--destructive));
+    box-shadow:
+      0 0 0 2px hsl(var(--destructive) / 0.18),
+      0 0 8px hsl(var(--destructive) / 0.7);
+  }
+
+  /* ---- Speaker grille / perforation pattern ----------------------------- */
+  .grille {
+    background-image: radial-gradient(var(--grille) 1.1px, transparent 1.5px);
+    background-size: 7px 7px;
+  }
+  .grille-fine {
+    background-image: radial-gradient(var(--grille) 0.8px, transparent 1.1px);
+    background-size: 4px 4px;
+  }
+
+  /* ---- Ruler / tick marks ------------------------------------------------ */
+  .ticks {
+    background-image: repeating-linear-gradient(
+      90deg,
+      hsl(var(--foreground) / 0.25) 0 1px,
+      transparent 1px 8px
+    );
+  }
+
+  /* ---- Screw head (decorative) ------------------------------------------ */
+  .screw {
+    @apply relative inline-block size-2.5 rounded-full;
+    background: radial-gradient(
+      circle at 35% 30%,
+      hsl(var(--card)),
+      hsl(var(--muted-foreground) / 0.6)
+    );
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--foreground) / 0.2),
+      0 1px 0 hsl(0 0% 100% / 0.4);
+  }
+  .screw::after {
+    content: '';
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    top: 50%;
+    height: 1px;
+    transform: translateY(-50%) rotate(-35deg);
+    background: hsl(var(--foreground) / 0.45);
+  }
+}
+
 @layer utilities {
+  /* Legacy helpers re-skinned for the console look (kept for compatibility) */
   .glass {
-    @apply bg-background/60 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-lg;
+    @apply bg-card shadow-panel;
   }
-
   .glass-card {
-    @apply bg-card/75 backdrop-blur-lg border border-border/60 shadow-md;
+    @apply bg-card shadow-panel;
   }
-
   .audio-live-glow {
-    box-shadow: 0 0 24px -2px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 1px hsl(var(--live) / 0.5), 0 0 18px -4px hsl(var(--live) / 0.5);
   }
-
   .speaking-indicator {
-    @apply ring-2 ring-emerald-500 ring-offset-2 ring-offset-background animate-speaking-glow;
+    @apply ring-2 ring-live ring-offset-2 ring-offset-card animate-speaking-glow;
   }
-
-  .blob {
-    @apply absolute rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob;
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
   }
-
-  .dark .blob {
-    @apply mix-blend-screen opacity-25;
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 
-/* Custom Scrollbar */
+/* Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
 }

@@ -12,26 +12,22 @@ import {
 } from '@/services/chatApi';
 import { useDebounce } from '@/utils/hooks';
 import { toast } from '@/hooks/use-toast';
-import { getAvatarUrl } from '@/lib/utils';
+import { getAvatarUrl, cn } from '@/lib/utils';
 
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 
 import {
   Search,
   Loader2,
-  MessageSquarePlus,
-  ArrowLeft,
-  Users2,
-  LucideProps,
-  UserPlus,
+  MessageSquare,
+  Users,
   X,
 } from 'lucide-react';
+import { PageFrame, Module } from '@/components/console/PageFrame';
+import { Led, SectionLabel, channelNo } from '@/components/console';
 
 type ChatMode = 'direct' | 'group';
 
@@ -75,15 +71,15 @@ export default function NewChatPage() {
         participant_ids: [participantId],
       }).unwrap();
       toast({
-        title: 'Chat created',
-        description: `You can now chat with ${participantName}.`,
+        title: 'CHANNEL PATCHED',
+        description: `Connected with ${participantName}.`,
       });
       navigate(`/chat/${response.id}`);
     } catch (error) {
       console.error('Failed to create chat room:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to create chat. Please try again.',
+        title: 'ERROR',
+        description: 'Failed to patch channel.',
         variant: 'destructive',
       });
     } finally {
@@ -94,16 +90,16 @@ export default function NewChatPage() {
   const handleCreateGroupChat = async () => {
     if (selectedUsers.length < 1) {
       toast({
-        title: 'Select participants',
-        description: 'Please select at least one participant for the group.',
+        title: 'NO OPERATORS SELECTED',
+        description: 'Select at least one participant.',
         variant: 'destructive',
       });
       return;
     }
     if (!groupName.trim()) {
       toast({
-        title: 'Group name required',
-        description: 'Please enter a name for the group.',
+        title: 'CHANNEL LABEL REQUIRED',
+        description: 'Specify a label for this channel.',
         variant: 'destructive',
       });
       return;
@@ -116,15 +112,15 @@ export default function NewChatPage() {
         participant_ids: selectedUsers.map(u => u.id),
       }).unwrap();
       toast({
-        title: 'Group created',
-        description: `Group "${groupName}" has been created.`,
+        title: 'GROUP CHANNEL OPEN',
+        description: `Channel "${groupName}" ready.`,
       });
       navigate(`/chat/${response.id}`);
     } catch (error) {
       console.error('Failed to create group:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to create group. Please try again.',
+        title: 'ERROR',
+        description: 'Failed to create channel.',
         variant: 'destructive',
       });
     }
@@ -149,389 +145,266 @@ export default function NewChatPage() {
     selectedUsers.some(u => u.id === userId);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <>
       <Helmet>
-        <title>New Chat | MNK Chat</title>
-        <meta name="description" content="Start a new conversation" />
+        <title>New Channel | MNK Chat</title>
       </Helmet>
 
-      {/* Header - Consistent with other pages */}
-      <header className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 border-b sm:gap-4 sm:px-6 sm:py-4 bg-background/80 backdrop-blur-xl border-border/50">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-xl shrink-0 sm:w-10 sm:h-10"
-        >
-          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-        </Button>
-        <div className="min-w-0">
-          <h1 className="text-lg font-bold truncate sm:text-xl text-foreground">
-            {chatMode === 'direct' ? 'New Chat' : 'New Group'}
-          </h1>
-          <p className="text-xs truncate sm:text-sm text-muted-foreground">
-            {chatMode === 'direct'
-              ? 'Start a conversation'
-              : 'Create a group chat'}
-          </p>
-        </div>
-      </header>
-
-      {/* Mode Tabs */}
-      <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
-        <Tabs
-          value={chatMode}
-          onValueChange={v => {
-            setChatMode(v as ChatMode);
-            setSelectedUsers([]);
-            setGroupName('');
-          }}
-        >
-          <TabsList className="grid w-full max-w-xs grid-cols-2 mx-auto">
-            <TabsTrigger value="direct" className="gap-2">
-              <MessageSquarePlus className="w-4 h-4" />
-              Direct
-            </TabsTrigger>
-            <TabsTrigger value="group" className="gap-2">
-              <Users2 className="w-4 h-4" />
-              Group
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {/* Group Name Input (only for group mode) */}
-      {chatMode === 'group' && (
-        <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
-          <div className="max-w-xl mx-auto">
-            <Input
-              placeholder="Enter group name..."
-              value={groupName}
-              onChange={e => setGroupName(e.target.value)}
-              className="h-12 text-base border rounded-xl bg-muted/50 border-border/50 focus:bg-background"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Selected Users (only for group mode) */}
-      {chatMode === 'group' && selectedUsers.length > 0 && (
-        <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
-          <div className="max-w-xl mx-auto">
-            <div className="flex flex-wrap gap-2">
-              {selectedUsers.map(selectedUser => (
-                <Badge
-                  key={selectedUser.id}
-                  variant="secondary"
-                  className="flex items-center gap-1 py-1 pl-1 pr-2"
-                >
-                  <Avatar className="w-5 h-5">
-                    <AvatarImage
-                      src={getAvatarUrl(selectedUser.avatar)}
-                      alt={selectedUser.name}
-                    />
-                    <AvatarFallback className="text-[10px]">
-                      {selectedUser.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs">{selectedUser.name}</span>
-                  <button
-                    onClick={() => removeSelectedUser(selectedUser.id)}
-                    className="ml-1 hover:text-destructive"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Group Button (only for group mode) */}
-      {chatMode === 'group' && (
-        <div className="px-4 py-3 border-b sm:px-6 border-border/50 bg-background/50">
-          <div className="max-w-xl mx-auto">
+      <PageFrame
+        code="02"
+        section="Channels"
+        title="Patch Channel"
+        description="Initialize a direct link with an operator or broadcast a new group frequency."
+        actions={
+          chatMode === 'group' ? (
             <Button
               onClick={handleCreateGroupChat}
-              disabled={
-                creatingChatRoom ||
-                selectedUsers.length < 1 ||
-                !groupName.trim()
-              }
-              className="w-full h-11 rounded-xl"
+              disabled={creatingChatRoom || selectedUsers.length === 0 || !groupName.trim()}
+              className="font-mono text-xs font-bold"
             >
-              {creatingChatRoom ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <UserPlus className="w-4 h-4 mr-2" />
-              )}
-              Create Group ({selectedUsers.length} member
-              {selectedUsers.length !== 1 ? 's' : ''})
+              {creatingChatRoom ? 'PATCHING...' : 'BROADCAST GROUP'}
             </Button>
-          </div>
-        </div>
-      )}
+          ) : undefined
+        }
+      >
+        <div className="space-y-5">
+          {/* Channel Mode Selector */}
+          <Module label="CONFIGURATION" title="Transmission Mode">
+            <div className="flex items-center gap-1.5 p-1 rounded-full bg-well shadow-well max-w-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setChatMode('direct');
+                  setSelectedUsers([]);
+                  setGroupName('');
+                }}
+                className={cn(
+                  'flex-1 py-1.5 rounded-full font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all',
+                  chatMode === 'direct'
+                    ? 'bg-card text-foreground shadow-key'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>DIRECT [DMS]</span>
+              </button>
 
-      {/* Search Input */}
-      <div className="px-4 py-4 border-b sm:px-6 border-border/50 bg-background/50">
-        <div className="max-w-xl mx-auto">
-          <div className="relative">
-            <Search className="absolute w-5 h-5 -translate-y-1/2 left-4 top-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or email..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="h-12 pl-12 text-base border rounded-xl bg-muted/50 border-border/50 focus:bg-background"
-              autoFocus
-            />
-            {searchLoading && (
-              <Loader2 className="absolute w-5 h-5 -translate-y-1/2 right-4 top-1/2 animate-spin text-primary" />
-            )}
-          </div>
-          {searchQuery.length > 0 && searchQuery.length < 2 && (
-            <p className="mt-2 text-xs text-center text-muted-foreground">
-              Type at least 2 characters to search
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        {/* Search Results Section */}
-        {(searchLoading ||
-          (searchResults && searchResults.length > 0) ||
-          (debouncedSearchQuery && debouncedSearchQuery.length >= 2)) && (
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="px-4 py-2 sm:px-6">
-              <h2 className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-                Search Results
-              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setChatMode('group');
+                  setSelectedUsers([]);
+                  setGroupName('');
+                }}
+                className={cn(
+                  'flex-1 py-1.5 rounded-full font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all',
+                  chatMode === 'group'
+                    ? 'bg-card text-foreground shadow-key'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>GROUP [CHN]</span>
+              </button>
             </div>
-            <ScrollArea className="flex-1">
-              <div className="px-4 pb-4 sm:px-6">
-                {searchLoading ? (
-                  <LoadingState />
-                ) : searchResults && searchResults.length > 0 ? (
-                  <div className="space-y-2">
-                    {searchResults
-                      .filter(candidate => candidate.id !== user?.id)
-                      .map(candidate => (
-                        <UserCard
-                          key={candidate.id}
-                          user={candidate}
-                          isOnline={isOnline(candidate.id)}
-                          onStartChat={() =>
-                            handleCreateDirectChat(candidate.id, candidate.name)
-                          }
-                          onToggleSelect={() => toggleUserSelection(candidate)}
-                          isSelected={isUserSelected(candidate.id)}
-                          isGroupMode={chatMode === 'group'}
-                          isLoading={
-                            creatingChatRoom &&
-                            pendingChatUserId === candidate.id
-                          }
-                          disabled={creatingChatRoom}
-                        />
-                      ))}
-                  </div>
-                ) : (
-                  <EmptyState
-                    icon={Search}
-                    title="No users found"
-                    description={`No results for "${searchQuery}". Try a different search.`}
+          </Module>
+
+          {/* Group Channel Details */}
+          {chatMode === 'group' && (
+            <Module label="PARAMETERS" title="Channel Identity">
+              <div className="space-y-3">
+                <div>
+                  <label className="label-engraved block mb-1.5">CHANNEL NAME</label>
+                  <Input
+                    placeholder="e.g. engineering, release-squad, audio-test"
+                    value={groupName}
+                    onChange={e => setGroupName(e.target.value)}
+                    className="font-mono text-xs h-10"
                   />
+                </div>
+
+                {selectedUsers.length > 0 && (
+                  <div>
+                    <label className="label-engraved block mb-1.5">
+                      STAGED OPERATORS ({selectedUsers.length})
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedUsers.map(selectedUser => (
+                        <span
+                          key={selectedUser.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full key font-mono text-xs"
+                        >
+                          <Avatar className="w-4 h-4 border border-border">
+                            <AvatarImage src={getAvatarUrl(selectedUser.avatar)} />
+                            <AvatarFallback className="text-[8px] font-bold">
+                              {selectedUser.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-semibold">{selectedUser.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeSelectedUser(selectedUser.id)}
+                            className="text-muted-foreground hover:text-destructive p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-            </ScrollArea>
-          </div>
-        )}
+            </Module>
+          )}
 
-        {/* Contacts Section - Visible when not searching */}
-        {!debouncedSearchQuery || debouncedSearchQuery.length < 2 ? (
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="px-4 py-2 sm:px-6">
-              <h2 className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-                <Users2 className="w-3.5 h-3.5" />
-                Contacts
-                {friends.length > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="px-1.5 py-0 text-[10px] bg-primary/10 text-primary border-0"
-                  >
-                    {friends.length}
-                  </Badge>
-                )}
-              </h2>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="px-4 pb-6 sm:px-6">
-                {friendshipsLoading ? (
-                  <LoadingState />
-                ) : friends.length > 0 ? (
-                  <div className="space-y-2">
-                    {friends.map(friend => (
-                      <UserCard
-                        key={friend.id}
-                        user={friend}
-                        isOnline={isOnline(friend.id)}
-                        onStartChat={() =>
-                          handleCreateDirectChat(friend.id, friend.name)
-                        }
-                        onToggleSelect={() => toggleUserSelection(friend)}
-                        isSelected={isUserSelected(friend.id)}
-                        isGroupMode={chatMode === 'group'}
-                        isLoading={
-                          creatingChatRoom && pendingChatUserId === friend.id
-                        }
-                        disabled={creatingChatRoom}
-                        isFriend
-                      />
+          {/* Operator Search & Directory */}
+          <Module
+            label="DIRECTORY"
+            title="Scan Operators"
+            description="Search workspace operators by identifier or callsign."
+          >
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute w-4 h-4 left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="SEARCH CALLSIGN OR EMAIL..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="font-mono text-xs pl-10 h-10"
+                />
+              </div>
+
+              {/* Search Results */}
+              {searchLoading && (
+                <div className="flex items-center justify-center py-8 gap-2 font-mono text-xs text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <span>SCANNING DIRECTORY...</span>
+                </div>
+              )}
+
+              {searchResults && searchResults.length > 0 && (
+                <div className="space-y-2">
+                  <SectionLabel count={searchResults.length}>SEARCH RESULTS</SectionLabel>
+                  <div className="panel divide-y divide-border overflow-hidden">
+                    {searchResults.map(result => (
+                      <div
+                        key={result.id}
+                        className="flex items-center justify-between p-3 hover:bg-well transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {chatMode === 'group' && (
+                            <Checkbox
+                              checked={isUserSelected(result.id)}
+                              onCheckedChange={() => toggleUserSelection(result)}
+                            />
+                          )}
+                          <div className="relative">
+                            <Avatar className="w-8 h-8 border border-border">
+                              <AvatarImage src={getAvatarUrl(result.avatar)} />
+                              <AvatarFallback className="font-mono text-xs font-bold bg-well">
+                                {result.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isOnline(result.id) && (
+                              <Led tone="live" className="absolute -bottom-0.5 -right-0.5 ring-1 ring-card" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-mono text-xs font-bold text-foreground truncate">
+                              {result.name}
+                            </p>
+                            <p className="font-mono text-[10px] text-muted-foreground truncate">
+                              OP·{channelNo(result.id)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {chatMode === 'direct' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCreateDirectChat(result.id, result.name)}
+                            disabled={pendingChatUserId === result.id}
+                            className="font-mono text-xs h-8 px-3"
+                          >
+                            {pendingChatUserId === result.id ? 'CONNECTING...' : 'CONNECT'}
+                          </Button>
+                        )}
+                      </div>
                     ))}
                   </div>
-                ) : (
-                  <EmptyState
-                    icon={Search}
-                    title="Find people to chat with"
-                    description="Search for anyone by name or email above to start a conversation directly."
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        ) : null}
+                </div>
+              )}
 
-        {/* Default state when no search */}
-        {!debouncedSearchQuery &&
-          friends.length === 0 &&
-          !friendshipsLoading && <div className="flex-1" />}
-      </div>
-    </div>
-  );
-}
+              {/* Saved Contacts / Friends */}
+              {!searchQuery && (
+                <div className="space-y-2">
+                  <SectionLabel count={friends.length}>KNOWN OPERATORS</SectionLabel>
+                  {friendshipsLoading ? (
+                    <div className="flex items-center justify-center py-6 gap-2 font-mono text-xs text-muted-foreground">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      <span>LOADING CONTACTS...</span>
+                    </div>
+                  ) : friends.length > 0 ? (
+                    <div className="panel divide-y divide-border overflow-hidden">
+                      {friends.map(friend => (
+                        <div
+                          key={friend.id}
+                          className="flex items-center justify-between p-3 hover:bg-well transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {chatMode === 'group' && (
+                              <Checkbox
+                                checked={isUserSelected(friend.id)}
+                                onCheckedChange={() => toggleUserSelection(friend)}
+                              />
+                            )}
+                            <div className="relative">
+                              <Avatar className="w-8 h-8 border border-border">
+                                <AvatarImage src={getAvatarUrl(friend.avatar)} />
+                                <AvatarFallback className="font-mono text-xs font-bold bg-well">
+                                  {friend.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              {isOnline(friend.id) && (
+                                <Led tone="live" className="absolute -bottom-0.5 -right-0.5 ring-1 ring-card" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-mono text-xs font-bold text-foreground truncate">
+                                {friend.name}
+                              </p>
+                              <p className="font-mono text-[10px] text-muted-foreground">
+                                OP·{channelNo(friend.id)}
+                              </p>
+                            </div>
+                          </div>
 
-// Loading State Component
-function LoadingState() {
-  return (
-    <div className="flex items-center justify-center py-12">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
-}
-
-// User Card Component
-function UserCard({
-  user,
-  isOnline,
-  onStartChat,
-  onToggleSelect,
-  isSelected,
-  isGroupMode,
-  isLoading,
-  disabled,
-  isFriend,
-}: {
-  user: User;
-  isOnline: boolean;
-  onStartChat: () => void;
-  onToggleSelect: () => void;
-  isSelected: boolean;
-  isGroupMode: boolean;
-  isLoading: boolean;
-  disabled: boolean;
-  isFriend?: boolean;
-}) {
-  const handleClick = () => {
-    if (isGroupMode) {
-      onToggleSelect();
-    }
-  };
-
-  return (
-    <div
-      className={`flex items-center gap-3 p-3 transition-colors border rounded-xl bg-card border-border/50 hover:bg-accent/50 sm:p-4 ${
-        isGroupMode ? 'cursor-pointer' : ''
-      } ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
-      onClick={handleClick}
-    >
-      {isGroupMode && (
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={() => onToggleSelect()}
-          onClick={e => e.stopPropagation()}
-          className="shrink-0"
-        />
-      )}
-      <div className="relative">
-        <Avatar className="w-10 h-10 border sm:w-12 sm:h-12 border-border/50">
-          <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} />
-          <AvatarFallback className="text-sm font-semibold sm:text-base bg-primary/10 text-primary">
-            {user.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        {isOnline && (
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 rounded-full sm:w-3.5 sm:h-3.5 border-card" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold truncate sm:text-base text-foreground">
-          {user.name}
-        </h3>
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          {isOnline ? (
-            <span className="font-medium text-green-500">Online</span>
-          ) : (
-            <span>Offline</span>
-          )}
-          {isFriend && (
-            <>
-              <span className="text-border">•</span>
-              <span>Friend</span>
-            </>
-          )}
-        </p>
-      </div>
-      {!isGroupMode && (
-        <Button
-          size="sm"
-          onClick={onStartChat}
-          disabled={disabled}
-          className="rounded-lg h-9 shrink-0 sm:h-10"
-        >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <MessageSquarePlus className="w-4 h-4 mr-1.5" />
-              <span className="hidden sm:inline">Chat</span>
-            </>
-          )}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-// Empty State Component
-function EmptyState({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ForwardRefExoticComponent<
-    Omit<LucideProps, 'ref'> & React.RefAttributes<SVGSVGElement>
-  >;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-      <div className="flex items-center justify-center mb-4 border w-14 h-14 rounded-2xl bg-muted/50 border-border/50">
-        <Icon className="w-7 h-7 text-muted-foreground" />
-      </div>
-      <h3 className="mb-1 text-sm font-semibold text-foreground">{title}</h3>
-      <p className="max-w-xs text-xs text-muted-foreground">{description}</p>
-    </div>
+                          {chatMode === 'direct' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCreateDirectChat(friend.id, friend.name)}
+                              disabled={pendingChatUserId === friend.id}
+                              className="font-mono text-xs h-8 px-3"
+                            >
+                              {pendingChatUserId === friend.id ? 'CONNECTING...' : 'CONNECT'}
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center py-6 font-mono text-xs text-muted-foreground">
+                      NO SAVED CONTACTS YET. TYPE ABOVE TO SEARCH DIRECTORY.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </Module>
+        </div>
+      </PageFrame>
+    </>
   );
 }

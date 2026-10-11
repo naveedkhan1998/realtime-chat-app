@@ -398,7 +398,7 @@ export default function ChatWindow({
 
   return (
     <>
-      <div className="relative flex w-full h-full bg-background/30">
+      <div className="relative flex w-full h-full bg-card overflow-hidden">
         <div className="relative flex flex-col flex-1 h-full">
           <ChatHeader
             activeRoom={activeRoom}

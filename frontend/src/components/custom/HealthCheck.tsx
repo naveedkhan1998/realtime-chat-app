@@ -3,46 +3,40 @@ import { useHealthCheckQuery } from '@/services/baseApi';
 import { setError } from '@/features/errorSlice';
 import { WifiOff, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Led } from '@/components/console';
 
 interface HealthCheckProps {
   children: React.ReactNode;
 }
 
-const loadingMessages = [
-  'Warming up the engines...',
-  'Brewing some coffee for the servers...',
-  'Untangling the cables...',
-  'Waking up the hamsters...',
-  'Charging the flux capacitor...',
-  'Aligning the planets...',
+const bootLogs = [
+  'COLD START · INITIALIZING ASGI RUNTIME...',
+  'SPINNING UP REDIS PUB/SUB CHANNEL LAYER...',
+  'WARMING POSTGRES CONNECTION POOL...',
+  'CALIBRATING WEBRTC SIGNALING ROUTER...',
+  'STABILIZING STATION GATEWAY...',
 ];
 
 export default function HealthCheck({ children }: HealthCheckProps) {
   const { isLoading, isError, refetch } = useHealthCheckQuery();
   const [isBackendReady, setIsBackendReady] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState(loadingMessages[0]);
+  const [logIndex, setLogIndex] = useState(0);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-    let messageIntervalId: NodeJS.Timeout;
+    let logIntervalId: NodeJS.Timeout;
 
     if (isLoading || isError) {
       setIsBackendReady(false);
-      // Retry logic - poll frequently when down
       intervalId = setInterval(() => {
         refetch();
       }, 5000);
 
-      // Change message every 5 seconds
-      messageIntervalId = setInterval(() => {
-        setCurrentMessage(
-          loadingMessages[Math.floor(Math.random() * loadingMessages.length)]
-        );
-      }, 5000);
+      logIntervalId = setInterval(() => {
+        setLogIndex(prev => (prev + 1) % bootLogs.length);
+      }, 4000);
     } else {
-      // Backend is up
       setIsBackendReady(true);
-      // Poll less frequently when up
       intervalId = setInterval(() => {
         refetch();
       }, 60000);
@@ -50,13 +44,13 @@ export default function HealthCheck({ children }: HealthCheckProps) {
 
     return () => {
       if (intervalId) clearInterval(intervalId);
-      if (messageIntervalId) clearInterval(messageIntervalId);
+      if (logIntervalId) clearInterval(logIntervalId);
     };
   }, [isLoading, isError, refetch]);
 
   useEffect(() => {
     if (isBackendReady && isError) {
-      setError('Connection to the server lost. Please try again later.');
+      setError('Connection to station lost. Reconnecting...');
     }
   }, [isBackendReady, isError]);
 
@@ -66,51 +60,54 @@ export default function HealthCheck({ children }: HealthCheckProps) {
       <AnimatePresence>
         {(!isBackendReady || isError) && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] md:w-auto md:max-w-sm"
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+            className="fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] sm:w-auto sm:max-w-md"
           >
-            <div className="flex items-center gap-4 p-4 border shadow-2xl bg-background/80 backdrop-blur-md rounded-2xl border-primary/20 ring-1 ring-primary/10">
-              <div className="relative flex items-center justify-center shrink-0">
-                {isError ? (
-                  <div className="p-2 rounded-full bg-destructive/10 text-destructive">
-                    <WifiOff className="w-5 h-5" />
-                  </div>
-                ) : (
-                  <div className="p-2 rounded-full bg-primary/10 text-primary">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  </div>
-                )}
-                {!isError && (
-                  <span className="absolute inset-0 rounded-full animate-ping bg-primary/20" />
-                )}
+            <div className="panel p-3.5 shadow-lift border border-border bg-card">
+              {/* Hardware Strip Header */}
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-2.5 mb-2.5">
+                <div className="flex items-center gap-2">
+                  <Led tone={isError ? 'danger' : 'signal'} blink />
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground">
+                    {isError ? 'CARRIER LOST' : 'GATEWAY BOOT'}
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  STATUS·{isError ? 'OFFLINE' : 'POLLING'}
+                </span>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-foreground">
-                  {isError ? 'Connection Issue' : 'Waking up server...'}
-                </h3>
-                <p className="text-xs text-muted-foreground truncate">
-                  {isError
-                    ? 'Retrying connection...'
-                    : 'Free tier cold start (approx. 1 min)'}
-                </p>
+              {/* LCD Diagnostic readout */}
+              <div className="lcd p-2.5 rounded text-xs space-y-1">
+                <div className="flex items-center justify-between font-mono text-[10px] text-primary/80 border-b border-primary/20 pb-1">
+                  <span>BACKEND HOST</span>
+                  <span>RENDER CLOUD</span>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 font-mono text-xs text-primary">
+                  {isError ? (
+                    <WifiOff className="size-3.5 shrink-0 text-primary" />
+                  ) : (
+                    <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
+                  )}
+                  <span className="truncate">
+                    {isError
+                      ? 'GATEWAY UNREACHABLE · RETRYING...'
+                      : bootLogs[logIndex]}
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer Note */}
+              <div className="mt-2 text-center font-mono text-[10px] text-muted-foreground/70">
+                {isError
+                  ? 'Auto-reconnecting every 5s'
+                  : 'Free-tier spinup: approx. 45-60s on first request'}
               </div>
             </div>
-
-            {!isError && (
-              <motion.p
-                key={currentMessage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mt-2 text-[10px] text-center text-muted-foreground/70"
-              >
-                {currentMessage}
-              </motion.p>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

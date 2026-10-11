@@ -8,14 +8,12 @@ import {
   PhoneOff,
   Activity,
   MessageSquare,
-  Users,
 } from 'lucide-react';
 import { useHuddle } from '@/contexts/HuddleContext';
 import { useAppSelector } from '@/app/hooks';
 import { selectRoomHuddleParticipants } from '@/features/unifiedChatSlice';
 import { useGetChatRoomsQuery } from '@/services/chatApi';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -25,12 +23,12 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
 import WebRTCStats from '@/components/custom/WebRTCStats';
 import { cn, getAvatarUrl } from '@/lib/utils';
+import { Led, Lcd, LevelMeter, Kbd } from '@/components/console';
 
 export default function HuddleBar() {
   const navigate = useNavigate();
@@ -65,10 +63,10 @@ export default function HuddleBar() {
   }, [huddleChatId, chatRooms]);
 
   const roomName = useMemo(() => {
-    if (!currentRoom) return `Huddle Room #${huddleChatId ?? ''}`;
+    if (!currentRoom) return `Channel #${huddleChatId ?? ''}`;
     if (currentRoom.is_group_chat) return currentRoom.name;
     const counterpart = currentRoom.participants?.find(p => p.id !== user?.id);
-    return counterpart ? counterpart.name : currentRoom.name || 'Private Chat';
+    return counterpart ? counterpart.name : currentRoom.name || 'Private Station';
   }, [currentRoom, huddleChatId, user?.id]);
 
   const isCurrentRoomOpen = location.pathname === `/chat/${huddleChatId}`;
@@ -108,306 +106,290 @@ export default function HuddleBar() {
 
   return (
     <>
-      <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-xl pointer-events-auto">
+      <div className="fixed bottom-[calc(var(--dock-h,0px)+0.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg pointer-events-auto">
         <motion.div
-          initial={{ y: 50, opacity: 0, scale: 0.95 }}
+          initial={{ y: 30, opacity: 0, scale: 0.96 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 50, opacity: 0, scale: 0.95 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className={cn(
-            'overflow-hidden rounded-2xl border shadow-2xl transition-all duration-300',
-            'bg-card/90 dark:bg-card/95 backdrop-blur-xl',
-            'border-emerald-500/30 dark:border-emerald-500/25',
-            'audio-live-glow'
-          )}
+          exit={{ y: 30, opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.15 }}
+          className="panel shadow-lift p-2 sm:p-2.5 flex items-center justify-between gap-2.5 border border-border"
         >
-          {/* Main Huddle Bar Header / Compact Content */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
-            {/* Left: Live indicator & Room Info */}
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* Dynamic Equalizer / Live Radio Waves */}
-              <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex-shrink-0">
-                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-                {/* Audio Wave Visualizer Bars */}
-                <div className="flex items-end gap-0.5 h-3.5 w-3.5">
-                  <div
-                    className={cn(
-                      'w-1 bg-emerald-500 rounded-full transition-all duration-150',
-                      isLocalUserSpeaking || speakingUserIds.length > 0
-                        ? 'animate-wave-1'
-                        : 'h-1.5'
-                    )}
-                  />
-                  <div
-                    className={cn(
-                      'w-1 bg-emerald-500 rounded-full transition-all duration-150',
-                      isLocalUserSpeaking || speakingUserIds.length > 0
-                        ? 'animate-wave-2'
-                        : 'h-2.5'
-                    )}
-                  />
-                  <div
-                    className={cn(
-                      'w-1 bg-emerald-500 rounded-full transition-all duration-150',
-                      isLocalUserSpeaking || speakingUserIds.length > 0
-                        ? 'animate-wave-3'
-                        : 'h-1.5'
-                    )}
-                  />
-                </div>
-              </div>
+          {/* Left: LCD Display Chip */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Lcd className="px-2 py-1 flex items-center gap-2 shrink-0">
+              <Led tone="live" blink />
+              <span className="font-mono text-2xs font-bold text-live uppercase tracking-wider">
+                ON AIR
+              </span>
+              <LevelMeter active={isLocalUserSpeaking || speakingUserIds.length > 0} bars={3} />
+            </Lcd>
 
-              {/* Room details */}
-              <div className="min-w-0 flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-semibold truncate text-foreground">
-                    {roomName}
-                  </span>
-                  <span
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-xs font-bold text-foreground truncate">
+                {roomName}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground truncate">
+                {participants.length} CONNECTED · {isUsingSfu ? 'SFU' : 'P2P'}
+              </p>
+            </div>
+          </div>
+
+          {/* Center: Avatars Pile (desktop) */}
+          <div className="hidden sm:flex items-center -space-x-1.5 shrink-0 px-1">
+            {participants.slice(0, 4).map(p => {
+              const isSpeaking = speakingUserIds.includes(p.id);
+              return (
+                <div key={p.id} className="relative">
+                  <Avatar
                     className={cn(
-                      'text-[9px] px-1.5 py-0.5 rounded-full font-medium border flex-shrink-0',
-                      isUsingSfu
-                        ? 'bg-purple-500/10 text-purple-500 dark:text-purple-400 border-purple-500/30'
-                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                      'w-6 h-6 border ring-1 transition-all',
+                      isSpeaking
+                        ? 'ring-live border-live animate-pulse'
+                        : 'ring-card border-card'
                     )}
                   >
-                    {isUsingSfu ? 'SFU' : 'P2P Mesh'}
-                  </span>
+                    <AvatarImage
+                      src={
+                        'avatar' in p && p.avatar
+                          ? getAvatarUrl(p.avatar)
+                          : undefined
+                      }
+                    />
+                    <AvatarFallback className="font-mono text-[8px] font-bold bg-well">
+                      {p.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-3 h-3 text-emerald-500" />
-                    {participants.length} in huddle
+              );
+            })}
+          </div>
+
+          {/* Right: Tactile Remote Keys */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Return to channel key */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => navigate(`/chat/${huddleChatId}`)}
+                    className="size-7 rounded-md key flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    aria-label="Return to channel"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-mono text-xs">OPEN CHANNEL FREQUENCY</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Diagnostics key */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowStatsDialog(true)}
+                    className="size-7 rounded-md key flex items-center justify-center text-live"
+                    aria-label="WebRTC Telemetry"
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-mono text-xs">NETWORK TELEMETRY</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Mute key */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleMute}
+                    className={cn(
+                      'size-7 rounded-md flex items-center justify-center transition-all',
+                      isMuted
+                        ? 'bg-destructive text-destructive-foreground shadow-key'
+                        : 'key text-live'
+                    )}
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? (
+                      <MicOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Mic className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-mono text-xs">
+                    {isMuted ? 'UNMUTE (CTRL+SHIFT+M)' : 'MUTE (CTRL+SHIFT+M)'}
                   </span>
-                  {speakingUserIds.length > 0 && (
-                    <span className="text-emerald-500 font-medium animate-pulse">
-                      • Speaking...
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            {/* Center: Participant Avatars Pile */}
-            <div className="hidden sm:flex items-center -space-x-2 flex-shrink-0 px-2">
-              <TooltipProvider>
-                {participants.slice(0, 5).map(p => {
-                  const isSpeaking = speakingUserIds.includes(p.id);
-                  const isSelf = user?.id === p.id;
-                  const selfMuted = isSelf && isMuted;
+            {/* Deafen key */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleDeafen}
+                    className={cn(
+                      'size-7 rounded-md flex items-center justify-center transition-all',
+                      isDeafened
+                        ? 'bg-destructive text-destructive-foreground shadow-key'
+                        : 'key text-muted-foreground hover:text-foreground'
+                    )}
+                    aria-label={isDeafened ? 'Undeafen' : 'Deafen'}
+                  >
+                    <Headphones className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-mono text-xs">
+                    {isDeafened ? 'UNDEAFEN AUDIO' : 'DEAFEN AUDIO'}
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-                  return (
-                    <Tooltip key={p.id}>
-                      <TooltipTrigger asChild>
-                        <div className="relative">
-                          <Avatar
-                            className={cn(
-                              'w-8 h-8 border-2 border-background shadow-sm transition-transform',
-                              isSpeaking &&
-                                'ring-2 ring-emerald-500 ring-offset-2 ring-offset-background scale-105'
-                            )}
-                          >
-                            <AvatarImage
-                              src={
-                                'avatar' in p && p.avatar
-                                  ? getAvatarUrl(p.avatar)
-                                  : undefined
-                              }
-                            />
-                            <AvatarFallback className="text-[10px] font-bold bg-muted">
-                              {p.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {selfMuted && (
-                            <span className="absolute -bottom-1 -right-1 bg-destructive text-destructive-foreground p-0.5 rounded-full shadow-sm">
-                              <MicOff className="w-2.5 h-2.5" />
-                            </span>
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="font-semibold">
-                          {p.name} {isSelf && '(You)'}
-                        </p>
-                        {isSpeaking && (
-                          <p className="text-xs text-emerald-500 font-medium">
-                            Speaking
-                          </p>
-                        )}
-                        {selfMuted && (
-                          <p className="text-xs text-destructive font-medium">
-                            Microphone Muted
-                          </p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-                {participants.length > 5 && (
-                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-muted text-[10px] font-bold border-2 border-background text-muted-foreground">
-                    +{participants.length - 5}
-                  </div>
-                )}
-              </TooltipProvider>
-            </div>
-
-            {/* Right: Actions / Call Controls */}
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-              {/* Navigate to Chat button if elsewhere */}
-              {!isCurrentRoomOpen && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate(`/chat/${huddleChatId}`)}
-                        className="h-8 w-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Go to Chat Room</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              {/* WebRTC Stats Trigger */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowStatsDialog(true)}
-                      className="h-8 w-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-emerald-500"
-                    >
-                      <Activity className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>WebRTC & Audio Telemetry</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Mute Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={isMuted ? 'destructive' : 'secondary'}
-                      size="sm"
-                      onClick={toggleMute}
-                      className={cn(
-                        'h-8 px-2.5 rounded-xl font-medium gap-1.5 text-xs transition-all',
-                        !isMuted &&
-                          'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
-                      )}
-                    >
-                      {isMuted ? (
-                        <>
-                          <MicOff className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Unmute</span>
-                        </>
-                      ) : (
-                        <>
-                          <Mic className="w-3.5 h-3.5 text-emerald-500" />
-                          <span className="hidden sm:inline">Mute</span>
-                        </>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{isMuted ? 'Unmute Mic' : 'Mute Mic'}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Ctrl+Shift+M
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Deafen Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleDeafen}
-                      className={cn(
-                        'h-8 w-8 rounded-xl transition-all',
-                        isDeafened
-                          ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      {isDeafened ? (
-                        <Headphones className="w-3.5 h-3.5 text-amber-500" />
-                      ) : (
-                        <Headphones className="w-3.5 h-3.5" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isDeafened
-                      ? 'Undeafen Audio'
-                      : 'Deafen (Mute Incoming Audio)'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Hangup / Leave Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={stopHuddle}
-                      className="h-8 px-2.5 rounded-xl gap-1.5 font-medium text-xs shadow-md shadow-destructive/20 hover:scale-102 transition-transform"
-                    >
-                      <PhoneOff className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Leave</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Disconnect from Huddle</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            {/* Disconnect key */}
+            <button
+              onClick={stopHuddle}
+              className="h-7 px-2.5 rounded-md bg-destructive text-destructive-foreground font-mono text-xs font-bold flex items-center gap-1 shadow-key active:translate-y-px"
+              aria-label="Disconnect"
+            >
+              <PhoneOff className="w-3 h-3" />
+              <span className="hidden sm:inline">END</span>
+            </button>
           </div>
         </motion.div>
       </div>
 
-      {/* WebRTC Diagnostics & Audio Telemetry Modal */}
+      {/* Diagnostics Modal: REMOTE HUDDLE TELEMETRY */}
       <Dialog open={showStatsDialog} onOpenChange={setShowStatsDialog}>
-        <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="px-6 py-4 border-b border-border bg-card">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-                <Activity className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-bold">
-                  WebRTC Network & Audio Telemetry
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  Real-time peer-to-peer and SFU connection metrics for{' '}
-                  {roomName}
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 overflow-hidden flex flex-col bg-card border border-border shadow-lift sm:rounded-xl">
+          {/* Top Instrument Bezel / Header */}
+          <div className="relative px-5 py-4 border-b border-border bg-card select-none">
+            {/* Corner chassis screws */}
+            <span className="screw absolute top-3 left-3 opacity-60" aria-hidden="true" />
+            <span className="screw absolute top-3 right-12 opacity-60" aria-hidden="true" />
+
+            <div className="flex items-start justify-between gap-3 pl-3 pr-8">
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="label-engraved text-xs font-bold text-foreground">
+                    REMOTE HUDDLE TELEMETRY
+                  </DialogTitle>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-well text-muted-foreground border border-border">
+                    MOD·VOX·48K
+                  </span>
+                </div>
+                <DialogDescription className="font-mono text-xs text-muted-foreground truncate">
+                  CARRIER: <span className="text-foreground font-semibold">{roomName}</span> · FREQ·{huddleChatId}
                 </DialogDescription>
               </div>
-            </div>
-          </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background/50">
+              <div className="flex items-center gap-2 shrink-0">
+                <Lcd className="px-2 py-0.5 flex items-center gap-1.5 shrink-0">
+                  <Led tone="live" blink />
+                  <span className="font-mono text-[10px] font-bold text-live">ON AIR</span>
+                </Lcd>
+              </div>
+            </div>
+
+            {/* Transceiver & RF status strip */}
+            <div className="mt-3 mx-1 p-2 rounded-lg bg-well border border-border/80 flex flex-wrap items-center justify-between gap-2 text-2xs font-mono">
+              <div className="flex items-center gap-3">
+                {/* Local Mic Status */}
+                <div className="flex items-center gap-1.5">
+                  <Led tone={isMuted ? 'danger' : 'live'} />
+                  <span className={cn(isMuted ? 'text-destructive font-bold' : 'text-live font-semibold')}>
+                    {isMuted ? 'TX: MUTED' : 'TX: LIVE'}
+                  </span>
+                </div>
+
+                {/* Local Audio Status */}
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Headphones className="size-3" />
+                  <span>{isDeafened ? 'RX: DEAF' : 'RX: ACTIVE'}</span>
+                </div>
+
+                {/* Topology */}
+                <span className="hidden sm:inline text-muted-foreground/40">|</span>
+                <span className="hidden sm:inline text-muted-foreground">
+                  TOPOLOGY: {isUsingSfu ? 'SFU RELAY (EDGE)' : 'P2P FULL-MESH'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-card text-muted-foreground border border-border/60">
+                  OPUS·48kHz·SRTP
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className={cn(
+                    'h-5 px-2 rounded font-mono text-[10px] font-bold transition-all active:translate-y-px',
+                    isMuted
+                      ? 'bg-destructive text-destructive-foreground shadow-xs'
+                      : 'key text-foreground'
+                  )}
+                >
+                  {isMuted ? 'UNMUTE' : 'MUTE'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Telemetry body */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-card">
             <WebRTCStats
-              connectionDetails={connectionDetails}
+              connectionDetails={connectionDetails || {}}
               connectedPeers={participants as any}
               isUsingSfu={isUsingSfu}
               sfuStats={sfuStats}
               scrollable={false}
             />
+          </div>
+
+          {/* Instrument Footer */}
+          <div className="relative border-t border-border bg-card p-3 sm:px-5 sm:py-3 flex items-center justify-between gap-3">
+            {/* Calibration tick marks */}
+            <div className="absolute -top-1.5 left-0 right-0 h-1.5 ticks opacity-30 pointer-events-none" />
+
+            {/* Shortcut hint */}
+            <div className="flex items-center gap-1.5 text-2xs font-mono text-muted-foreground">
+              <span className="hidden sm:inline">SHORTCUT:</span>
+              <Kbd>Ctrl</Kbd>
+              <span>+</span>
+              <Kbd>Shift</Kbd>
+              <span>+</span>
+              <Kbd>M</Kbd>
+              <span className="hidden sm:inline text-muted-foreground/70">MUTE</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={stopHuddle}
+                className="h-7 px-2.5 rounded-md bg-destructive text-destructive-foreground font-mono text-2xs font-bold flex items-center gap-1 shadow-key active:translate-y-px"
+              >
+                <PhoneOff className="size-3" />
+                <span>LEAVE HUDDLE</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowStatsDialog(false)}
+                className="h-7 px-3 rounded-md key font-mono text-2xs font-bold text-foreground hover:bg-muted active:translate-y-px"
+              >
+                DISMISS TELEMETRY
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { Loader2, Hash, ArrowDown, Sparkles, MessageSquare, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, ArrowDown, Radio, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, ChatRoom } from '@/services/chatApi';
 import { UserProfile } from '@/services/userApi';
 import MessageBubble from '../MessageBubble';
-import { getAvatarUrl, cn } from '@/lib/utils';
+import { getAvatarUrl } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { isSameDay, format, isToday, isYesterday } from 'date-fns';
+import { PresetKey, channelNo } from '@/components/console';
 
 interface MessageListProps {
   messages: Message[];
@@ -25,9 +25,9 @@ interface MessageListProps {
 
 const formatDateDivider = (dateString: string) => {
   const date = new Date(dateString);
-  if (isToday(date)) return 'Today';
-  if (isYesterday(date)) return 'Yesterday';
-  return format(date, 'MMMM d, yyyy');
+  if (isToday(date)) return 'TODAY';
+  if (isYesterday(date)) return 'YESTERDAY';
+  return format(date, 'd MMM yyyy').toUpperCase();
 };
 
 export default function MessageList({
@@ -45,76 +45,107 @@ export default function MessageList({
   const scrollerRef = useRef<HTMLElement | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const prevMessagesLengthRef = useRef(messages.length);
+  const prevLastMessageIdRef = useRef<number | string | undefined>(
+    messages[messages.length - 1]?.client_id || messages[messages.length - 1]?.id
+  );
   const isInitialLoadRef = useRef(true);
+  const isAtBottomRef = useRef(true);
 
-  // Scroll to bottom helper that guarantees 100% scroll to the last pixel
+  // Scroll to absolute bottom via Virtuoso index and scroller DOM
   const scrollToBottomToEnd = useCallback(
-    (behavior: 'smooth' | 'auto' = 'smooth') => {
+    (behavior: 'smooth' | 'auto' = 'auto') => {
       if (messages.length === 0) return;
-
-      // 1. Virtuoso virtual item scroll
       virtuosoRef.current?.scrollToIndex({
         index: messages.length - 1,
         align: 'end',
         behavior,
       });
-
-      // 2. Direct DOM scroller scroll to eliminate any remaining sub-pixel or measurement offset
-      requestAnimationFrame(() => {
-        if (scrollerRef.current) {
+      if (scrollerRef.current) {
+        if (behavior === 'auto') {
+          scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+        } else {
           scrollerRef.current.scrollTo({
             top: scrollerRef.current.scrollHeight,
-            behavior,
+            behavior: 'smooth',
           });
         }
-      });
-
-      // 3. Fallback tick in case item contents finished rendering or resizing
-      setTimeout(() => {
-        if (scrollerRef.current) {
-          const maxScroll =
-            scrollerRef.current.scrollHeight - scrollerRef.current.clientHeight;
-          if (Math.abs(scrollerRef.current.scrollTop - maxScroll) > 1) {
-            scrollerRef.current.scrollTo({
-              top: maxScroll,
-              behavior,
-            });
-          }
-        }
-      }, 50);
+      }
     },
     [messages.length]
   );
 
-  // Reset initial load flag on active room change
   useEffect(() => {
     isInitialLoadRef.current = true;
+    isAtBottomRef.current = true;
   }, [activeRoom?.id]);
 
-  // Scroll to bottom on initial load or room change
   useEffect(() => {
     if (!initialLoading && messages.length > 0 && isInitialLoadRef.current) {
       isInitialLoadRef.current = false;
-      const timer = setTimeout(() => {
+      const t1 = setTimeout(() => {
         scrollToBottomToEnd('auto');
-      }, 30);
-      return () => clearTimeout(timer);
+      }, 50);
+      const t2 = setTimeout(() => {
+        scrollToBottomToEnd('auto');
+      }, 150);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
   }, [initialLoading, messages.length, scrollToBottomToEnd]);
 
-  // Auto-scroll when new messages arrive:
-  // If the last message is sent by current user, always scroll down smoothly.
+  // Handle new incoming and outgoing messages
   useEffect(() => {
-    if (messages.length > prevMessagesLengthRef.current) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage && lastMessage.sender.id === user.id) {
+    const lastMessage = messages[messages.length - 1];
+    const lastMessageKey = lastMessage?.client_id || lastMessage?.id;
+    const isLengthIncreased = messages.length > prevMessagesLengthRef.current;
+    const isLastMessageChanged =
+      lastMessageKey !== undefined &&
+      lastMessageKey !== prevLastMessageIdRef.current;
+    const isOwnMessage = lastMessage?.sender?.id === user.id;
+
+    if (isLengthIncreased || (isOwnMessage && isLastMessageChanged)) {
+      if (isOwnMessage) {
+        // Own message: scroll down immediately with zero lag
+        scrollToBottomToEnd('auto');
+
+        // Pass 1: 50ms - allows textarea height reset & React DOM render to settle
+        const t1 = setTimeout(() => {
+          scrollToBottomToEnd('auto');
+        }, 50);
+
+        // Pass 2: 160ms - allows Virtuoso ResizeObserver height measurement pass to settle
+        const t2 = setTimeout(() => {
+          scrollToBottomToEnd('auto');
+        }, 160);
+
+        prevMessagesLengthRef.current = messages.length;
+        prevLastMessageIdRef.current = lastMessageKey;
+
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      } else if (isAtBottomRef.current) {
+        // Inbound message: smoothly scroll to end if currently reading at bottom
         const timer = setTimeout(() => {
-          scrollToBottomToEnd('smooth');
-        }, 30);
+          virtuosoRef.current?.scrollToIndex({
+            index: messages.length - 1,
+            align: 'end',
+            behavior: 'smooth',
+          });
+        }, 40);
+
+        prevMessagesLengthRef.current = messages.length;
+        prevLastMessageIdRef.current = lastMessageKey;
+
         return () => clearTimeout(timer);
       }
     }
+
     prevMessagesLengthRef.current = messages.length;
+    prevLastMessageIdRef.current = lastMessageKey;
   }, [messages, user.id, scrollToBottomToEnd]);
 
   const otherParticipant = activeRoom?.is_group_chat
@@ -122,15 +153,15 @@ export default function MessageList({
     : activeRoom?.participants.find(p => p.id !== user.id);
 
   return (
-    <div className="relative flex-1 w-full h-full bg-background/20">
+    <div className="relative flex-1 w-full h-full bg-card/60">
       {initialLoading ? (
-        <div className="flex flex-col items-center justify-center h-full space-y-3">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        <div className="flex flex-col items-center justify-center h-full space-y-2">
+          <div className="flex items-center gap-2 p-2 px-3 rounded bg-well shadow-well">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="font-mono text-xs font-bold text-foreground">
+              RX: SYNCHRONIZING PACKETS...
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Loading message history...
-          </p>
         </div>
       ) : messages.length > 0 ? (
         <Virtuoso
@@ -143,33 +174,46 @@ export default function MessageList({
           data={messages}
           startReached={handleLoadMore}
           initialTopMostItemIndex={Math.max(0, messages.length - 1)}
-          followOutput={isAtBottom => (isAtBottom ? 'smooth' : false)}
+          followOutput={isAtBottom => {
+            if (messages.length === 0) return false;
+            const lastMessage = messages[messages.length - 1];
+            const isOwnMessage = lastMessage?.sender?.id === user.id;
+            if (isOwnMessage) {
+              return 'auto';
+            }
+            return isAtBottom ? 'smooth' : false;
+          }}
+          atBottomThreshold={80}
+          atBottomStateChange={atBottom => {
+            isAtBottomRef.current = atBottom;
+            setShowScrollButton(!atBottom);
+          }}
           computeItemKey={(index, message) =>
-            message.id
-              ? `msg-${message.id}`
-              : message.client_id
+            message.client_id
               ? `client-${message.client_id}`
+              : message.id
+              ? `msg-${message.id}`
               : `idx-${index}`
           }
-          atBottomStateChange={atBottom => setShowScrollButton(!atBottom)}
           components={{
             Header: () => (
-              <div className="flex items-center justify-center py-4">
+              <div className="flex items-center justify-center py-3">
                 {loadingMore && (
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-card/90 border border-border text-xs text-muted-foreground shadow-xs backdrop-blur-md">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                    <span>Loading earlier messages...</span>
+                  <div className="flex items-center gap-2 px-3 py-1 rounded bg-well shadow-well font-mono text-[11px] text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                    <span>RETRIEVING EARLIER PACKETS...</span>
                   </div>
                 )}
               </div>
             ),
+            Footer: () => <div className="h-4" aria-hidden="true" />,
           }}
           itemContent={(index, message) => {
             const isOwnMessage = message.sender.id === user.id;
             const prevMessage = messages[index - 1];
             const nextMessage = messages[index + 1];
 
-            // Calendar date separator logic
+            // Calendar date separator
             const showDateDivider =
               !prevMessage ||
               !isSameDay(
@@ -196,25 +240,23 @@ export default function MessageList({
               activeRoom?.participants.find(p => p.id === message.sender.id) ||
               (message.sender.id === user.id ? user : message.sender);
 
-            const isLastMessage = index === messages.length - 1;
-
             return (
               <div
                 key={message.id || message.client_id || index}
-                className={cn(isLastMessage && 'pb-2.5 sm:pb-3')}
+                className="pb-1"
               >
                 {/* Date Separator Divider */}
                 {showDateDivider && (
-                  <div className="flex items-center my-4 px-4 sm:px-8">
-                    <div className="flex-1 h-[1px] bg-border/40" />
-                    <span className="mx-3 px-3 py-0.5 rounded-full bg-card/95 border border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground shadow-xs backdrop-blur-md select-none">
+                  <div className="flex items-center py-3 px-4 sm:px-8 gap-3">
+                    <span className="ticks h-2 flex-1 opacity-50" />
+                    <span className="font-mono text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-2 py-0.5 rounded bg-well shadow-well select-none">
                       {formatDateDivider(message.timestamp)}
                     </span>
-                    <div className="flex-1 h-[1px] bg-border/40" />
+                    <span className="ticks h-2 flex-1 opacity-50" />
                   </div>
                 )}
 
-                <div className="px-1.5 sm:px-4">
+                <div className="px-1.5 sm:px-3">
                   <MessageBubble
                     message={message}
                     isSent={isOwnMessage}
@@ -239,53 +281,50 @@ export default function MessageList({
           }}
         />
       ) : (
-        /* Elevated Modern Channel / Conversation Welcome Hero */
-        <div className="flex flex-col items-center justify-center h-full px-4 text-center pb-16">
-          <div className="max-w-md w-full mx-auto p-6 sm:p-8 rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl shadow-sm">
+        /* Empty Channel Hardware Welcome */
+        <div className="flex flex-col items-center justify-center h-full px-4 text-center pb-12">
+          <div className="max-w-sm w-full mx-auto p-5 sm:p-6 rounded-xl border border-border bg-card shadow-panel text-center">
             {activeRoom?.is_group_chat ? (
-              <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-primary/25 via-primary/10 to-indigo-500/20 border border-primary/30 text-primary shadow-inner">
-                <Hash className="w-8 h-8 sm:w-10 sm:h-10 stroke-[2.2]" />
+              <div className="flex justify-center mb-3">
+                <PresetKey name={activeRoom.name} size="xl" />
               </div>
             ) : otherParticipant ? (
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4">
-                <Avatar className="w-full h-full rounded-3xl border-2 border-border/60 shadow-md">
+              <div className="relative w-14 h-14 mx-auto mb-3">
+                <Avatar className="w-full h-full rounded-xl border border-border shadow-md">
                   <AvatarImage
                     src={getAvatarUrl(otherParticipant.avatar)}
                     alt={otherParticipant.name}
                     className="object-cover"
                   />
-                  <AvatarFallback className="text-xl sm:text-2xl font-bold bg-primary/15 text-primary rounded-3xl">
-                    {otherParticipant.name.charAt(0)}
+                  <AvatarFallback className="font-mono text-lg font-bold bg-well">
+                    {otherParticipant.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-card" />
               </div>
-            ) : (
-              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-3xl bg-primary/15 text-primary">
-                <Sparkles className="w-8 h-8" />
-              </div>
-            )}
+            ) : null}
 
-            <h3 className="text-base sm:text-xl font-bold text-foreground tracking-tight">
+            <span className="font-mono text-2xs uppercase tracking-widest text-primary font-bold">
+              CHANNEL OPEN · NO TRAFFIC YET
+            </span>
+
+            <h3 className="text-base font-bold text-foreground mt-1 tracking-tight">
               {activeRoom?.is_group_chat
-                ? `Welcome to #${activeRoom.name || 'channel'}`
-                : `Say hello to ${otherParticipant?.name || 'your contact'}`}
+                ? activeRoom.name
+                : otherParticipant?.name}
             </h3>
 
-            <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-              {activeRoom?.is_group_chat
-                ? `This is the start of the #${activeRoom.name || 'channel'} channel. Share ideas, files, and start instant audio calls.`
-                : 'This is the start of your message history. Say hi or initiate a WebRTC voice call.'}
+            <p className="mt-1.5 font-mono text-[11px] text-muted-foreground leading-relaxed">
+              FREQUENCY CH·{channelNo(activeRoom?.id)} CONFIGURED. TRANSMIT MESSAGES OR INITIATE VOICE BROADCAST BELOW.
             </p>
 
-            <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium">
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Type below to send a message</span>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-well text-muted-foreground font-mono text-[10px]">
+                <Send className="w-3 h-3 text-primary" />
+                ENTER TO TRANSMIT
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-medium">
-                <Phone className="w-3.5 h-3.5" />
-                <span>Voice calls supported</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-well text-muted-foreground font-mono text-[10px]">
+                <Radio className="w-3 h-3 text-live" />
+                VOX READY
               </span>
             </div>
           </div>
@@ -299,17 +338,16 @@ export default function MessageList({
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 10 }}
-            className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-30"
+            className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 z-30"
           >
-            <Button
-              size="icon"
-              className="w-10 h-10 rounded-full shadow-lg bg-card/95 hover:bg-card border border-border/80 text-foreground backdrop-blur-xl active:scale-95 transition-all"
+            <button
+              className="size-9 rounded-full key shadow-key flex items-center justify-center text-foreground hover:bg-accent active:translate-y-px transition-all"
               onClick={() => scrollToBottomToEnd('smooth')}
-              title="Jump to latest messages"
+              title="Jump to latest transmission"
               aria-label="Scroll to bottom"
             >
               <ArrowDown className="w-4 h-4 text-primary" />
-            </Button>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

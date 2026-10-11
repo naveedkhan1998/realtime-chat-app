@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
-import NavigationRail from '@/components/custom/NavigationRail';
+import NavigationRail, { MobileDock } from '@/components/custom/NavigationRail';
 import Sidebar from '@/components/custom/Sidebar';
 import HuddleBar from '@/components/custom/HuddleBar';
 import { cn } from '@/lib/utils';
-import { BackgroundBlobs } from '@/components/ui/background-blobs';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAppSelector } from '@/app/hooks';
 import { selectActiveHuddleRoomIds } from '@/features/unifiedChatSlice';
+import { useState } from 'react';
 
 export interface AppShellContext {
   activeChat: number | undefined;
@@ -19,17 +19,15 @@ interface AppShellProps {
   isMobile: boolean;
 }
 
-const routeMetadata: Record<string, { title: string; description: string }> = {
-  '/chat': {
-    title: 'Conversations',
-    description: 'Stay in sync with every thread and team.',
-  },
-  '/new-chat': {
-    title: 'Start Something New',
-    description: 'Spin up a private or group space in seconds.',
-  },
-};
-
+/**
+ * The device body.
+ *
+ *  ≥ md   [ rail (on chassis) ] [ channel bank panel ] [ main stage panel ]
+ *  < md   one full-bleed view at a time + bottom dock (hidden inside a chat)
+ *
+ * Exposes `--dock-h` so anything pinned to the bottom on mobile can sit
+ * above the dock.
+ */
 export default function AppShell({ isMobile }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,28 +35,45 @@ export default function AppShell({ isMobile }: AppShellProps) {
   const activeChat = chatMatch?.params?.chatId
     ? Number(chatMatch.params.chatId)
     : undefined;
-  const basePath = location.pathname.startsWith('/chat/')
-    ? '/chat'
-    : location.pathname;
-  const metadata = routeMetadata[basePath] ?? {
-    title: 'Workspace',
-    description: 'Navigate your real-time collaboration hub.',
-  };
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isVoiceFilterActive, setIsVoiceFilterActive] = useState(false);
 
+  const [isVoiceFilterActive, setIsVoiceFilterActive] = useState(false);
   const activeVoiceRoomIds = useAppSelector(selectActiveHuddleRoomIds);
 
+  const isChatRoute = location.pathname.startsWith('/chat');
   const isMobileChatList = isMobile && location.pathname === '/chat';
+  const showDock = isMobile && !activeChat;
 
-  // Initialize notifications - handles sound, desktop notifications, and title updates
+  // Sound, desktop notifications and document title updates
   useNotifications(activeChat);
 
+  // Leaving the chat area drops the voice filter so the bank isn't stuck on VOX
   useEffect(() => {
-    if (!isMobile) {
-      setIsSidebarOpen(false);
-    }
-  }, [isMobile]);
+    if (!isChatRoute) setIsVoiceFilterActive(false);
+  }, [isChatRoute]);
+
+  // Mobile virtual keyboard viewport height sync
+  useEffect(() => {
+    if (!window.visualViewport) return;
+
+    const updateVisualHeight = () => {
+      const height = window.visualViewport?.height;
+      if (height && height > 0) {
+        document.documentElement.style.setProperty(
+          '--app-height',
+          `${Math.round(height)}px`
+        );
+      }
+    };
+
+    updateVisualHeight();
+    const vv = window.visualViewport;
+    vv.addEventListener('resize', updateVisualHeight);
+
+    return () => {
+      vv.removeEventListener('resize', updateVisualHeight);
+      document.documentElement.style.removeProperty('--app-height');
+    };
+  }, []);
 
   const handleSetActiveChat = (chatId: number | undefined) => {
     if (typeof chatId === 'number' && !Number.isNaN(chatId)) {
@@ -66,80 +81,72 @@ export default function AppShell({ isMobile }: AppShellProps) {
     } else {
       navigate('/chat');
     }
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
   };
 
-  return (
-    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background selection:bg-primary/40 selection:text-foreground">
-      <BackgroundBlobs />
+  const toggleVoiceFilter = () => setIsVoiceFilterActive(prev => !prev);
 
-      <div className="relative z-10 flex h-[100dvh] w-full overflow-hidden p-0 gap-0">
-        {/* Column 1: Slim Icon Navigation Rail (Slack & Discord Architecture) */}
+  return (
+    <div
+      className="relative w-full overflow-hidden bg-background"
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        '--dock-h': showDock ? '4rem' : '0px',
+      } as React.CSSProperties}
+    >
+      <div className="flex h-full w-full md:gap-2 md:p-2 md:pl-0 lg:gap-2.5 lg:p-2.5 lg:pl-0">
+        {/* Column 1 — control rail, mounted straight onto the chassis */}
         <NavigationRail
           isVoiceFilterActive={isVoiceFilterActive}
-          onVoiceFilterToggle={() => setIsVoiceFilterActive(prev => !prev)}
+          onVoiceFilterToggle={toggleVoiceFilter}
           activeVoiceCount={activeVoiceRoomIds.length}
-          isMobile={isMobile}
-          activeChat={activeChat}
-          className="hidden md:flex border-r border-border/70 z-30 flex-shrink-0"
+          className="hidden md:flex"
         />
 
-        {/* Column 2: Channel & Conversation Lounge Sidebar */}
+        {/* Column 2 — channel bank. Full screen on the mobile /chat route. */}
         <Sidebar
           activeChat={activeChat}
           setActiveChat={handleSetActiveChat}
           isMobile={isMobile}
-          isSidebarOpen={isMobileChatList || isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          metadata={metadata}
+          isSidebarOpen={isMobileChatList}
+          onClose={() => undefined}
+          metadata={{ title: 'Channels', description: '' }}
           voiceFilterOnly={isVoiceFilterActive}
           onClearVoiceFilter={() => setIsVoiceFilterActive(false)}
+          showCloseButton={false}
           className={cn(
-            isMobileChatList ? 'w-full translate-x-0 relative z-0' : '',
-            isMobile && !activeChat
-              ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-0'
-              : ''
+            isMobile && !isMobileChatList && 'hidden',
+            isMobileChatList &&
+              'pb-[calc(var(--dock-h)+env(safe-area-inset-bottom,0px))]'
           )}
-          showCloseButton={!isMobileChatList}
         />
 
-        {/* Mobile Slide-Over Overlay */}
-        <div
-          className={cn(
-            'fixed inset-0 z-40 bg-background/80 backdrop-blur-md md:hidden transition-opacity duration-300',
-            isMobile && isSidebarOpen && !isMobileChatList
-              ? 'opacity-100 pointer-events-auto'
-              : 'opacity-0 pointer-events-none'
-          )}
-          onClick={() => setIsSidebarOpen(false)}
-        />
-
-        {/* Column 3: Main Central Stage (Chat Window, Settings, etc.) */}
+        {/* Column 3 — main stage */}
         <main
           className={cn(
-            'relative flex flex-col flex-1 h-full overflow-hidden transition-all duration-300',
-            'bg-card/40 dark:bg-card/50 backdrop-blur-xl',
-            isMobileChatList ? 'hidden' : 'flex',
-            isMobile && !activeChat
-              ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-0'
-              : ''
+            'relative flex min-w-0 flex-1 flex-col overflow-hidden bg-card',
+            'md:rounded-xl md:shadow-panel',
+            isMobileChatList && 'hidden'
           )}
         >
-          <div className="flex-1 h-full overflow-hidden">
-            <Outlet
-              context={{
-                activeChat,
-                setActiveChat: handleSetActiveChat,
-                isMobile,
-              }}
-            />
-          </div>
+          <Outlet
+            context={{
+              activeChat,
+              setActiveChat: handleSetActiveChat,
+              isMobile,
+            }}
+          />
         </main>
       </div>
 
-      {/* Global Persistent Audio Huddle Dock */}
+      {showDock && (
+        <MobileDock
+          isVoiceFilterActive={isVoiceFilterActive}
+          onVoiceFilterToggle={toggleVoiceFilter}
+          activeVoiceCount={activeVoiceRoomIds.length}
+        />
+      )}
+
+      {/* Global floating huddle remote */}
       <HuddleBar />
     </div>
   );

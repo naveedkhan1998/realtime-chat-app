@@ -15,7 +15,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   CircleDot,
-  Sparkles,
   LucideIcon,
   Cloud,
   Upload,
@@ -25,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn, getAvatarUrl } from '@/lib/utils';
+import { Led } from '@/components/console';
 
 // ============ TYPES ============
 export interface SfuStats {
@@ -97,39 +97,39 @@ interface CandidatePair {
 // ============ STATIC CONFIGS (outside component to avoid recreation) ============
 const QUALITY_CONFIGS = {
   excellent: {
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-    border: 'border-green-500/30',
+    color: 'text-live',
+    bg: 'bg-live/10',
+    border: 'border-live/30',
     bars: 4,
     label: 'Excellent',
   },
   good: {
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/30',
+    color: 'text-live',
+    bg: 'bg-live/10',
+    border: 'border-live/30',
     bars: 3,
     label: 'Good',
   },
   fair: {
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/30',
     bars: 2,
     label: 'Fair',
   },
   poor: {
-    color: 'text-red-500',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/30',
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
+    border: 'border-destructive/30',
     bars: 1,
     label: 'Poor',
   },
 } as const;
 
 const DEFAULT_QUALITY_CONFIG = {
-  color: 'text-gray-500',
-  bg: 'bg-gray-500/10',
-  border: 'border-gray-500/30',
+  color: 'text-muted-foreground',
+  bg: 'bg-well/40',
+  border: 'border-border',
   bars: 0,
   label: 'Unknown',
 };
@@ -140,22 +140,22 @@ const STATE_CONFIGS: Record<
 > = {
   succeeded: {
     icon: CheckCircle2,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
+    color: 'text-live',
+    bg: 'bg-live/10',
   },
-  failed: { icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10' },
+  failed: { icon: AlertTriangle, color: 'text-destructive', bg: 'bg-destructive/10' },
   'in-progress': {
     icon: CircleDot,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
   },
-  frozen: { icon: WifiOff, color: 'text-gray-500', bg: 'bg-gray-500/10' },
+  frozen: { icon: WifiOff, color: 'text-muted-foreground', bg: 'bg-well/40' },
 };
 
 const DEFAULT_STATE_CONFIG = {
   icon: CircleDot,
-  color: 'text-gray-500',
-  bg: 'bg-gray-500/10',
+  color: 'text-muted-foreground',
+  bg: 'bg-well/40',
 };
 
 const BAR_HEIGHTS = ['h-1', 'h-2', 'h-3', 'h-4'] as const;
@@ -202,7 +202,7 @@ const ConnectionPathVisual = memo(
     const isDirect = path === 'direct';
 
     return (
-      <div className="relative p-4 overflow-hidden border rounded-xl bg-gradient-to-br from-background via-background to-muted/30">
+      <div className="relative p-4 overflow-hidden border rounded-xl bg-well">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-[size:20px_20px]" />
         </div>
@@ -213,7 +213,7 @@ const ConnectionPathVisual = memo(
               <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-primary/10 border-primary/30">
                 <Radio className="w-5 h-5 text-primary" />
               </div>
-              <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+              <div className="absolute w-3 h-3 bg-live border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
             </div>
             <span className="text-[10px] font-medium text-muted-foreground">
               You
@@ -221,7 +221,7 @@ const ConnectionPathVisual = memo(
           </div>
 
           <div className="relative flex-1 mx-4">
-            <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full" />
+            <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-well" />
 
             <div className="absolute inset-0 overflow-hidden">
               <div
@@ -242,18 +242,18 @@ const ConnectionPathVisual = memo(
               <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div
                   className={cn(
-                    'flex flex-col items-center gap-1 px-3 py-2 rounded-lg border backdrop-blur-sm',
+                    'flex flex-col items-center gap-1 px-3 py-2 rounded-lg border',
                     isRelay
-                      ? 'bg-orange-500/10 border-orange-500/30'
-                      : 'bg-blue-500/10 border-blue-500/30'
+                      ? 'bg-primary/10 border-primary/30'
+                      : 'bg-well border-border'
                   )}
                 >
                   {isRelay ? (
-                    <Server className="w-4 h-4 text-orange-500" />
+                    <Server className="w-4 h-4 text-primary" />
                   ) : (
-                    <Globe className="w-4 h-4 text-blue-500" />
+                    <Globe className="w-4 h-4 text-primary" />
                   )}
-                  <span className="text-[9px] font-semibold uppercase tracking-wider">
+                  <span className="text-[9px] font-mono font-semibold uppercase tracking-wider text-foreground">
                     {isRelay ? 'TURN' : 'STUN'}
                   </span>
                 </div>
@@ -262,9 +262,9 @@ const ConnectionPathVisual = memo(
 
             {isDirect && (
               <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-                <div className="flex items-center gap-1 px-2 py-1 border rounded-full bg-green-500/10 border-green-500/30">
-                  <Zap className="w-3 h-3 text-green-500" />
-                  <span className="text-[9px] font-semibold text-green-500">
+                <div className="flex items-center gap-1 px-2 py-1 border rounded-full bg-live/10 border-live/30">
+                  <Zap className="w-3 h-3 text-live" />
+                  <span className="text-[9px] font-semibold text-live">
                     DIRECT
                   </span>
                 </div>
@@ -277,7 +277,7 @@ const ConnectionPathVisual = memo(
               <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-secondary/50 border-secondary">
                 <Radio className="w-5 h-5 text-secondary-foreground" />
               </div>
-              <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+              <div className="absolute w-3 h-3 bg-live border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
             </div>
             <span className="text-[10px] font-medium text-muted-foreground">
               Peer
@@ -312,27 +312,28 @@ const StatCard = memo(
     color?: string;
     pulse?: boolean;
   }) => (
-    <div className="p-3 space-y-2 border rounded-lg bg-muted/30">
+    <div className="p-3 space-y-2 border rounded-lg bg-well border-border">
       <div className="flex items-center gap-2">
         <div
           className={cn(
             'p-1.5 rounded-md',
             color === 'primary' && 'bg-primary/10 text-primary',
-            color === 'green' && 'bg-green-500/10 text-green-500',
-            color === 'blue' && 'bg-blue-500/10 text-blue-500',
-            color === 'orange' && 'bg-orange-500/10 text-orange-500',
-            color === 'red' && 'bg-red-500/10 text-red-500',
+            (color === 'green' || color === 'live') && 'bg-live/10 text-live',
+            color === 'blue' && 'bg-primary/10 text-primary',
+            (color === 'orange' || color === 'signal') && 'bg-primary/15 text-primary',
+            (color === 'red' || color === 'destructive') &&
+              'bg-destructive/10 text-destructive',
             pulse && 'animate-pulse'
           )}
         >
           <Icon className="w-3.5 h-3.5" />
         </div>
-        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="font-mono text-2xs uppercase tracking-wider text-muted-foreground">{label}</span>
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="text-lg font-bold">{value}</span>
+        <span className="font-mono text-lg font-bold text-foreground">{value}</span>
         {subValue && (
-          <span className="text-xs text-muted-foreground">{subValue}</span>
+          <span className="font-mono text-xs text-muted-foreground">{subValue}</span>
         )}
       </div>
     </div>
@@ -351,14 +352,14 @@ const BitrateChart = memo(
     }, [inbound, outbound]);
 
     return (
-      <div className="p-4 space-y-4 border rounded-xl bg-gradient-to-br from-muted/30 to-muted/10">
+      <div className="p-4 space-y-4 border rounded-xl bg-well">
         <div className="flex items-center justify-between">
           <h4 className="flex items-center gap-2 text-sm font-semibold">
             <Activity className="w-4 h-4 text-primary" />
             Live Bitrate
           </h4>
           <Badge variant="secondary" className="text-[10px]">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse" />
+            <span className="w-1.5 h-1.5 bg-live rounded-full mr-1 animate-pulse" />
             LIVE
           </Badge>
         </div>
@@ -367,38 +368,36 @@ const BitrateChart = memo(
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                <ArrowDownLeft className="w-3 h-3 text-green-500" />
+                <ArrowDownLeft className="w-3 h-3 text-live" />
                 Receiving
               </span>
               <span className="font-mono font-medium">
                 {inbound.toFixed(1)} kbps
               </span>
             </div>
-            <div className="relative h-2 overflow-hidden rounded-full bg-muted">
+            <div className="relative h-2 overflow-hidden rounded-full bg-well border border-border/40">
               <div
-                className="absolute inset-y-0 left-0 transition-all duration-500 rounded-full bg-gradient-to-r from-green-500 to-emerald-400"
+                className="absolute inset-y-0 left-0 transition-all duration-300 rounded-full bg-live"
                 style={{ width: `${inPercent}%` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 text-muted-foreground">
-                <ArrowUpRight className="w-3 h-3 text-blue-500" />
+                <ArrowUpRight className="w-3 h-3 text-primary" />
                 Sending
               </span>
               <span className="font-mono font-medium">
                 {outbound.toFixed(1)} kbps
               </span>
             </div>
-            <div className="relative h-2 overflow-hidden rounded-full bg-muted">
+            <div className="relative h-2 overflow-hidden rounded-full bg-well border border-border/40">
               <div
-                className="absolute inset-y-0 left-0 transition-all duration-500 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                className="absolute inset-y-0 left-0 transition-all duration-300 rounded-full bg-primary"
                 style={{ width: `${outPercent}%` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]" />
             </div>
           </div>
         </div>
@@ -436,9 +435,8 @@ const CandidatePairCard = memo(
             </span>
           </div>
           {isActive && (
-            <Badge className="text-[9px] bg-primary hover:bg-primary">
-              <Sparkles className="w-2.5 h-2.5 mr-1" />
-              Active
+            <Badge className="text-[9px] bg-primary text-primary-foreground font-mono">
+              ACTIVE
             </Badge>
           )}
         </div>
@@ -521,12 +519,12 @@ const PeerStats = memo(({ peer, details, showHeader }: PeerStatsProps) => {
 
   // Memoize color calculations
   const rttColor = useMemo(
-    () => (rtt && rtt > 150 ? 'orange' : rtt && rtt > 50 ? 'blue' : 'green'),
+    () => (rtt && rtt > 150 ? 'signal' : rtt && rtt > 50 ? 'primary' : 'live'),
     [rtt]
   );
 
   const packetLossColor = useMemo(
-    () => (packetLoss > 2 ? 'red' : packetLoss > 0.5 ? 'orange' : 'green'),
+    () => (packetLoss > 2 ? 'destructive' : packetLoss > 0.5 ? 'signal' : 'live'),
     [packetLoss]
   );
 
@@ -553,7 +551,7 @@ const PeerStats = memo(({ peer, details, showHeader }: PeerStatsProps) => {
       {!showHeader && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Wifi className="w-4 h-4 text-green-500" />
+            <Wifi className="w-4 h-4 text-live" />
             <span className="text-sm font-medium">Connection Quality</span>
           </div>
           <QualityIndicator quality={details.quality || 'unknown'} />
@@ -592,20 +590,20 @@ const PeerStats = memo(({ peer, details, showHeader }: PeerStatsProps) => {
           icon={ArrowDownLeft}
           label="Packets In"
           value={packetsReceived.toLocaleString()}
-          color="green"
+          color="live"
         />
         <StatCard
           icon={ArrowUpRight}
           label="Packets Out"
           value={packetsSent.toLocaleString()}
-          color="blue"
+          color="primary"
         />
       </div>
 
       {jitter && (
         <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20">
-          <div className="p-2 rounded-lg bg-purple-500/10">
-            <Activity className="w-4 h-4 text-purple-500" />
+          <div className="p-2 rounded-lg bg-well">
+            <Activity className="w-4 h-4 text-foreground" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Audio Jitter</p>
@@ -694,14 +692,14 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
   return (
     <div className="space-y-6">
       {/* SFU Header */}
-      <div className="p-4 border rounded-xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-indigo-500/10 border-primary/20">
+      <div className="p-4 border rounded-xl bg-well">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-primary/10 border-primary/30">
                 <Cloud className="w-6 h-6 text-primary" />
               </div>
-              <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+              <div className="absolute w-3 h-3 bg-live border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Cloudflare SFU</h3>
@@ -714,7 +712,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
         </div>
 
         {/* Connection Path Visual for SFU */}
-        <div className="relative p-4 overflow-hidden border rounded-xl bg-gradient-to-br from-background via-background to-muted/30">
+        <div className="relative p-4 overflow-hidden border rounded-xl bg-well">
           <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-[size:20px_20px]" />
           </div>
@@ -726,7 +724,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-primary/10 border-primary/30">
                   <Radio className="w-5 h-5 text-primary" />
                 </div>
-                <div className="absolute w-3 h-3 bg-green-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+                <div className="absolute w-3 h-3 bg-live border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
               </div>
               <span className="text-[10px] font-medium text-muted-foreground">
                 You
@@ -735,10 +733,10 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
 
             {/* Connection line to SFU */}
             <div className="relative flex-1 mx-4">
-              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-blue-500 to-purple-500/50 rounded-full" />
+              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-well" />
               <div className="absolute inset-0 overflow-hidden">
                 <div
-                  className="absolute w-2 h-2 rounded-full top-1/2 -translate-y-1/2 bg-blue-500 animate-[ping_2s_ease-in-out_infinite]"
+                  className="absolute w-2 h-2 rounded-full top-1/2 -translate-y-1/2 bg-primary animate-[ping_2s_ease-in-out_infinite]"
                   style={{ left: '30%' }}
                 />
               </div>
@@ -747,10 +745,10 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
             {/* SFU Cloud */}
             <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-purple-500/10 border-purple-500/30">
-                  <Cloud className="w-5 h-5 text-purple-500" />
+                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-well border-border">
+                  <Cloud className="w-5 h-5 text-foreground" />
                 </div>
-                <div className="absolute w-3 h-3 bg-blue-500 border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
+                <div className="absolute w-3 h-3 bg-live border-2 rounded-full -bottom-1 -right-1 border-background animate-pulse" />
               </div>
               <span className="text-[10px] font-medium text-muted-foreground">
                 SFU
@@ -759,10 +757,10 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
 
             {/* Connection line to peers */}
             <div className="relative flex-1 mx-4">
-              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 via-indigo-500 to-primary/50 rounded-full" />
+              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-well" />
               <div className="absolute inset-0 overflow-hidden">
                 <div
-                  className="absolute w-2 h-2 rounded-full top-1/2 -translate-y-1/2 bg-indigo-500 animate-[ping_2s_ease-in-out_infinite_0.5s]"
+                  className="absolute w-2 h-2 rounded-full top-1/2 -translate-y-1/2 bg-live animate-[ping_2s_ease-in-out_infinite_0.5s]"
                   style={{ left: '70%' }}
                 />
               </div>
@@ -771,8 +769,8 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
             {/* Peers */}
             <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-indigo-500/10 border-indigo-500/30">
-                  <Server className="w-5 h-5 text-indigo-500" />
+                <div className="flex items-center justify-center w-12 h-12 border-2 rounded-xl bg-primary/10 border-primary/30">
+                  <Server className="w-5 h-5 text-primary" />
                 </div>
               </div>
               <span className="text-[10px] font-medium text-muted-foreground">
@@ -787,7 +785,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
       {sfuStats.publish && (
         <div className="p-4 space-y-4 border rounded-xl bg-card border-border/50">
           <div className="flex items-center gap-2">
-            <Upload className="w-4 h-4 text-green-500" />
+            <Upload className="w-4 h-4 text-live" />
             <h4 className="font-medium text-foreground">Upload (Publish)</h4>
             <Badge variant="outline" className="ml-auto text-xs">
               {sfuStats.publish.connectionState}
@@ -799,14 +797,14 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
               icon={ArrowUpRight}
               label="Bitrate Out"
               value={`${sfuStats.publish.bitrate.out.toFixed(1)} kbps`}
-              color="text-green-500"
+              color="text-live"
             />
             {sfuStats.publish.rtt !== undefined && (
               <StatCard
                 icon={Clock}
                 label="RTT"
                 value={`${sfuStats.publish.rtt.toFixed(0)} ms`}
-                color="text-blue-500"
+                color="text-primary"
               />
             )}
             {sfuStats.publish.audio?.packetsSent !== undefined && (
@@ -814,7 +812,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 icon={Package}
                 label="Packets Sent"
                 value={sfuStats.publish.audio.packetsSent.toLocaleString()}
-                color="text-purple-500"
+                color="text-foreground"
               />
             )}
           </div>
@@ -825,7 +823,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
       {sfuStats.subscribe && (
         <div className="p-4 space-y-4 border rounded-xl bg-card border-border/50">
           <div className="flex items-center gap-2">
-            <Download className="w-4 h-4 text-blue-500" />
+            <Download className="w-4 h-4 text-primary" />
             <h4 className="font-medium text-foreground">
               Download (Subscribe)
             </h4>
@@ -839,14 +837,14 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
               icon={ArrowDownLeft}
               label="Bitrate In"
               value={`${sfuStats.subscribe.bitrate.in.toFixed(1)} kbps`}
-              color="text-blue-500"
+              color="text-primary"
             />
             {sfuStats.subscribe.rtt !== undefined && (
               <StatCard
                 icon={Clock}
                 label="RTT"
                 value={`${sfuStats.subscribe.rtt.toFixed(0)} ms`}
-                color="text-blue-500"
+                color="text-primary"
               />
             )}
             {sfuStats.subscribe.audio?.packetsReceived !== undefined && (
@@ -854,7 +852,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 icon={Package}
                 label="Packets Received"
                 value={sfuStats.subscribe.audio.packetsReceived.toLocaleString()}
-                color="text-purple-500"
+                color="text-foreground"
               />
             )}
             {sfuStats.subscribe.audio?.packetLossPercent !== undefined && (
@@ -864,8 +862,8 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 value={`${sfuStats.subscribe.audio.packetLossPercent.toFixed(2)}%`}
                 color={
                   sfuStats.subscribe.audio.packetLossPercent > 2
-                    ? 'text-red-500'
-                    : 'text-green-500'
+                    ? 'text-destructive'
+                    : 'text-live'
                 }
               />
             )}
@@ -874,7 +872,7 @@ const SfuStatsDisplay = memo(({ sfuStats }: { sfuStats: SfuStats }) => {
                 icon={Activity}
                 label="Jitter"
                 value={`${(sfuStats.subscribe.audio.jitter * 1000).toFixed(1)} ms`}
-                color="text-yellow-500"
+                color="text-primary"
               />
             )}
           </div>
@@ -893,22 +891,37 @@ function WebRTCStats({
   sfuStats,
   scrollable = true,
 }: WebRTCStatsProps) {
-  // Early return for no connections - memoized empty state
+  // Early return for no connections - memoized console empty state
   const emptyState = useMemo(
     () => (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="p-4 mb-4 rounded-full bg-muted/50">
-          <WifiOff className="w-8 h-8 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-8 px-2 text-center space-y-4">
+        {/* Amber LCD Carrier Standby */}
+        <div className="w-full max-w-md lcd p-4 rounded-xl space-y-2 text-left">
+          <div className="flex items-center justify-between font-mono text-2xs text-primary/80 border-b border-primary/20 pb-1">
+            <span>VOX·CARRIER STANDBY</span>
+            <span className="flex items-center gap-1.5 font-bold">
+              <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+              POLLING
+            </span>
+          </div>
+          <div className="space-y-1 font-mono text-xs text-primary">
+            <div>&gt; LOCAL TRANSCEIVER ENGAGED</div>
+            <div>&gt; CODEC: OPUS 48 kHz STEREO FULLBAND</div>
+            <div>&gt; AWAITING INBOUND PEER AUDIO STREAMS...</div>
+          </div>
+          <div className="pt-2 flex items-center justify-between text-2xs font-mono text-primary/70 border-t border-primary/20">
+            <span>DTLS 1.2 / SRTP ENCRYPTED</span>
+            <span>TOPOLOGY: {isUsingSfu ? 'SFU RELAY' : 'PEER MESH'}</span>
+          </div>
         </div>
-        <p className="font-medium text-muted-foreground">
-          No active connections
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground/70">
-          WebRTC stats will appear once connected
-        </p>
+
+        <div className="font-mono text-xs text-muted-foreground flex items-center gap-2">
+          <Led tone="signal" blink />
+          <span>Listening for inbound audio packets on active frequency</span>
+        </div>
       </div>
     ),
-    []
+    [isUsingSfu]
   );
 
   // SFU mode: show SFU stats
@@ -921,19 +934,19 @@ function WebRTCStats({
     return content;
   }
 
-  // P2P mode: show per-peer stats
-  if (connectedPeers.length === 0) {
+  // P2P mode: show per-peer stats (filter for peers that have active connection data)
+  const activePeers = connectedPeers.filter(peer => !!connectionDetails[peer.id]);
+
+  if (activePeers.length === 0) {
     return emptyState;
   }
 
-  const showMultiplePeerHeaders = connectedPeers.length > 1;
+  const showMultiplePeerHeaders = activePeers.length > 1;
 
   const content = (
-    <div className="space-y-8">
-      {connectedPeers.map(peer => {
+    <div className="space-y-6">
+      {activePeers.map(peer => {
         const details = connectionDetails[peer.id];
-        if (!details) return null;
-
         return (
           <PeerStats
             key={peer.id}
